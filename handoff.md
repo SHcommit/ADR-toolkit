@@ -12,14 +12,25 @@ Touched files:
 - `handoff.md` (this file)
 
 Next step:
-- User is away (~30 min, granted permission to proceed without asking).
-  Self-review of the design doc is done inline (no placeholders, no
-  contradictions found). Proceeding to invoke the writing-plans skill to
-  turn the spec into an implementation plan.
-- On the user's return: get explicit sign-off on the spec (especially the
-  MIT license call made in §13 of the design doc, which was decided
-  in-absence and needs confirmation before any public release) before
-  starting actual code implementation.
+- Done while user was away: design spec self-reviewed (no placeholders/
+  contradictions found), `project-roadmap.md` written, and Plan 1 of 4
+  ("core scripts + INIT") written in full to
+  `docs/superpowers/plans/2026-08-29-adr-toolkit-core-and-init.md`
+  (18 bite-sized TDD tasks, self-reviewed for spec coverage and type
+  consistency). All committed locally (no pushes made).
+- Deliberately stopped before executing the plan (writing actual
+  scripts/*.py code) and before writing Plans 2-4 (RECORD, CHECK,
+  i18n+other adapters+release) — that crosses from planning into
+  implementation, which per the brainstorming skill's hard gate needs the
+  user's explicit go-ahead, and they haven't yet done a line-by-line
+  review of the spec itself.
+- On the user's return: (1) confirm the MIT license call in spec §13,
+  decided in their absence; (2) confirm they're still happy with CHECK's
+  structural-only scope (spec §7) now that the concrete rule table exists;
+  (3) pick an execution approach for Plan 1 — subagent-driven (fresh
+  subagent per task) or inline (executing-plans skill, batched with
+  checkpoints); (4) decide whether to write Plans 2-4 now or after Plan 1
+  lands.
 
 Open risk:
 - CHECK's conflict detection is scoped to structural/path evidence only for
