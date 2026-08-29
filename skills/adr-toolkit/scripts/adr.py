@@ -7,7 +7,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.commands import preflight, discover, init, create, index, related, significance, validate
+from scripts.commands import (
+    create,
+    discover,
+    index,
+    init,
+    preflight,
+    related,
+    significance,
+    status,
+    validate,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -53,6 +63,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_validate.add_argument("--dir", default="docs/decisions")
     p_validate.add_argument("--json", action="store_true")
 
+    p_status = sub.add_parser("status")
+    p_status.add_argument("adr_number", type=int)
+    p_status.add_argument("--to", required=True)
+    p_status.add_argument("--dir", default="docs/decisions")
+    p_status.add_argument("--dry-run", dest="dry_run", action="store_true")
+    p_status.add_argument("--json", action="store_true")
+
+    p_deprecate = sub.add_parser("deprecate")
+    p_deprecate.add_argument("adr_number", type=int)
+    p_deprecate.add_argument("--dir", default="docs/decisions")
+    p_deprecate.add_argument("--dry-run", dest="dry_run", action="store_true")
+    p_deprecate.add_argument("--json", action="store_true")
+    p_deprecate.set_defaults(to="deprecated")
+
     return parser
 
 
@@ -65,6 +89,8 @@ HANDLERS = {
     "related": related.run,
     "significance": significance.run,
     "validate": validate.run,
+    "status": status.run,
+    "deprecate": status.run,
 }
 
 
