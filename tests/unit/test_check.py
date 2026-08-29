@@ -170,3 +170,82 @@ def test_unreadable_adr_file_degrades_to_warning_and_keeps_other_findings(tmp_pa
     violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
     assert violation["adr_id"] == "ADR-0001"
     assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0010-invalid-utf8.md" for w in result["warnings"])
+
+
+ACCEPTED_ADR_WITH_VERIFICATION = """---
+id: ADR-0003
+title: Add event replay
+status: accepted
+date: 2026-08-03
+decision_makers: []
+related: []
+affected_paths:
+  - src/events/
+tags: []
+retrospective: false
+---
+
+# Add event replay
+
+## Verification
+
+* `src/events/replay.py` implements the replay handler.
+"""
+
+SUPERSEDED_ADR = """---
+id: ADR-0004
+title: Use RabbitMQ
+status: superseded
+superseded_by: ADR-0005
+date: 2026-07-01
+decision_makers: []
+related: []
+affected_paths:
+  - src/queue/
+tags: []
+retrospective: false
+---
+
+# Use RabbitMQ
+
+Superseded.
+"""
+
+
+def test_review_required_when_verification_reference_is_removed(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0003-add-event-replay.md").write_text(ACCEPTED_ADR_WITH_VERIFICATION, encoding="utf-8")
+    (tmp_path / "src" / "events").mkdir(parents=True)
+    (tmp_path / "src" / "events" / "replay.py").write_text("def replay(): pass\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+
+    (tmp_path / "src" / "events" / "replay.py").unlink()
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    finding = next(f for f in result["findings"] if f["kind"] == "review_required")
+    assert finding["adr_id"] == "ADR-0003"
+    assert "src/events/replay.py" in finding["evidence"]["removed_paths"]
+
+
+def test_superseded_reference_fires_on_affected_path_overlap(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0004-use-rabbitmq.md").write_text(SUPERSEDED_ADR, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+
+    (tmp_path / "src" / "queue").mkdir(parents=True)
+    (tmp_path / "src" / "queue" / "client.py").write_text("x = 1\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    finding = next(f for f in result["findings"] if f["rule_id"] == "superseded_reference")
+    assert finding["adr_id"] == "ADR-0004"
+    assert finding["kind"] == "verified_violation"
+    assert finding["evidence"]["superseded_by"] == "ADR-0005"
+    assert finding["resolutions"] == RESOLUTIONS

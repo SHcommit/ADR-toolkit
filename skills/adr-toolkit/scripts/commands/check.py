@@ -1,5 +1,6 @@
 """Match a git diff against Accepted ADRs' constraints: rules and
 Superseded ADRs' affected_paths, per §7/§16 of the design spec."""
+import re
 from pathlib import Path
 
 from scripts.commands import diff as diff_command
@@ -10,6 +11,10 @@ from scripts.rules import conflict
 
 SKIP_FILES = {"README.md", "adr-template.md"}
 RESOLUTIONS = ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
+
+VERIFICATION_HEADING_RE = re.compile(r"^#+\s*Verification\s*$", re.IGNORECASE | re.MULTILINE)
+NEXT_HEADING_RE = re.compile(r"^#+\s", re.MULTILINE)
+PATH_TOKEN_RE = re.compile(r"`([^`]+\.[a-zA-Z0-9]+)`")
 
 
 def run(args) -> dict:
@@ -46,8 +51,34 @@ def run(args) -> dict:
                 findings.append({**violation, "adr_id": adr_id, "resolutions": RESOLUTIONS})
                 produced_any = True
 
+        review = _missing_realization(body, diff_files)
+        if review:
+            findings.append({"adr_id": adr_id, "kind": "review_required", **review})
+            produced_any = True
+
         if not produced_any:
             findings.append({"adr_id": adr_id, "kind": "related" if rules else "no_applicable_constraint"})
+
+    for entry in entries:
+        data = entry["data"]
+        if data.get("status") != "superseded":
+            continue
+        if not conflict.affected_paths_overlap(diff_files, data.get("affected_paths", [])):
+            continue
+        findings.append({
+            "adr_id": data.get("id"),
+            "kind": "verified_violation",
+            "rule_id": "superseded_reference",
+            "severity": "major",
+            "message": (
+                f"This path is governed by {data.get('id')}, which is superseded "
+                f"by {data.get('superseded_by')}. Review the replacement decision "
+                f"before proceeding."
+            ),
+            "file": None,
+            "evidence": {"superseded_by": data.get("superseded_by")},
+            "resolutions": RESOLUTIONS,
+        })
 
     return {
         "ok": True,
@@ -70,6 +101,28 @@ def _load_adrs(adr_dir: Path) -> tuple:
             continue
         entries.append({"data": data, "body": body})
     return entries, warnings
+
+
+def _missing_realization(body: str, diff_files: list):
+    heading = VERIFICATION_HEADING_RE.search(body)
+    if not heading:
+        return None
+    next_heading = NEXT_HEADING_RE.search(body, heading.end())
+    section = body[heading.end():next_heading.start() if next_heading else len(body)]
+
+    referenced_paths = PATH_TOKEN_RE.findall(section)
+    if not referenced_paths:
+        return None
+
+    by_path = {f["path"]: f for f in diff_files}
+    removed = [p for p in referenced_paths if by_path.get(p, {}).get("change_type") == "deleted"]
+    if not removed:
+        return None
+
+    return {
+        "message": f"Verification references {removed} which this diff removes.",
+        "evidence": {"removed_paths": removed},
+    }
 
 
 def _existing_paths(root: Path) -> set:
