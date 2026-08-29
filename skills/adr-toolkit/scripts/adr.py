@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.commands import (
     create,
+    diff,
     discover,
     index,
     init,
@@ -85,6 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_supersede.add_argument("--dry-run", dest="dry_run", action="store_true")
     p_supersede.add_argument("--json", action="store_true")
 
+    p_diff = sub.add_parser("diff")
+    p_diff.add_argument("--staged", action="store_true")
+    p_diff.add_argument("--uncommitted", action="store_true")
+    p_diff.add_argument("--since")
+    p_diff.add_argument("--root", default=".")
+    p_diff.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -100,6 +108,7 @@ HANDLERS = {
     "status": status.run,
     "deprecate": status.run,
     "supersede": supersede.run,
+    "diff": diff.run,
 }
 
 
