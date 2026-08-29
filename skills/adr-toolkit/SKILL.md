@@ -29,15 +29,15 @@ Use INIT when a repository has no ADR directory yet. INIT does not mine
 history — it only sets up the structure. Run DISCOVER afterward (or any
 time later) to recover past decisions.
 
-1. **PREFLIGHT** — run `python scripts/adr.py preflight --json`. If
+1. **PREFLIGHT** — run `python skills/adr-toolkit/scripts/adr.py preflight --json`. If
    `existing_adr_directory` is set, stop and tell the user an ADR directory
    already exists; do not scaffold a second one.
 2. **CONFIRM** — show the user the exact directory that will be created,
    before writing anything.
-3. **MUTATE** — run `python scripts/adr.py init --dir docs/decisions` to
+3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --dir docs/decisions` to
    scaffold the directory, template, and ADR-0001.
-4. **VALIDATE** — run `python scripts/adr.py validate --dir docs/decisions --json`
-   and `python scripts/adr.py index --dir docs/decisions --json`.
+4. **VALIDATE** — run `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
+   and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
 5. **REPORT** — tell the user INIT is done and that they can run DISCOVER
    next if they want to recover past decisions from the repository's
    history.
@@ -48,10 +48,10 @@ Use DISCOVER on a repository that already has an ADR directory (run INIT
 first if it doesn't). DISCOVER can be run once right after INIT, skipped
 entirely, or re-run later to mine more of the history incrementally.
 
-1. **PREFLIGHT** — run `python scripts/adr.py preflight --json`. If
+1. **PREFLIGHT** — run `python skills/adr-toolkit/scripts/adr.py preflight --json`. If
    `existing_adr_directory` is `null`, stop and tell the user to run INIT
    first.
-2. **GATHER EVIDENCE** — run `python scripts/adr.py discover --json` from
+2. **GATHER EVIDENCE** — run `python skills/adr-toolkit/scripts/adr.py discover --json` from
    the repository root. Read the `dependencies` list; each entry is
    candidate evidence for a past architectural decision (e.g. `pom.xml`
    suggests a JVM build-tool decision was made, even if undocumented).
@@ -90,7 +90,7 @@ entirely, or re-run later to mine more of the history incrementally.
    (`title`, `status`, `body` — body includes the three-part structure
    above — plus any of `date`/`decision_makers`/`related`/
    `affected_paths`/`tags`/`retrospective`) and run
-   `python scripts/adr.py create --input <draft.json> --dir docs/decisions`.
+   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions`.
 8. **VALIDATE** — same as INIT step 4. If validate reports errors, fix the
    draft and re-run `create` — never hand-edit the generated file to patch
    a validation error.

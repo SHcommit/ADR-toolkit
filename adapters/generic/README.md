@@ -32,5 +32,5 @@ project hasn't been tested against yet.
 
 You don't need one. Every deterministic operation is a plain CLI command
 you can run yourself: `python skills/adr-toolkit/scripts/adr.py init`,
-`... validate`, `... index`, and `... create --interactive` (see Task 19)
-for a guided prompt sequence that needs no AI harness whatsoever.
+`... validate`, `... index`, and `... create --interactive` for a guided
+prompt sequence that needs no AI harness whatsoever.

@@ -23,6 +23,18 @@ def test_creates_directory_template_and_first_adr(tmp_path):
     assert "status: accepted" in content
 
 
+def test_affected_paths_and_confirmation_reflect_custom_dir(tmp_path):
+    adr_dir = tmp_path / "custom" / "adr-location"
+    result = init.run(SimpleNamespace(dir=str(adr_dir), dry_run=False))
+    assert result["ok"] is True
+
+    content = (adr_dir / "0001-record-architecture-decisions.md").read_text(encoding="utf-8")
+    expected_path = str(adr_dir).rstrip("/") + "/"
+    assert f"  - {expected_path}\n" in content
+    assert "docs/decisions/" not in content
+    assert f"`{expected_path}` exists with this file" in content
+
+
 def test_refuses_to_run_on_non_empty_directory(tmp_path):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)

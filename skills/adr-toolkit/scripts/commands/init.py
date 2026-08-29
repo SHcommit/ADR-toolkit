@@ -30,7 +30,7 @@ Chosen option: **Architecture Decision Records stored alongside the code**, beca
 
 ## Confirmation
 
-* [ ] `docs/decisions/` exists with this file, a template, and an index.
+* [ ] `{adr_dir}` exists with this file, a template, and an index.
 
 ## Revisit Triggers
 
@@ -61,6 +61,8 @@ def run(args) -> dict:
     adr_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(TEMPLATE_SOURCE, adr_dir / "adr-template.md")
 
+    adr_dir_str = str(args.dir).rstrip("/") + "/"
+
     frontmatter_block = (
         "---\n"
         "id: ADR-0001\n"
@@ -70,14 +72,14 @@ def run(args) -> dict:
         "decision_makers: []\n"
         "related: []\n"
         "affected_paths:\n"
-        "  - docs/decisions/\n"
+        f"  - {adr_dir_str}\n"
         "tags:\n"
         "  - process\n"
         "retrospective: false\n"
         "---\n\n"
     )
     (adr_dir / "0001-record-architecture-decisions.md").write_text(
-        frontmatter_block + INITIAL_ADR_BODY, encoding="utf-8"
+        frontmatter_block + INITIAL_ADR_BODY.format(adr_dir=adr_dir_str), encoding="utf-8"
     )
 
     return {"ok": True, "operation": "init", "dry_run": False, "created": would_create}
