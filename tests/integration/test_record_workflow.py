@@ -9,11 +9,38 @@ ADR_PY = Path(__file__).resolve().parent.parent.parent / "skills" / "adr-toolkit
 
 
 def _run(args, cwd):
+    command = [sys.executable, str(ADR_PY), *args]
     result = subprocess.run(
-        [sys.executable, str(ADR_PY), *args], cwd=cwd, capture_output=True, text=True,
+        command, cwd=cwd, capture_output=True, text=True,
     )
-    assert result.returncode in (0, 1), result.stderr
-    return json.loads(result.stdout)
+    assert result.returncode == 0, (
+        f"CLI command failed: {' '.join(command)}\n"
+        f"cwd: {cwd}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(
+            f"CLI command did not return JSON: {' '.join(command)}\n"
+            f"cwd: {cwd}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        ) from exc
+    assert isinstance(payload, dict), (
+        f"CLI command returned a non-object JSON payload: {' '.join(command)}\n"
+        f"cwd: {cwd}\npayload: {payload!r}\nstderr:\n{result.stderr}"
+    )
+    assert payload.get("ok") is True, (
+        f"CLI command reported failure: {' '.join(command)}\n"
+        f"cwd: {cwd}\npayload: {payload!r}\nstderr:\n{result.stderr}"
+    )
+    return payload
+
+
+def _status_section(readme, status):
+    marker = f"### {status}\n"
+    start = readme.index(marker) + len(marker)
+    status_block = readme[start:readme.index("## By tag", start)]
+    next_status = status_block.find("\n### ")
+    return status_block if next_status == -1 else status_block[:next_status]
 
 
 def test_record_finds_related_scores_and_creates_new_adr(tmp_path):
@@ -65,7 +92,9 @@ def test_record_finds_related_scores_and_creates_new_adr(tmp_path):
     assert index_result["count"] == 2
 
     readme = (repo / "docs" / "decisions" / "README.md").read_text(encoding="utf-8")
-    assert "ADR-0001" in readme
-    assert "ADR-0002" in readme
-    assert "### Superseded" in readme
-    assert "### Accepted" in readme
+    superseded = _status_section(readme, "Superseded")
+    accepted = _status_section(readme, "Accepted")
+    assert "ADR-0001" in superseded
+    assert "ADR-0002" not in superseded
+    assert "ADR-0002" in accepted
+    assert "ADR-0001" not in accepted
