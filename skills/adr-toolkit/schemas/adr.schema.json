@@ -12,6 +12,8 @@
     "related": { "type": "array", "items": { "type": "string" } },
     "affected_paths": { "type": "array", "items": { "type": "string" } },
     "tags": { "type": "array", "items": { "type": "string" } },
-    "retrospective": { "type": "boolean" }
+    "retrospective": { "type": "boolean" },
+    "supersedes": { "type": "array", "items": { "type": "string" } },
+    "superseded_by": { "type": "string" }
   }
 }

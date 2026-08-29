@@ -20,6 +20,11 @@ REQUIRED_FIELDS = {
     "retrospective": bool,
 }
 
+OPTIONAL_FIELDS = {
+    "supersedes": list,
+    "superseded_by": str,
+}
+
 ID_RE = re.compile(r"^ADR-\d{4}$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -31,6 +36,13 @@ def validate_frontmatter(data: dict) -> list:
             errors.append(f"missing required field: {field}")
             continue
         if not isinstance(data[field], expected_type):
+            errors.append(
+                f"field {field!r} must be {expected_type.__name__}, "
+                f"got {type(data[field]).__name__}"
+            )
+
+    for field, expected_type in OPTIONAL_FIELDS.items():
+        if field in data and not isinstance(data[field], expected_type):
             errors.append(
                 f"field {field!r} must be {expected_type.__name__}, "
                 f"got {type(data[field]).__name__}"
