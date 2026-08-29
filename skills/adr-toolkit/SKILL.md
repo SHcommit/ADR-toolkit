@@ -59,9 +59,11 @@ entirely, or re-run later to mine more of the history incrementally.
    database driver, a message broker, a web framework) versus routine
    tooling (a linter, a test runner), using the table below. Only
    structural choices are candidates.
-4. **ASK-IF-NEEDED** — for each candidate, ask the user at most one
-   question: why was this chosen, only if the reason is not evident from
-   comments, README, or commit history. Do not ask about anything
+4. **ASK-IF-NEEDED** — consult `references/interview-guide.md` before asking
+   questions and follow its priority order, at-most-3-per-round cap,
+   no-known-facts rule, and ambiguity follow-up rule. For each candidate, ask
+   the highest-priority unanswered question only if the reason is not evident
+   from comments, README, or commit history. Do not ask about anything
    `discover` already reported as a fact.
 5. **PLAN** — draft a `retrospective: true` MADR body for each ADR the user
    wants recorded, following `templates/madr-minimal.md` (see

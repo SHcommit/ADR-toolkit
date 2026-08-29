@@ -10,6 +10,11 @@ and continue in a later round when needed.
 
 Ask the highest-priority unanswered question first:
 
+Each independently answerable priority item counts as one substantive
+question. Do not combine multiple priority items in one sentence or bullet
+to bypass the cap; after three substantive questions, defer lower-priority
+items to a later round.
+
 1. What problem or constraint made this decision necessary?
 2. What realistic alternatives were considered?
 3. Why was this option chosen over the others - what was the primary driver?
