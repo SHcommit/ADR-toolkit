@@ -38,7 +38,9 @@ def run(args) -> dict:
         }
 
     data["status"] = args.to
-    target_file.write_text(fm.serialize(data, body.strip() + "\n"), encoding="utf-8")
+    target_file.write_text(
+        fm.serialize(data, body, body_is_parsed=True), encoding="utf-8"
+    )
 
     return {
         "ok": True,

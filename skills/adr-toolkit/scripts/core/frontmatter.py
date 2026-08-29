@@ -20,12 +20,13 @@ def parse(text: str) -> tuple:
     return _parse_simple_yaml(raw_yaml), body
 
 
-def serialize(data: dict, body: str) -> str:
+def serialize(data: dict, body: str, *, body_is_parsed: bool = False) -> str:
     lines = ["---"]
     for key, value in data.items():
         lines.append(_format_field(key, value))
     lines.append("---")
-    return "\n".join(lines) + "\n\n" + body
+    separator = "\n" if body_is_parsed else "\n\n"
+    return "\n".join(lines) + separator + body
 
 
 def _parse_simple_yaml(raw: str) -> dict:
