@@ -5,19 +5,19 @@ the current session.
 
 ## Open
 
-- `scripts/adr.py`'s `--json` flag is parsed on every subcommand but never
+- [ ] `scripts/adr.py`'s `--json` flag is parsed on every subcommand but never
   read (output is always JSON regardless). Either implement a non-JSON
   mode or drop the flag.
-- Codex's `quick_validate.py` rejects the existing ADR Toolkit `SKILL.md`
+- [ ] Codex's `quick_validate.py` rejects the existing ADR Toolkit `SKILL.md`
   frontmatter keys `user-invocable` and `version`, while the repository's
   cross-harness contract and tests currently require them. Make a deliberate
   metadata/validator compatibility decision before changing either side;
   do not silently delete the keys to satisfy one harness.
-- Confirm with the user whether the final MVP keeps 5 languages / 4
+- [ ] Confirm with the user whether the final MVP keeps 5 languages / 4
   harnesses as originally agreed, or trims further — raised once in
   conversation, not yet answered. Doesn't block Plan 1 (English + Claude
   Code only), but affects Plan 4's scope.
-- Before building the Codex/Gemini CLI/Antigravity CLI adapters (Plan 4),
+- [ ] Before building the Codex/Gemini CLI/Antigravity CLI adapters (Plan 4),
   verify each harness's real plugin/skill manifest format against actual
   documentation. The original Claude Code adapter guessed a `"skills"` key
   and a nested manifest path that turned out not to match real Claude Code
@@ -27,26 +27,29 @@ the current session.
 
 ## Done
 
-- Corrected the stale bare `python scripts/adr.py` invocation in
+- [x] Completed Plan 2 of 4 (RECORD + lifecycle): all 11 tasks are implemented
+  and task-reviewed, lifecycle defects found during review are fixed, and the
+  full unit/integration suite passes 105 tests.
+- [x] Corrected the stale bare `python scripts/adr.py` invocation in
   `adapters/generic/README.md` to the documented generic install location,
   `python .agents/skills/adr-toolkit/scripts/adr.py`.
-- Kept runtime ADR validation and the published JSON Schema in sync when
+- [x] Kept runtime ADR validation and the published JSON Schema in sync when
   Plan 2 added `supersedes` and `superseded_by`, and added a unit parity
   test so future field changes cannot silently drift between
   `core/schema.py` and `schemas/adr.schema.json`.
-- Bootstrapped shared harness operating files (`AGENTS.md`, thin
+- [x] Bootstrapped shared harness operating files (`AGENTS.md`, thin
   `CLAUDE.md`/`CODEX.md`/`GEMINI.md`, `handoff.md`/`improvements.md`/
   `changelog.md`) so any harness starting cold defers to the same rules.
-- ADR Toolkit MVP design spec written and iterated
+- [x] ADR Toolkit MVP design spec written and iterated
   (`docs/superpowers/specs/2026-08-29-adr-toolkit-design.md`), covering
   repo structure, ADR document format (incl. structured `constraints:`
   blocks and the retrospective Confirmed Evidence/Inferred
   Rationale/Unknown split), CHECK's structural-only MVP scope, harness
   strategy (Claude Code deep + generic fallback + light adapters),
   i18n scope, and the INIT/DISCOVER operation split.
-- `project-roadmap.md` created to hold everything explicitly deferred out
+- [x] `project-roadmap.md` created to hold everything explicitly deferred out
   of MVP.
-- Plan 1 of 4 ("core scripts + INIT/DISCOVER") designed
+- [x] Plan 1 of 4 ("core scripts + INIT/DISCOVER") designed
   (`docs/superpowers/plans/2026-08-29-adr-toolkit-core-and-init.md`, 20
   tasks) and fully implemented via subagent-driven-development: every task
   built and reviewed clean (one fix loop on Task 11's dry-run/id bugs), a

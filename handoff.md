@@ -19,33 +19,37 @@ Branch: `SHcommit/feat-plan-adr-toolkit`.
   end-to-end RECORD-to-supersession fixture.
 - **Plans 3 and 4** are not yet designed or implemented.
 
-## Exact next action
+## Next work
 
-Design **Plan 3 (CHECK)** from
-`docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` sections 7 and 11.
-Use the brainstorming skill to confirm the CHECK behavior and boundaries,
-then the writing-plans skill to produce the task-by-task implementation plan
-under `docs/superpowers/plans/`. Preserve the agreed MVP boundary: CHECK
-matches structured `constraints:` evidence only and does not attempt general
-semantic conflict detection.
+- [ ] **Close Plan 2:** complete the final whole-branch review for
+  `37067b1..HEAD`, address any confirmed findings in one fix wave, rerun the
+  full unit/integration suite, and choose how to integrate the branch.
+- [ ] **Design Plan 3 (CHECK):** use the brainstorming skill against
+  `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` sections 7 and 11,
+  then use the writing-plans skill to create the task-by-task plan under
+  `docs/superpowers/plans/`.
+- [ ] **Implement Plan 3:** execute the approved plan with TDD, task reviews,
+  a final whole-branch review, and fixture/golden coverage.
+- [ ] **Design and implement Plan 4:** add five-locale runtime text, build the
+  remaining adapters only after verifying each harness's current format, and
+  add version synchronization and release automation.
+- [ ] **Resolve release decisions:** obtain explicit approval for the license
+  and confirm whether the final MVP retains five languages and four harnesses.
 
-Plan 3 must cover:
+Plan 3 must preserve the agreed MVP boundary: CHECK matches structured
+`constraints:` evidence only and does not attempt general semantic conflict
+detection. Its implementation plan must cover:
 
-1. Parsing the fixed structured constraint vocabulary:
-   `forbidden_import`, `required_path`, `forbidden_path`,
+1. Parsing `forbidden_import`, `required_path`, `forbidden_path`,
    `dependency_forbidden`, `file_must_exist`, and `test_must_exist`.
 2. Matching a git diff against Accepted ADRs and their affected paths.
-3. Reporting the four finding classes: Related, Review required, Verified
-   violation, and No applicable constraint.
-4. Presenting all five resolution options for a Verified violation: fix the
-   code, supersede the ADR, adjust its scope/constraints, register an
-   exception, or mark a false positive.
+3. Reporting Related, Review required, Verified violation, and No applicable
+   constraint findings.
+4. Presenting all five Verified violation resolutions: fix the code,
+   supersede the ADR, adjust its scope/constraints, register an exception,
+   or mark a false positive.
 5. Unit, integration, behavioral, and fixture/golden coverage consistent
    with the deterministic-core and human-approval rules.
-
-After Plan 3, design **Plan 4 (i18n + remaining adapters + release)**. It
-covers five-locale runtime text, verified Codex/Gemini CLI/Antigravity CLI
-adapter formats, version synchronization, and release automation.
 
 ## Open decisions
 
