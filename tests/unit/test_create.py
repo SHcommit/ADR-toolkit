@@ -90,3 +90,50 @@ def test_dry_run_response_includes_id(tmp_path):
     assert result["dry_run"] is True
     assert "id" in result
     assert result["id"] == "ADR-0001"
+
+
+def test_empty_slug_title_is_an_error_and_does_not_write_file(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    draft_path = _write_draft(tmp_path, title="아키텍처 결정 기록")
+
+    result = create.run(SimpleNamespace(input=str(draft_path), dir=str(adr_dir), dry_run=False))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "EMPTY_SLUG"
+    assert list(adr_dir.iterdir()) == []
+
+
+def test_empty_slug_title_dry_run_is_also_an_error(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    draft_path = _write_draft(tmp_path, title="아키텍처 결정 기록")
+
+    result = create.run(SimpleNamespace(input=str(draft_path), dir=str(adr_dir), dry_run=True))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "EMPTY_SLUG"
+    assert list(adr_dir.iterdir()) == []
+
+
+def test_missing_draft_file_returns_json_error(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    missing_path = tmp_path / "does-not-exist.json"
+
+    result = create.run(SimpleNamespace(input=str(missing_path), dir=str(adr_dir), dry_run=False))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "DRAFT_FILE_NOT_FOUND"
+
+
+def test_malformed_json_draft_file_returns_json_error(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    bad_json_path = tmp_path / "draft.json"
+    bad_json_path.write_text("{not valid json", encoding="utf-8")
+
+    result = create.run(SimpleNamespace(input=str(bad_json_path), dir=str(adr_dir), dry_run=False))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "DRAFT_FILE_INVALID_JSON"

@@ -1,5 +1,6 @@
 """Assign the next ADR ID and write a new ADR file from an approved draft."""
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -11,7 +12,9 @@ REQUIRED_DRAFT_FIELDS = {"title", "status", "body"}
 
 
 def _prompt(input_fn, question: str) -> str:
-    return input_fn(f"{question}\n> ").strip()
+    print(question, file=sys.stderr)
+    print("> ", end="", file=sys.stderr)
+    return input_fn("").strip()
 
 
 def gather_draft_interactively(input_fn=None) -> dict:
@@ -63,7 +66,22 @@ def run(args) -> dict:
                 "operation": "create",
                 "errors": [{"code": "MISSING_INPUT_OR_INTERACTIVE"}],
             }
-        draft = json.loads(Path(input_path).read_text(encoding="utf-8"))
+        try:
+            raw_draft = Path(input_path).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "DRAFT_FILE_NOT_FOUND", "path": input_path}],
+            }
+        try:
+            draft = json.loads(raw_draft)
+        except json.JSONDecodeError as exc:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "DRAFT_FILE_INVALID_JSON", "path": input_path, "detail": str(exc)}],
+            }
 
     adr_dir = Path(args.dir)
     missing = REQUIRED_DRAFT_FIELDS - draft.keys()
@@ -76,6 +94,12 @@ def run(args) -> dict:
 
     next_num = identifiers.next_id(adr_dir)
     slug = identifiers.slugify(draft["title"])
+    if not slug:
+        return {
+            "ok": False,
+            "operation": "create",
+            "errors": [{"code": "EMPTY_SLUG", "detail": "title must contain at least one ASCII letter or digit"}],
+        }
     filename = identifiers.format_filename(next_num, slug)
     target = adr_dir / filename
 

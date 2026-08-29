@@ -18,7 +18,8 @@ def run(args) -> dict:
     seen_ids: dict = {}
 
     for path in adr_files:
-        if identifiers.parse_filename(path.name) is None:
+        parsed_filename = identifiers.parse_filename(path.name)
+        if parsed_filename is None:
             errors.append({"code": "BAD_FILENAME", "file": path.name})
             continue
 
@@ -30,6 +31,16 @@ def run(args) -> dict:
 
         for detail in validate_frontmatter(data):
             errors.append({"code": "SCHEMA_ERROR", "file": path.name, "detail": detail})
+
+        parsed_num = parsed_filename[0]
+        expected_id = f"ADR-{parsed_num:04d}"
+        if data.get("id") != expected_id:
+            errors.append({
+                "code": "FILENAME_ID_MISMATCH",
+                "file": path.name,
+                "expected_id": expected_id,
+                "found_id": data.get("id"),
+            })
 
         adr_id = data.get("id")
         if adr_id:

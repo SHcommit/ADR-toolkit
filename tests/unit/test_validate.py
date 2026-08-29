@@ -53,3 +53,16 @@ def test_bad_filename_is_reported(tmp_path):
     (tmp_path / "not-a-valid-name.md").write_text(VALID_ADR, encoding="utf-8")
     result = validate.run(SimpleNamespace(dir=str(tmp_path)))
     assert any(e["code"] == "BAD_FILENAME" for e in result["errors"])
+
+
+def test_filename_id_mismatch_is_reported(tmp_path):
+    (tmp_path / "0002-something.md").write_text(VALID_ADR, encoding="utf-8")
+
+    result = validate.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is False
+    mismatches = [e for e in result["errors"] if e["code"] == "FILENAME_ID_MISMATCH"]
+    assert len(mismatches) == 1
+    assert mismatches[0]["file"] == "0002-something.md"
+    assert mismatches[0]["expected_id"] == "ADR-0002"
+    assert mismatches[0]["found_id"] == "ADR-0001"
