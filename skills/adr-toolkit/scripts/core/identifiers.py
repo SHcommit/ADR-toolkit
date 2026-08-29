@@ -29,3 +29,9 @@ def format_filename(adr_id: int, slug: str) -> str:
 def slugify(title: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
     return re.sub(r"-+", "-", slug)
+
+
+def find_by_number(adr_dir: Path, number: int) -> Optional[Path]:
+    for entry in adr_dir.glob(f"{number:04d}-*.md"):
+        return entry
+    return None

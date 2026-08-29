@@ -28,3 +28,14 @@ def test_format_filename_zero_pads_to_four_digits():
 
 def test_slugify_lowercases_and_hyphenates():
     assert identifiers.slugify("Use Kafka for Domain Events!") == "use-kafka-for-domain-events"
+
+
+def test_find_by_number_locates_matching_file(tmp_path):
+    (tmp_path / "0003-use-kafka.md").write_text("x", encoding="utf-8")
+    found = identifiers.find_by_number(tmp_path, 3)
+    assert found is not None
+    assert found.name == "0003-use-kafka.md"
+
+
+def test_find_by_number_returns_none_when_missing(tmp_path):
+    assert identifiers.find_by_number(tmp_path, 7) is None
