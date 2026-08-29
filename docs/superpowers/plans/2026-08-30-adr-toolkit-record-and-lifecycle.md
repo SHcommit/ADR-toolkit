@@ -1283,7 +1283,14 @@ git commit -m "test: add end-to-end RECORD/supersede fixture and golden test"
 - **Type consistency checked:** `identifiers.find_by_number` signature (Task 1) matches its use in Tasks 6 and 7. `schema.validate_frontmatter`'s new optional-field handling (Task 5) doesn't change its existing signature or break any Plan 1 caller. `status.run` is reused unmodified as the `deprecate` handler via `set_defaults(to="deprecated")`, not a second copy of the transition logic.
 - **No placeholders found.**
 
-## Open items for the user
+## Execution status
 
-1. This plan has not yet been executed — token budget was limited when it was written, so execution (via subagent-driven-development) is deliberately deferred to a session with more budget available.
-2. The 3 open decisions noted in `handoff.md` (license, final MVP language/harness count, the trivial doc fix in `adapters/generic/README.md`) are still unresolved and don't block this plan either way.
+- Completed on 2026-08-30 via subagent-driven-development: all 11 tasks were
+  implemented and task-reviewed, including fix rounds for issues found during
+  review. The resulting unit and integration suite has 105 passing tests.
+- The remaining user decisions are the public-release license and whether the
+  final MVP retains five languages and four named harnesses. Neither blocked
+  Plan 2.
+- Codex `quick_validate.py` compatibility with the existing cross-harness
+  `user-invocable` and `version` skill frontmatter keys remains tracked in
+  `improvements.md` as a metadata/validator compatibility risk.

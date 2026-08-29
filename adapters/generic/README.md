@@ -26,11 +26,11 @@ project hasn't been tested against yet.
 
 3. That's it. `SKILL.md` never assumes a plugin manifest, a hook, or any
    harness-specific configuration — only that something can read markdown
-   and run `python skills/adr-toolkit/scripts/adr.py ...`.
+   and run `python .agents/skills/adr-toolkit/scripts/adr.py ...`.
 
 ## No agent at all?
 
 You don't need one. Every deterministic operation is a plain CLI command
-you can run yourself: `python skills/adr-toolkit/scripts/adr.py init`,
+you can run yourself: `python .agents/skills/adr-toolkit/scripts/adr.py init`,
 `... validate`, `... index`, and `... create --interactive` for a guided
 prompt sequence that needs no AI harness whatsoever.

@@ -28,8 +28,8 @@ the current session.
 ## Done
 
 - Corrected the stale bare `python scripts/adr.py` invocation in
-  `adapters/generic/README.md` to the repository-root
-  `python skills/adr-toolkit/scripts/adr.py` form.
+  `adapters/generic/README.md` to the documented generic install location,
+  `python .agents/skills/adr-toolkit/scripts/adr.py`.
 - Kept runtime ADR validation and the published JSON Schema in sync when
   Plan 2 added `supersedes` and `superseded_by`, and added a unit parity
   test so future field changes cannot silently drift between
