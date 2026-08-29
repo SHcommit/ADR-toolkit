@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a self-contained `skills/adr-toolkit/` package with the deterministic script layer (frontmatter, IDs, lifecycle, schema, discovery, index, validation) and two fully working operations — INIT (scaffolding) and DISCOVER (past-decision recovery, kept separate from INIT per user feedback) — packaged for Claude Code with CI enforcing it from the first commit.
+**Goal:** Ship a self-contained `skills/adr-toolkit/` package with the deterministic script layer (frontmatter, IDs, lifecycle, schema, discovery, index, validation) and two fully working operations — INIT (scaffolding) and DISCOVER (past-decision recovery, kept separate from INIT per user feedback) — usable three ways: through Claude Code, through any other harness via a generic fallback adapter, or directly from the terminal with no AI agent at all via an interactive CLI wizard. CI enforces all of it from the first commit.
 
 **Architecture:** Deterministic Python stdlib-only scripts under `skills/adr-toolkit/scripts/` (package name `scripts`, imported as `scripts.core.*` / `scripts.commands.*` / `scripts.evidence.*`) do all file I/O, ID assignment, and validation. `SKILL.md` carries the workflow contract the agent follows and never re-implements those deterministic steps in prose. A thin Claude Code adapter under `adapters/claude/` points at the skill folder; it carries no logic of its own.
 
@@ -2323,13 +2323,274 @@ git commit -m "test: add end-to-end INIT fixture and golden test"
 
 ---
 
-### Task 18: CI workflow
+### Task 18: Generic harness fallback adapter
+
+**Files:**
+- Create: `adapters/generic/README.md`
+- Test: `tests/unit/test_generic_adapter.py`
+
+**Interfaces:**
+- Consumes: nothing (documentation only).
+- Produces: a manual-install path that works for any harness not covered by Task 16's Claude adapter — including harnesses that don't have a plugin/skill manifest system at all, as long as they read project instructions and can run shell commands.
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+# tests/unit/test_generic_adapter.py
+from pathlib import Path
+
+GENERIC_README = Path(__file__).resolve().parent.parent.parent / "adapters" / "generic" / "README.md"
+
+
+def test_generic_adapter_readme_exists_and_documents_symlink_install():
+    text = GENERIC_README.read_text(encoding="utf-8")
+    assert "skills/adr-toolkit" in text
+    assert "AGENTS.md" in text
+    assert "SKILL.md" in text
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `python -m pytest tests/unit/test_generic_adapter.py -v`
+Expected: FAIL — file doesn't exist.
+
+- [ ] **Step 3: Write the fallback guide**
+
+```markdown
+<!-- adapters/generic/README.md -->
+# Generic harness adapter
+
+If your AI coding harness isn't Claude Code, Codex, Gemini CLI, or
+Antigravity CLI, ADR Toolkit still works — `SKILL.md` only assumes your
+harness can read project instructions and run shell commands, which
+covers effectively every current coding agent, including ones this
+project hasn't been tested against yet.
+
+## Install
+
+1. Copy or symlink `skills/adr-toolkit/` into your project, at whatever
+   path your harness scans for instructions or skills:
+
+   ```bash
+   mkdir -p .agents/skills
+   ln -s ../../path/to/adr-toolkit/skills/adr-toolkit .agents/skills/adr-toolkit
+   ```
+
+2. Add one line to your project's `AGENTS.md` (or whatever instruction
+   file your harness reads first):
+
+   ```markdown
+   For architecture decisions (introducing, recording, or checking ADRs),
+   follow `.agents/skills/adr-toolkit/SKILL.md`.
+   ```
+
+3. That's it. `SKILL.md` never assumes a plugin manifest, a hook, or any
+   harness-specific configuration — only that something can read markdown
+   and run `python scripts/adr.py ...`.
+
+## No agent at all?
+
+You don't need one. Every deterministic operation is a plain CLI command
+you can run yourself: `python skills/adr-toolkit/scripts/adr.py init`,
+`... validate`, `... index`, and `... create --interactive` (see Task 19)
+for a guided prompt sequence that needs no AI harness whatsoever.
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `python -m pytest tests/unit/test_generic_adapter.py -v`
+Expected: PASS (1 test)
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add adapters/generic/README.md tests/unit/test_generic_adapter.py
+git commit -m "docs: add generic harness fallback adapter"
+```
+
+---
+
+### Task 19: `create.py --interactive` — terminal wizard for humans with no agent
+
+**Files:**
+- Modify: `skills/adr-toolkit/scripts/commands/create.py` (Task 11)
+- Modify: `skills/adr-toolkit/scripts/adr.py` (Task 14) — `--input` becomes optional, `--interactive` added
+- Test: `tests/unit/test_create_interactive.py`
+
+**Interfaces:**
+- Consumes: nothing beyond what Task 11 already consumes.
+- Produces: `gather_draft_interactively(input_fn=input) -> dict` (same draft shape Task 11's `run()` already expects: `title`, `status`, `body`). `run(args)` now accepts an `args.interactive` flag as an alternative to `args.input` — everything downstream (ID assignment, schema validation, file write) is unchanged.
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+# tests/unit/test_create_interactive.py
+from types import SimpleNamespace
+
+from scripts.commands import create
+
+
+def test_gather_draft_interactively_builds_valid_minimal_body():
+    answers = iter([
+        "Use Kafka for domain events",
+        "Order processing and downstream work are tightly coupled",
+        "synchronous HTTP, RabbitMQ, Kafka",
+        "Kafka",
+        "it isolates failures and allows reprocessing",
+        "failures in one consumer don't block others",
+        "operational complexity increases",
+        "no direct SDK calls appear outside the events module",
+        "message volume exceeds what a single queue can handle",
+    ])
+    draft = create.gather_draft_interactively(input_fn=lambda _prompt: next(answers))
+
+    assert draft["title"] == "Use Kafka for domain events"
+    assert draft["status"] == "proposed"
+    assert "## Context and Problem Statement" in draft["body"]
+    assert "Kafka" in draft["body"]
+
+
+def test_create_run_supports_interactive_mode_end_to_end(tmp_path, monkeypatch):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+
+    answers = iter([
+        "Use Kafka for domain events", "Problem text", "HTTP, Kafka", "Kafka",
+        "reason", "good thing", "bad thing", "verification note", "revisit condition",
+    ])
+    monkeypatch.setattr("builtins.input", lambda _prompt="": next(answers))
+
+    result = create.run(SimpleNamespace(interactive=True, input=None, dir=str(adr_dir), dry_run=False))
+
+    assert result["ok"] is True
+    assert result["id"] == "ADR-0001"
+
+
+def test_create_run_without_input_or_interactive_is_an_error(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+
+    result = create.run(SimpleNamespace(interactive=False, input=None, dir=str(adr_dir), dry_run=False))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "MISSING_INPUT_OR_INTERACTIVE"
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `python -m pytest tests/unit/test_create_interactive.py -v`
+Expected: FAIL — `gather_draft_interactively` doesn't exist; `run()` doesn't accept `interactive`/`None` input.
+
+- [ ] **Step 3: Modify `create.py`**
+
+Add this function anywhere above `run`:
+
+```python
+def _prompt(input_fn, question: str) -> str:
+    return input_fn(f"{question}\n> ").strip()
+
+
+def gather_draft_interactively(input_fn=input) -> dict:
+    title = _prompt(input_fn, "Title of the decision?")
+    problem = _prompt(input_fn, "What problem or constraint made this decision necessary?")
+    options_raw = _prompt(input_fn, "Options considered (comma-separated)?")
+    options = [o.strip() for o in options_raw.split(",") if o.strip()]
+    decision = _prompt(input_fn, "Which option was chosen?")
+    rationale = _prompt(input_fn, "Why was it chosen?")
+    good = _prompt(input_fn, "One good consequence?")
+    bad = _prompt(input_fn, "One accepted downside?")
+    confirmation = _prompt(input_fn, "How will this be verified in the code?")
+    revisit = _prompt(input_fn, "What condition should reopen this decision?")
+
+    options_block = "\n".join(f"* {o}" for o in options) if options else f"* {decision}"
+
+    body = (
+        f"# {title}\n\n"
+        "## Context and Problem Statement\n\n"
+        f"{problem}\n\n"
+        "## Considered Options\n\n"
+        f"{options_block}\n\n"
+        "## Decision Outcome\n\n"
+        f"Chosen option: **{decision}**, because {rationale}.\n\n"
+        "## Consequences\n\n"
+        f"* Good: {good}\n"
+        f"* Bad: {bad}\n\n"
+        "## Confirmation\n\n"
+        f"{confirmation}\n\n"
+        "## Revisit Triggers\n\n"
+        f"* {revisit}\n"
+    )
+
+    return {"title": title, "status": "proposed", "body": body}
+```
+
+Replace the start of `run(args)` (everything up to `adr_dir.mkdir`) with:
+
+```python
+def run(args) -> dict:
+    dry_run = getattr(args, "dry_run", False)
+
+    if getattr(args, "interactive", False):
+        draft = gather_draft_interactively()
+    else:
+        input_path = getattr(args, "input", None)
+        if not input_path:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "MISSING_INPUT_OR_INTERACTIVE"}],
+            }
+        draft = json.loads(Path(input_path).read_text(encoding="utf-8"))
+
+    adr_dir = Path(args.dir)
+    missing = REQUIRED_DRAFT_FIELDS - draft.keys()
+    if missing:
+        return {
+            "ok": False,
+            "operation": "create",
+            "errors": [{"code": "MISSING_DRAFT_FIELD", "fields": sorted(missing)}],
+        }
+```
+
+(the rest of `run` — ID assignment, schema validation, file write — is unchanged from Task 11)
+
+- [ ] **Step 4: Modify `adr.py`'s `create` subparser**
+
+In `build_parser()`, replace:
+
+```python
+    p_create.add_argument("--input", required=True)
+```
+
+with:
+
+```python
+    p_create.add_argument("--input")
+    p_create.add_argument("--interactive", action="store_true")
+```
+
+- [ ] **Step 5: Run tests to verify they pass**
+
+Run: `python -m pytest tests/unit/test_create.py tests/unit/test_create_interactive.py -v`
+Expected: PASS (7 tests total — Task 11's 4 plus this task's 3). Task 11's tests must still pass unchanged, since `getattr(args, "interactive", False)` defaults to `False` for their `SimpleNamespace` instances.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add skills/adr-toolkit/scripts/commands/create.py skills/adr-toolkit/scripts/adr.py \
+        tests/unit/test_create_interactive.py
+git commit -m "feat: add interactive create wizard for use without an AI agent"
+```
+
+---
+
+### Task 20: CI workflow
 
 **Files:**
 - Create: `.github/workflows/test.yml`
 
 **Interfaces:**
-- Consumes: nothing new — runs the full test suite built by Tasks 1–17.
+- Consumes: nothing new — runs the full test suite built by Tasks 1–19.
 - Produces: CI enforcement on every push and PR.
 
 - [ ] **Step 1: Write the workflow file**
@@ -2361,7 +2622,7 @@ jobs:
 - [ ] **Step 2: Run the equivalent command locally to confirm it would pass in CI**
 
 Run: `python -m pytest tests/unit tests/integration -v`
-Expected: PASS (every test added in Tasks 1–17)
+Expected: PASS (every test added in Tasks 1–19)
 
 - [ ] **Step 3: Commit**
 
@@ -2372,13 +2633,13 @@ git commit -m "ci: run pytest across unit and integration tests on every push an
 
 ---
 
-## Revision note
+## Revision notes
 
-After this plan was first written, the user reviewed a separate improvement
-proposal and asked to fold in several low-cost refinements before
-execution began (no code had been written yet). Applied in this revision:
-INIT and DISCOVER split into two SKILL.md operations instead of one bundled
-flow (Task 15), retrospective ADRs now require a Confirmed
+**Revision 1** — After this plan was first written, the user reviewed a
+separate improvement proposal and asked to fold in several low-cost
+refinements before execution began (no code had been written yet).
+Applied: INIT and DISCOVER split into two SKILL.md operations instead of
+one bundled flow (Task 15), retrospective ADRs now require a Confirmed
 Evidence/Inferred Rationale/Unknown structure (Task 15), and a "what
 belongs in an ADR" classification table was added (Task 15, and spec §6.1).
 No script-level tasks changed — `discover.py` (Task 8) already existed as
@@ -2387,9 +2648,23 @@ Structured `constraints:` YAML blocks and CHECK's four-way finding
 classification were accepted too, but recorded only in the design spec
 (§6.1, §7) since CHECK isn't implemented until Plan 3.
 
+**Revision 2** — The user asked whether the design was actually natural to
+use both for AI harnesses and for plain human developers. Two real gaps
+surfaced: (1) the Codex/Gemini CLI/Antigravity adapter manifests planned
+for Plan 4 rest on assumed, unverified schemas, and the original PRD's
+harness-agnostic "Generic Agent Skills" fallback had been dropped when the
+harness list was narrowed to four named ones; (2) `create.py` only accepted
+a pre-built JSON draft, which is natural for an agent but not for a human
+running the CLI directly with no AI harness at all — undermining the
+stated goal of easy adoption by other developers. Added Task 18 (a
+zero-maintenance generic fallback adapter — symlink + one `AGENTS.md` line
+— that works for any harness, including ones not yet accounted for) and
+Task 19 (`create --interactive`, a terminal wizard that needs no agent).
+Both are documentation/CLI-only changes with no effect on Tasks 1–17.
+
 ## Plan self-review notes
 
-- **Spec coverage:** §5 (repo structure) → Tasks 1, 16; §6 (ADR document format) → Tasks 2, 5, 9, 10, 11; §10 (multi-view index) → Task 12; §11 INIT data flow → Tasks 6, 8, 10, 11, 13, 14, 15; §12 CI → Task 18; §8 Claude Code depth → Tasks 16, 17. RECORD (§11), CHECK (§7, §11), i18n (§9), and the Codex/Gemini CLI/Antigravity adapters (§8) are explicitly out of scope for this plan — see Plans 2–4.
+- **Spec coverage:** §5 (repo structure) → Tasks 1, 16; §6 (ADR document format) → Tasks 2, 5, 9, 10, 11; §6.1 (what belongs in an ADR) → Task 15; §10 (multi-view index) → Task 12; §11 INIT/DISCOVER data flow → Tasks 6, 8, 10, 11, 13, 14, 15; §12 CI → Task 20; §8 Claude Code depth → Tasks 16, 17. Harness-naturalness and human-usability (raised in review, not in the original spec numbering) → Tasks 18 (generic adapter) and 19 (interactive wizard). RECORD (§11), CHECK (§7, §11), i18n (§9), and the Codex/Gemini CLI/Antigravity adapters (§8) are explicitly out of scope for this plan — see Plans 2–4.
 - **Type consistency checked:** `identifiers.next_id`/`format_filename`/`slugify`/`parse_filename` signatures match across Tasks 3, 10, 11, 12, 13. `frontmatter.parse`/`serialize` signatures match across Tasks 2, 11, 12, 13, 15. `schema.validate_frontmatter` signature matches across Tasks 5, 11, 13.
 - **No placeholders found** — every step has runnable code or literal file content; nothing deferred with "TODO" inside this plan's own tasks.
 

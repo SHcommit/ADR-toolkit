@@ -279,6 +279,24 @@ manifest pointing at `skills/adr-toolkit/` to work. Full cross-harness
 fixture parity testing for the three secondary harnesses is deferred to
 `project-roadmap.md`.
 
+**Generic fallback, restored.** The Codex/Gemini CLI/Antigravity adapter
+manifests above rest on each harness's assumed plugin/skill discovery
+format, which hasn't been verified against real documentation for any of
+the three. To make sure the tool works even if those assumptions are wrong
+— and for any harness not on this list at all, present or future — a
+`adapters/generic/` fallback (present from Plan 1, not deferred) documents
+a manual install: symlink `skills/adr-toolkit/` into the target repo and
+add one line to that repo's `AGENTS.md` pointing at its `SKILL.md`.
+`SKILL.md` only assumes markdown-reading and shell execution, so this
+fallback has no dependency on any harness-specific convention being right.
+
+**Usable with no AI agent at all.** `create` also gains an `--interactive`
+mode (Plan 1) that prompts the same questions a skill would ask, directly
+in the terminal, and writes the ADR without any JSON draft file or agent
+involvement. Without this, the tool is only natural for agent-mediated
+use, which cuts against the stated goal of easy adoption by developers who
+try it standalone before ever wiring up a harness.
+
 ## 9. Internationalization scope
 
 Only the skill's own runtime output is localized for MVP: the questions it
@@ -427,6 +445,8 @@ resolving them here so they don't block implementation:
 | Implementation Constraints format | Structured `constraints:` YAML block with a fixed rule-kind vocabulary, not free-form prose — prose alone can't be checked deterministically. Added after user feedback; see §6.1 and §7. |
 | Retrospective ADR body structure | Must separate Confirmed Evidence / Inferred Rationale / Unknown into distinct subsections, never merge into one narrative. Added after user feedback; see §6. |
 | CHECK finding classification | Four-way (Related / Review required / Verified violation / No applicable constraint) plus 5 resolution options on a verified violation, replacing a plain severity scale. Added after user feedback; see §7. |
+| Harness fallback | Restored a generic, manifest-free fallback adapter (symlink + one `AGENTS.md` line) dropped when the harness list was narrowed to four named ones — de-risks the Codex/Gemini CLI/Antigravity manifests being unverified guesses. Built in Plan 1, not deferred; see §8. |
+| Human usability without an agent | `create --interactive` terminal wizard added to Plan 1 so the tool has a natural, complete experience for a developer with no AI harness at all, not only for agent-mediated use; see §8. |
 
 ## 14. What's deferred to `project-roadmap.md`
 
