@@ -5,17 +5,14 @@ the current session.
 
 ## Open
 
-- `adapters/generic/README.md` line 29 has a leftover bare
-  `python scripts/adr.py` reference in prose; should match the rest of the
-  file's `python skills/adr-toolkit/scripts/adr.py` form. Found by the
-  final whole-branch review on Plan 1, judged non-blocking at the time.
 - `scripts/adr.py`'s `--json` flag is parsed on every subcommand but never
   read (output is always JSON regardless). Either implement a non-JSON
   mode or drop the flag.
-- `core/schema.py` (the enforced validator) and `schemas/adr.schema.json`
-  (the human/tool-readable reference) are hand-synced by design with no
-  test asserting they agree — they will silently drift as fields are added
-  in later plans.
+- Codex's `quick_validate.py` rejects the existing ADR Toolkit `SKILL.md`
+  frontmatter keys `user-invocable` and `version`, while the repository's
+  cross-harness contract and tests currently require them. Make a deliberate
+  metadata/validator compatibility decision before changing either side;
+  do not silently delete the keys to satisfy one harness.
 - Confirm with the user whether the final MVP keeps 5 languages / 4
   harnesses as originally agreed, or trims further — raised once in
   conversation, not yet answered. Doesn't block Plan 1 (English + Claude
@@ -30,6 +27,13 @@ the current session.
 
 ## Done
 
+- Corrected the stale bare `python scripts/adr.py` invocation in
+  `adapters/generic/README.md` to the repository-root
+  `python skills/adr-toolkit/scripts/adr.py` form.
+- Kept runtime ADR validation and the published JSON Schema in sync when
+  Plan 2 added `supersedes` and `superseded_by`, and added a unit parity
+  test so future field changes cannot silently drift between
+  `core/schema.py` and `schemas/adr.schema.json`.
 - Bootstrapped shared harness operating files (`AGENTS.md`, thin
   `CLAUDE.md`/`CODEX.md`/`GEMINI.md`, `handoff.md`/`improvements.md`/
   `changelog.md`) so any harness starting cold defers to the same rules.

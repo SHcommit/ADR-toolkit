@@ -26,7 +26,7 @@ project hasn't been tested against yet.
 
 3. That's it. `SKILL.md` never assumes a plugin manifest, a hook, or any
    harness-specific configuration — only that something can read markdown
-   and run `python scripts/adr.py ...`.
+   and run `python skills/adr-toolkit/scripts/adr.py ...`.
 
 ## No agent at all?
 

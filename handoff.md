@@ -2,101 +2,76 @@
 
 ## Current state (as of 2026-08-30)
 
-Branch `SHcommit/feat-plan-adr-toolkit` (off `master`), pushed to `origin`,
-working tree clean.
+Branch: `SHcommit/feat-plan-adr-toolkit`.
 
-- **Plan 1 of 4** ("core scripts + INIT/DISCOVER") — DONE. Implemented via
-  subagent-driven-development, 20 tasks + a final-review fix wave, all
-  clean. 73/73 tests passing. Delivers a self-contained
-  `skills/adr-toolkit/` package usable via Claude Code, any other harness
-  (generic manifest-free fallback), or no AI agent at all (`create
-  --interactive`).
-- **Plan 2 of 4** ("RECORD + lifecycle") — **DESIGNED, NOT EXECUTED.**
-  Full plan document written and committed:
-  `docs/superpowers/plans/2026-08-30-adr-toolkit-record-and-lifecycle.md`
-  (11 bite-sized TDD tasks, each with exact test code + exact
-  implementation code already written out — nothing left to design,
-  only to execute). Not run due to a token-budget constraint in the
-  session that wrote it.
-- **Plans 3 and 4** — not yet designed at all.
+- **Plan 1 of 4** (core scripts + INIT/DISCOVER) is complete. It delivered
+  the self-contained `skills/adr-toolkit/` package, Claude Code and generic
+  harness entry points, deterministic scaffolding/discovery commands, and
+  the standalone interactive creation flow.
+- **Plan 2 of 4** (RECORD + lifecycle) is implemented across all 11 planned
+  tasks. Each task used a fresh implementer/reviewer cycle, with fix rounds
+  for body preservation, supersession write-failure guards, behavioral guidance,
+  and stronger golden workflow assertions. The current full suite has 105
+  passing unit and integration tests.
+- Plan 2 delivers deterministic significance scoring, related-ADR search,
+  evidence-first RECORD guidance, optional `supersedes`/`superseded_by`
+  schema fields, validated `status`/`deprecate`/`supersede` commands, and an
+  end-to-end RECORD-to-supersession fixture.
+- **Plans 3 and 4** are not yet designed or implemented.
 
-## Exact next action — resume here, no re-derivation needed
+## Exact next action
 
-Run this single command to execute Plan 2 exactly as Plan 1 was executed:
+Design **Plan 3 (CHECK)** from
+`docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` sections 7 and 11.
+Use the brainstorming skill to confirm the CHECK behavior and boundaries,
+then the writing-plans skill to produce the task-by-task implementation plan
+under `docs/superpowers/plans/`. Preserve the agreed MVP boundary: CHECK
+matches structured `constraints:` evidence only and does not attempt general
+semantic conflict detection.
 
-```
-Use superpowers:subagent-driven-development to execute
-docs/superpowers/plans/2026-08-30-adr-toolkit-record-and-lifecycle.md
-task by task (fresh implementer + fresh reviewer per task, final
-whole-branch review at the end). Spec:
-docs/superpowers/specs/2026-08-29-adr-toolkit-design.md.
-```
+Plan 3 must cover:
 
-What this will do, task by task (all already fully specified in the plan
-file — this list is just so you don't have to open it to know the shape):
+1. Parsing the fixed structured constraint vocabulary:
+   `forbidden_import`, `required_path`, `forbidden_path`,
+   `dependency_forbidden`, `file_must_exist`, and `test_must_exist`.
+2. Matching a git diff against Accepted ADRs and their affected paths.
+3. Reporting the four finding classes: Related, Review required, Verified
+   violation, and No applicable constraint.
+4. Presenting all five resolution options for a Verified violation: fix the
+   code, supersede the ADR, adjust its scope/constraints, register an
+   exception, or mark a false positive.
+5. Unit, integration, behavioral, and fixture/golden coverage consistent
+   with the deterministic-core and human-approval rules.
 
-1. `core/identifiers.find_by_number` — locate an ADR file by numeric ID
-2. `rules/significance.py` — deterministic 0–14 scoring/banding
-3. `commands/significance.py` + wire into `adr.py`
-4. `commands/related.py` (search by path/tag/keyword) + wire into `adr.py`
-5. Extend `core/schema.py` with optional `supersedes`/`superseded_by`
-6. `commands/status.py` (validated transition) + `deprecate` alias in `adr.py`
-7. `commands/supersede.py` (bidirectional link update)
-8. `references/significance-rules.md`
-9. `references/interview-guide.md`
-10. `SKILL.md` — add `## RECORD` and `## Lifecycle operations` sections
-11. End-to-end RECORD/supersede fixture + golden test
+After Plan 3, design **Plan 4 (i18n + remaining adapters + release)**. It
+covers five-locale runtime text, verified Codex/Gemini CLI/Antigravity CLI
+adapter formats, version synchronization, and release automation.
 
-Expect this to look like Plan 1's execution: ~11 implementer dispatches,
-~11 task reviews, occasional fix-loop rounds if a reviewer finds something,
-then one final whole-branch review + at most one fix wave + one scoped
-re-review, then the finishing-a-development-branch skill's menu again
-(merge / PR / keep-as-is).
+## Open decisions
 
-## After Plan 2 lands
+1. **License:** MIT remains proposed but needs explicit user approval before
+   a public release.
+2. **Final MVP scope:** confirm whether Plan 4 retains five languages and
+   four named harnesses or trims that scope.
 
-- **Plan 3 (CHECK)** — not yet written. When ready, brainstorm/plan it
-  from spec §7 (structured `constraints:` YAML rule matching, four-way
-  finding classification: Related / Review required / Verified violation /
-  No applicable constraint, five resolution options on a verified
-  violation) and spec §11's CHECK data-flow section.
-- **Plan 4 (i18n + remaining adapters + release)** — not yet written.
-  Covers: 5-locale i18n wiring into the skill's runtime text (spec §9);
-  Codex/Gemini CLI/Antigravity CLI adapters — **verify each harness's real
-  plugin/skill manifest format against actual documentation before
-  building these**, do not assume it mirrors Claude Code (the original
-  Claude adapter guessed wrong — a `"skills"` key and nested manifest path
-  that don't match real Claude Code plugins — caught only by Plan 1's
-  final review and fixed to a repo-root `.claude-plugin/plugin.json` with
-  no `"skills"` key, relying on auto-discovery); release automation
-  (version sync across `skills/adr-toolkit/VERSION`/`.claude-plugin/
-  plugin.json`, CHANGELOG, GitHub Release).
+## Standing risks
 
-## Open decisions still unresolved (don't block Plan 2, do block a public 1.0)
+- CHECK's MVP conflict detection is deliberately limited to structural
+  evidence from `constraints:` blocks. Full semantic detection remains in
+  `project-roadmap.md`; do not expand the MVP boundary without user review.
+- Before Plan 4 builds secondary adapters, verify each harness's actual
+  manifest/skill format against its documentation. Do not infer those
+  formats from the Claude Code adapter.
+- Codex `quick_validate.py` rejects the existing cross-harness
+  `user-invocable` and `version` skill frontmatter keys. The repository tests
+  require those keys today, so resolve validator/metadata compatibility
+  deliberately rather than removing them silently.
+- `scripts/adr.py` accepts `--json` on every subcommand but always emits JSON;
+  decide whether to implement a text mode or remove the ineffective flag.
 
-1. **License** — MIT was proposed in the design spec (§13) while the user
-   was away from the keyboard. Needs explicit sign-off before any public
-   release; not yet confirmed.
-2. **Final MVP scope** — whether to keep 5 languages / 4 harnesses as
-   originally agreed in conversation, or trim further. Raised once, never
-   answered. Plan 1 is unaffected either way (it only built English +
-   Claude Code); this only matters for Plan 4's actual scope.
-3. **Trivial doc fix** — `adapters/generic/README.md` line 29 still has a
-   bare `python scripts/adr.py` reference in prose; every other invocation
-   in that file correctly says `python skills/adr-toolkit/scripts/adr.py`.
-   Found by Plan 1's final review, judged non-blocking, still unfixed.
-   One-line fix whenever someone is next in that file.
+## Closeout files touched
 
-## Standing risks worth remembering
-
-- CHECK's conflict detection is deliberately scoped to structural/
-  `constraints:`-block evidence only for MVP (the PRD's full semantic
-  taxonomy — Direct violation, Pattern divergence — is deferred to
-  `project-roadmap.md`). This was an explicit trade agreed with the user,
-  not an oversight — don't "fix" it into semantic analysis without
-  checking with them first.
-- `core/schema.py` (the enforced validator) and `schemas/adr.schema.json`
-  (the human/tool-readable reference) are hand-synced by design with no
-  test asserting they agree. Plan 2's Task 5 adds fields to `schema.py`
-  only — remember to update `adr.schema.json` too if anyone ever adds that
-  sync test (tracked in `improvements.md`, not yet done).
+- `adapters/generic/README.md`
+- `improvements.md`
+- `changelog.md`
+- `handoff.md`
