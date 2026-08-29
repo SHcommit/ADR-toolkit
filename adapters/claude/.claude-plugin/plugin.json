@@ -1,8 +1,0 @@
-{
-  "name": "adr-toolkit",
-  "version": "0.1.0",
-  "description": "Initialize, record, and check Architecture Decision Records by inspecting the repository before asking questions.",
-  "skills": [
-    "../../../skills/adr-toolkit"
-  ]
-}
