@@ -192,6 +192,39 @@ RECORD. If a preview or mutation returns `INVALID_TRANSITION`, stop and
 explain the rejected transition using `references/lifecycle.md`; do not retry
 with a different status or bypass the script.
 
+## CHECK
+
+Use CHECK to look for structural conflicts between a diff and existing
+Accepted/Superseded ADRs before or during a change — never after merging,
+since CHECK is read-only and never fixes anything itself.
+
+1. **PREFLIGHT** — run
+   `python skills/adr-toolkit/scripts/adr.py preflight --json`. If
+   `existing_adr_directory` is `null`, stop and tell the user to run INIT
+   first.
+2. **GATHER EVIDENCE** — run
+   `python skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decisions --json`
+   (or `--staged`, or `--since <ref>` for a branch/commit range — pick the
+   mode that matches what the user asked to check). Read
+   `references/conflict-rules.md` if you need to explain a finding or help
+   the user write a `constraints:` block.
+3. **CLASSIFY** — each finding already carries its classification
+   (`related`, `review_required`, `verified_violation`,
+   `no_applicable_constraint`); do not re-judge it, report it as returned.
+4. **REPORT** — group findings by classification. For every Verified violation
+   finding, present all five resolutions from
+   `references/conflict-rules.md` (`fix_code`, `supersede_adr`,
+   `adjust_scope`, `register_exception`, `false_positive`) — never assume
+   which one the user wants.
+5. **ASK-IF-NEEDED / MUTATE** — CHECK itself never writes anything. If the
+   user picks `fix_code`, that's a normal code edit, not an ADR Toolkit
+   operation. If they pick `supersede_adr` or `adjust_scope`, follow the
+   RECORD or Lifecycle operations flow above — never hand-edit
+   `constraints:`, `affected_paths`, or `status`.
+6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`,
+   `BAD_CONSTRAINTS`) mean one ADR was skipped, not that CHECK failed —
+   report them, but don't block on them.
+
 ## Prohibited
 
 - Creating `docs/decisions/` when `preflight` already found one.
@@ -213,5 +246,7 @@ All mutating and validating operations are deterministic scripts under
 file writes, or schema validation in prose — it only decides what to ask and
 what to draft.
 
-CHECK is not yet implemented (see `project-roadmap.md` in the repository root
-and the design spec this skill is built from).
+CHECK's conflict detection is deliberately limited to structural evidence
+from `constraints:` blocks (see `references/conflict-rules.md`) — it never
+attempts semantic or AST-level analysis; see `project-roadmap.md` for what
+that fuller scope would look like.

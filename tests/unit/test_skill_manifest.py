@@ -37,3 +37,11 @@ def test_skill_md_requires_evidence_inference_separation_for_retrospective_adrs(
 def test_reference_files_exist():
     assert (REFERENCES / "lifecycle.md").is_file()
     assert (REFERENCES / "madr-guide.md").is_file()
+
+
+def test_skill_md_documents_check():
+    _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
+    assert "## CHECK" in body
+    assert "adr.py check" in body
+    assert "Verified violation" in body
+    assert "CHECK is not yet implemented" not in body
