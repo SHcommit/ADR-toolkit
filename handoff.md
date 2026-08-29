@@ -14,6 +14,16 @@ Touched files (this round):
   implementation + final-review fixes, already committed)
 
 Next step — in priority order:
+0. **Execute Plan 2** (RECORD + lifecycle), now fully designed and
+   committed at
+   `docs/superpowers/plans/2026-08-30-adr-toolkit-record-and-lifecycle.md`
+   (11 TDD tasks: significance scoring, related-ADR search,
+   status/supersede/deprecate commands, SKILL.md RECORD/Lifecycle
+   sections, one golden fixture test). Writing it consumed the remaining
+   token budget for this session — execution (subagent-driven-development,
+   ~11 implementer+reviewer dispatch pairs like Plan 1's) was deliberately
+   deferred to a session with more budget. Nothing was executed; the plan
+   document is the only new artifact.
 1. **Confirm 3 open decisions before going further:**
    - License: MIT was proposed in the design spec (§13) while the user was
      away; needs explicit sign-off before any public release.
