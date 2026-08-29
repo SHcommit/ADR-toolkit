@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.commands import preflight, discover, init, create, index, validate
+from scripts.commands import preflight, discover, init, create, index, significance, validate
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,6 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_index.add_argument("--dir", default="docs/decisions")
     p_index.add_argument("--json", action="store_true")
 
+    p_significance = sub.add_parser("significance")
+    p_significance.add_argument("--input", required=True)
+    p_significance.add_argument("--json", action="store_true")
+
     p_validate = sub.add_parser("validate")
     p_validate.add_argument("--dir", default="docs/decisions")
     p_validate.add_argument("--json", action="store_true")
@@ -51,6 +55,7 @@ HANDLERS = {
     "init": init.run,
     "create": create.run,
     "index": index.run,
+    "significance": significance.run,
     "validate": validate.run,
 }
 

@@ -34,3 +34,14 @@ def test_init_then_validate_round_trip(tmp_path):
 def test_unknown_subcommand_exits_nonzero(tmp_path):
     result = _run(["not-a-real-command"], cwd=tmp_path)
     assert result.returncode != 0
+
+
+def test_significance_via_cli(tmp_path):
+    scores_path = tmp_path / "scores.json"
+    scores_path.write_text(
+        '{"reversal_cost": 2, "quality_attribute_impact": 2}', encoding="utf-8",
+    )
+    result = _run(["significance", "--input", str(scores_path), "--json"], cwd=tmp_path)
+    payload = json.loads(result.stdout)
+    assert result.returncode == 0
+    assert payload["total"] == 4
