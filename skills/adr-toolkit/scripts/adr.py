@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.commands import (
+    check,
     create,
     diff,
     discover,
@@ -93,6 +94,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_diff.add_argument("--root", default=".")
     p_diff.add_argument("--json", action="store_true")
 
+    p_check = sub.add_parser("check")
+    p_check.add_argument("--staged", action="store_true")
+    p_check.add_argument("--uncommitted", action="store_true")
+    p_check.add_argument("--since")
+    p_check.add_argument("--root", default=".")
+    p_check.add_argument("--dir", default="docs/decisions")
+    p_check.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -109,6 +118,7 @@ HANDLERS = {
     "deprecate": status.run,
     "supersede": supersede.run,
     "diff": diff.run,
+    "check": check.run,
 }
 
 
