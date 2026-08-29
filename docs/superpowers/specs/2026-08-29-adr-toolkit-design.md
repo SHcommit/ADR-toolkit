@@ -604,13 +604,5 @@ repo, unknown ref) returns a specific code (`NOT_A_GIT_REPO`,
   diff), since it is the one new module that actually shells out to git.
 - `check.py`: integration tests combining a fixture repo with an Accepted
   ADR carrying a `constraints:` block plus a violating diff, plus a golden
-  test extending `tests/golden/` for a full RECORD-then-CHECK flow.
-- Zero files written before an explicit user approval.
-- Zero re-asked questions for facts already visible in code/config/existing
-  ADRs, measured against fixtures.
-- Zero citations of nonexistent ADR IDs or file paths.
-- All three workflows (INIT/RECORD/CHECK) run correctly on Claude Code
-  against the fixture set; Codex/Gemini CLI/Antigravity CLI each run the
-  three workflows once, manually verified, without full fixture coverage.
-- The `skills/adr-toolkit/` folder, copied alone into a fresh location,
-  passes its own test suite.
+  test extending `tests/integration/` for a CHECK-only flow — flag a
+  violation, fix the code, confirm the violation clears.

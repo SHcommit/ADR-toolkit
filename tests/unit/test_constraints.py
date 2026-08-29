@@ -57,3 +57,37 @@ def test_no_fenced_block_returns_empty_list():
 def test_malformed_line_raises_constraints_error():
     with pytest.raises(ConstraintsError):
         extract_constraints(BODY_WITH_MALFORMED_CONSTRAINTS)
+
+
+BODY_WITH_UNKNOWN_KIND = """
+## Implementation Constraints
+
+```yaml
+constraints:
+  - id: typo-kind
+    kind: forbidden_imports
+    paths: ["src/features/**"]
+    pattern: ["openai"]
+    severity: major
+    message: "typo'd kind"
+```
+"""
+
+
+def test_unknown_kind_raises_constraints_error():
+    with pytest.raises(ConstraintsError) as exc:
+        extract_constraints(BODY_WITH_UNKNOWN_KIND)
+    assert "forbidden_imports" in str(exc.value)
+
+
+def test_all_six_known_kinds_are_accepted():
+    for kind in [
+        "forbidden_import", "dependency_forbidden", "required_path",
+        "forbidden_path", "file_must_exist", "test_must_exist",
+    ]:
+        body = (
+            "```yaml\nconstraints:\n"
+            f"  - id: r\n    kind: {kind}\n    paths: [\"src/**\"]\n"
+            "    severity: major\n    message: \"m\"\n```\n"
+        )
+        assert extract_constraints(body)[0]["kind"] == kind

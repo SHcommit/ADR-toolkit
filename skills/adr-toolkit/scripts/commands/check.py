@@ -12,7 +12,12 @@ from scripts.rules import conflict
 SKIP_FILES = {"README.md", "adr-template.md"}
 RESOLUTIONS = ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
 
-VERIFICATION_HEADING_RE = re.compile(r"^#+\s*Verification\s*$", re.IGNORECASE | re.MULTILINE)
+# Every ADR this toolkit writes uses `## Confirmation` (templates/madr-*.md and
+# commands/create.py); `## Verification` is the design spec's name for the same
+# section. Accept both, plus any trailing words in the heading.
+VERIFICATION_HEADING_RE = re.compile(
+    r"^#+\s*(?:Verification|Confirmation)\b.*$", re.IGNORECASE | re.MULTILINE
+)
 NEXT_HEADING_RE = re.compile(r"^#+\s", re.MULTILINE)
 PATH_TOKEN_RE = re.compile(r"`([^`]+\.[a-zA-Z0-9]+)`")
 
@@ -26,7 +31,20 @@ def run(args) -> dict:
     root = Path(getattr(args, "root", ".")).resolve()
     existing_paths = _existing_paths(root)
 
+    # `--dir` is relative to `--root`, so `check --root /repo --dir docs/decisions`
+    # means the same directory no matter what the process CWD happens to be.
     adr_dir = Path(args.dir)
+    if not adr_dir.is_absolute():
+        adr_dir = root / adr_dir
+    if not adr_dir.is_dir():
+        # Silently proceeding here would emit a confident "no conflicts" for
+        # what is really a configuration error.
+        return {
+            "ok": False,
+            "operation": "check",
+            "errors": [{"code": "ADR_DIR_NOT_FOUND", "path": str(adr_dir)}],
+        }
+
     entries, warnings = _load_adrs(adr_dir)
 
     findings = []
@@ -46,12 +64,24 @@ def run(args) -> dict:
 
         produced_any = False
         for rule in rules:
-            violation = conflict.evaluate_rule(rule, diff_files, existing_paths)
+            try:
+                violation = conflict.evaluate_rule(rule, diff_files, existing_paths)
+            except re.error as exc:
+                # A malformed regex in one ADR's `pattern` must not abort the
+                # whole run — degrade to the same BAD_CONSTRAINTS warning a
+                # malformed constraints block already produces.
+                warnings.append({
+                    "code": "BAD_CONSTRAINTS",
+                    "adr_id": adr_id,
+                    "rule_id": rule.get("id"),
+                    "detail": f"Invalid regex in rule pattern: {exc}",
+                })
+                continue
             if violation:
                 findings.append({**violation, "adr_id": adr_id, "resolutions": RESOLUTIONS})
                 produced_any = True
 
-        review = _missing_realization(body, diff_files)
+        review = _missing_realization(body, diff_files, existing_paths)
         if review:
             findings.append({"adr_id": adr_id, "kind": "review_required", **review})
             produced_any = True
@@ -103,7 +133,7 @@ def _load_adrs(adr_dir: Path) -> tuple:
     return entries, warnings
 
 
-def _missing_realization(body: str, diff_files: list):
+def _missing_realization(body: str, diff_files: list, existing_paths: set):
     heading = VERIFICATION_HEADING_RE.search(body)
     if not heading:
         return None
@@ -115,13 +145,20 @@ def _missing_realization(body: str, diff_files: list):
         return None
 
     by_path = {f["path"]: f for f in diff_files}
-    removed = [p for p in referenced_paths if by_path.get(p, {}).get("change_type") == "deleted"]
-    if not removed:
+    # §16.3: fire when a referenced path is removed OR was never created.
+    missing = [
+        p for p in referenced_paths
+        if by_path.get(p, {}).get("change_type") == "deleted" or p not in existing_paths
+    ]
+    if not missing:
         return None
 
     return {
-        "message": f"Verification references {removed} which this diff removes.",
-        "evidence": {"removed_paths": removed},
+        "message": (
+            f"Verification references {missing} which this diff removes "
+            f"or which was never created."
+        ),
+        "evidence": {"unrealized_paths": missing},
     }
 
 

@@ -154,6 +154,11 @@ workflow does not.
    preserve the separate Confirmed Evidence, Inferred Rationale, and Unknown
    subsections defined in DISCOVER. Use `related` results to identify a
    possible replacement, but do not assume supersession.
+   If the decision is mechanically checkable (a forbidden import, a required
+   companion file, a boundary that must not be crossed), add an
+   `Implementation Constraints` section with a `constraints:` block so CHECK
+   can enforce it — see `references/conflict-rules.md` for the six rule kinds
+   and the exact block syntax.
 6. **CONFIRM** — before any `create`, show the title, problem, considered
    options, decision, primary driver, accepted downside, and affected paths.
    Get explicit approval of the draft. If it may replace an Accepted ADR,

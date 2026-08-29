@@ -18,15 +18,21 @@ def run(args) -> dict:
         }
 
     since = getattr(args, "since", None)
+    # `since` is agent/user-controlled, so it must never be able to reach git
+    # as an *option*. `--end-of-options` (git >= 2.24) forces everything after
+    # it to be read as a revision/path, which keeps CHECK read-only: a value
+    # like `--output=/tmp/PWNED` now fails as an unknown revision instead of
+    # making `git diff` write a file. Options themselves must still precede
+    # the marker, hence the options/range split.
     if getattr(args, "staged", False):
-        mode, diff_args = "staged", ["--cached"]
+        mode, diff_options, range_args = "staged", ["--cached"], []
     elif since:
-        mode, diff_args = "since", [f"{since}..HEAD"]
+        mode, diff_options, range_args = "since", [], [f"{since}..HEAD"]
     else:
-        mode, diff_args = "uncommitted", []
+        mode, diff_options, range_args = "uncommitted", [], []
 
     name_status = subprocess.run(
-        ["git", "-C", str(root), "diff", "--name-status", *diff_args],
+        ["git", "-C", str(root), "diff", "--name-status", *diff_options, "--end-of-options", *range_args],
         capture_output=True, text=True,
     )
     if name_status.returncode != 0:
@@ -34,7 +40,7 @@ def run(args) -> dict:
         return {"ok": False, "operation": "diff", "errors": [{"code": code, "detail": name_status.stderr.strip()}]}
 
     patch = subprocess.run(
-        ["git", "-C", str(root), "diff", "--unified=0", *diff_args],
+        ["git", "-C", str(root), "diff", "--unified=0", *diff_options, "--end-of-options", *range_args],
         capture_output=True, text=True,
     )
 

@@ -29,13 +29,31 @@ def evaluate_rule(rule: dict, diff_files: list, existing_paths: set):
     return None
 
 
-def affected_paths_overlap(diff_files: list, affected_paths: list) -> bool:
+def _as_list(value) -> list:
+    # core/frontmatter.py's hand-rolled YAML subset yields a bare string for
+    # `affected_paths: src/features/` and a bool for `affected_paths: false`.
+    # Iterating either one here would be wrong (a string iterates *characters*,
+    # so "s" would "overlap" setup.py) or fatal (a bool raises TypeError and
+    # aborts the whole check run), so normalize at the shared entry point.
+    return value if isinstance(value, list) else []
+
+
+def affected_paths_overlap(diff_files: list, affected_paths) -> bool:
     touched = _touched_paths(diff_files)
     return any(
-        diff_path == ap or diff_path.startswith(ap) or globs.match(ap, diff_path)
+        _path_under(diff_path, ap) or globs.match(ap, diff_path)
         for diff_path in touched
-        for ap in affected_paths
+        for ap in _as_list(affected_paths)
+        if isinstance(ap, str)
     )
+
+
+def _path_under(diff_path: str, affected_path: str) -> bool:
+    # Prefix matching must respect directory boundaries: "src/db" governs
+    # "src/db/x.py" but not "src/db2/file.py".
+    if diff_path == affected_path:
+        return True
+    return diff_path.startswith(affected_path.rstrip("/") + "/")
 
 
 def _touched_paths(diff_files: list) -> set:

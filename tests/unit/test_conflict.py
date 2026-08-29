@@ -78,3 +78,26 @@ def test_affected_paths_overlap_matches_glob():
 
 def test_affected_paths_overlap_false_when_no_match():
     assert not conflict.affected_paths_overlap(DIFF_FILES, ["src/unrelated/"])
+
+
+def test_affected_paths_overlap_respects_directory_boundaries():
+    diff_files = [{"path": "src/db2/file.py", "change_type": "modified",
+                   "added_lines": [], "removed_lines": []}]
+    assert not conflict.affected_paths_overlap(diff_files, ["src/db"])
+    assert conflict.affected_paths_overlap(
+        [{"path": "src/db/file.py", "change_type": "modified", "added_lines": [], "removed_lines": []}],
+        ["src/db"],
+    )
+
+
+def test_affected_paths_overlap_ignores_a_scalar_string_instead_of_iterating_characters():
+    diff_files = [{"path": "setup.py", "change_type": "modified",
+                   "added_lines": [], "removed_lines": []}]
+    # frontmatter.py yields a bare string for `affected_paths: src/features/`.
+    assert not conflict.affected_paths_overlap(diff_files, "src/features/")
+
+
+def test_affected_paths_overlap_ignores_a_bool_instead_of_raising():
+    # frontmatter.py yields a bool for `affected_paths: false`.
+    assert not conflict.affected_paths_overlap(DIFF_FILES, False)
+    assert not conflict.affected_paths_overlap(DIFF_FILES, None)

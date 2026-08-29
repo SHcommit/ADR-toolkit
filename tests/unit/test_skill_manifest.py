@@ -45,3 +45,9 @@ def test_skill_md_documents_check():
     assert "adr.py check" in body
     assert "Verified violation" in body
     assert "CHECK is not yet implemented" not in body
+
+
+def test_record_points_at_the_conflict_rules_reference_for_constraints_blocks():
+    _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
+    assert "constraints:" in body
+    assert "references/conflict-rules.md" in body

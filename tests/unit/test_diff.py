@@ -92,3 +92,20 @@ def test_uncommitted_mode_includes_untracked_new_files(tmp_path):
     entry = next(f for f in result["files"] if f["path"] == "brand_new.py")
     assert entry["change_type"] == "added"
     assert "import openai" in entry["added_lines"]
+
+
+def test_since_value_cannot_smuggle_a_git_option_that_writes_a_file(tmp_path):
+    """CHECK is read-only: a `--since` starting with `-` must not reach git as an option."""
+    _init_repo(tmp_path)
+    (tmp_path / "existing.py").write_text("x = 2\n", encoding="utf-8")
+    target = tmp_path / "PWNED"
+
+    result = diff.run(SimpleNamespace(
+        root=str(tmp_path), staged=False, uncommitted=False, since=f"--output={target}",
+    ))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "INVALID_REF"
+    # git's `--output` writes to the literal argument, i.e. "<target>..HEAD".
+    assert not target.exists()
+    assert not (tmp_path / f"{target.name}..HEAD").exists()

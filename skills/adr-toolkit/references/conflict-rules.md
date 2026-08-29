@@ -48,16 +48,18 @@ enforce — that's a legitimate state, not an error.
 
 - **Related** — the diff touches a path the ADR names, and its
   `constraints:` block was evaluated but nothing fired.
-- **Review required** — the ADR's `Verification` checklist references a
-  path or test the diff removes; this is prose-scanning, not a
-  `constraints:` rule, so it needs a human look rather than a mechanical
-  yes/no.
+- **Review required** — the ADR's `Confirmation` (or `Verification`)
+  section references a path or test that the diff removes, or that was
+  never created at all; this is prose-scanning, not a `constraints:` rule,
+  so it needs a human look rather than a mechanical yes/no.
 - **Verified violation** — a `constraints:` rule fired with direct
   structural evidence, or the diff touches a path a Superseded ADR
   governs (`rule_id: superseded_reference`).
 - **No applicable constraint** — the diff touches a path the ADR names,
-  but the ADR has neither a `constraints:` block nor a matching
-  Verification reference.
+  but the ADR has neither a usable `constraints:` block nor a matching
+  Confirmation/Verification reference. An unparseable block (unknown field,
+  unknown `kind`, or an invalid regex in `pattern`) also lands here, with a
+  `BAD_CONSTRAINTS` warning — it is never silently reported as Related.
 
 ## Resolving a Verified violation
 

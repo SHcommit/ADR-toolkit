@@ -13,6 +13,18 @@ FENCE_RE = re.compile(r"```ya?ml\n(.*?)\n```", re.DOTALL)
 
 KNOWN_FIELDS = {"id", "kind", "paths", "pattern", "severity", "message"}
 LIST_FIELDS = {"paths", "pattern"}
+# An unrecognized `kind` is silently unenforced downstream (conflict.evaluate_rule
+# returns None for it), and CHECK would then report the ADR as "related" — i.e.
+# "evaluated, nothing fired" — which is a lie. Reject it at parse time so it
+# surfaces through check.py's existing BAD_CONSTRAINTS warning path instead.
+KNOWN_KINDS = {
+    "forbidden_import",
+    "dependency_forbidden",
+    "required_path",
+    "forbidden_path",
+    "file_must_exist",
+    "test_must_exist",
+}
 
 
 class ConstraintsError(ValueError):
@@ -63,7 +75,13 @@ def _parse_rules(lines) -> list:
                 raise ConstraintsError(f"Field {key!r} must be a list, got {value!r}")
             current[key] = parsed_value
         else:
-            current[key] = value.strip('"').strip("'")
+            parsed_value = value.strip('"').strip("'")
+            if key == "kind" and parsed_value not in KNOWN_KINDS:
+                raise ConstraintsError(
+                    f"Unknown constraints kind: {parsed_value!r} "
+                    f"(known kinds: {', '.join(sorted(KNOWN_KINDS))})"
+                )
+            current[key] = parsed_value
 
     if current is not None:
         rules.append(current)
