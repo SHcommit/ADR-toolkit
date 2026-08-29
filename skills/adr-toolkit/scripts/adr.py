@@ -28,7 +28,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--json", action="store_true")
 
     p_create = sub.add_parser("create")
-    p_create.add_argument("--input", required=True)
+    p_create.add_argument("--input")
+    p_create.add_argument("--interactive", action="store_true")
     p_create.add_argument("--dir", default="docs/decisions")
     p_create.add_argument("--dry-run", dest="dry_run", action="store_true")
     p_create.add_argument("--json", action="store_true")
