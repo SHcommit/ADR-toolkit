@@ -167,10 +167,40 @@ Unchanged from the PRD's model (§11), reconfirmed here:
   option count and quality-attribute conflict), and an Agent extension
   section (Affected Code, Implementation Constraints, Verification
   checklist) that CHECK later reads.
-- The Agent extension's `Implementation Constraints` list is the contract
-  CHECK compares diffs against — plain-language rules like "feature modules
-  must not import provider SDKs directly," matched by path/import evidence,
-  not free-form semantic reasoning.
+- The Agent extension's `Implementation Constraints` section carries prose
+  for human readers **plus** an optional fenced `constraints:` YAML block
+  for CHECK to parse deterministically (see §7 — free-form prose alone
+  cannot be checked deterministically, which would violate the
+  Deterministic Core principle).
+- A retrospective ADR (`retrospective: true`) additionally requires three
+  explicitly separated subsections in its body, never merged into one
+  narrative: **Confirmed Evidence** (only facts the discover step or the
+  user's own words established), **Inferred Rationale** (the agent's best
+  guess, clearly labeled as a guess), and **Unknown** (anything about the
+  original decision that cannot be recovered from this repository). This
+  makes Evidence-before-Inference (§4) checkable by a reader, not just a
+  stated principle — a direct response to the motivating case of a
+  decision-maker leaving with no record of their reasoning.
+
+### 6.1 What belongs in an ADR
+
+Not every structural-looking change deserves a new file. CLASSIFY (used by
+INIT, DISCOVER, and RECORD alike) applies this table before drafting
+anything:
+
+| Content | Where it belongs |
+|---|---|
+| Structural, long-lived decision | ADR |
+| Feature implementation detail | Pull request |
+| Routine code-change rationale | Commit message |
+| Usage/behavior explanation | README or docs |
+| Incident/outage response | Incident report / postmortem |
+| A rule that must hold going forward | ADR's Implementation Constraints |
+
+Treating "record this feature" and "record the structural decision inside
+this feature" as the same request is the single most likely way this tool
+degrades into a changelog generator — CLASSIFY exists specifically to
+prevent that.
 
 ## 7. CHECK scope for MVP: conservative, evidence-only
 
@@ -192,9 +222,45 @@ not semantic:
 
 Everything else from the original taxonomy (Direct violation via SDK-call
 detection, Pattern divergence) moves to `project-roadmap.md` pending a
-proper AST/import-graph based approach. Findings without direct structural
-evidence are reported at `Info` severity ("possible related ADR, no direct
-conflict evidence") rather than `Major`/`Critical`.
+proper AST/import-graph based approach.
+
+**Structured constraints, not prose matching.** The `Implementation
+Constraints` section of an ADR (§6) may carry a fenced `constraints:` YAML
+block using a small fixed vocabulary of checkable rule kinds:
+
+```yaml
+constraints:
+  - id: no-provider-sdk-in-feature
+    kind: forbidden_import
+    paths: ["src/features/**"]
+    pattern: ["openai.*", "anthropic.*"]
+    severity: major
+    message: "Feature modules must use the LLM port."
+```
+
+MVP supports `forbidden_import`, `required_path`, `forbidden_path`,
+`dependency_forbidden`, `file_must_exist`, `test_must_exist`. CHECK matches
+diffs against these structurally; it never attempts to interpret
+free-form English constraint prose as an enforceable rule. An ADR with no
+`constraints:` block simply has nothing CHECK can mechanically enforce for
+it — that's a legitimate state, not an error.
+
+**Four-way finding classification**, replacing plain severity levels for
+clearer signal about what a human actually needs to do:
+
+| Classification | Meaning |
+|---|---|
+| Related | The diff touches a path an ADR names, no rule fired. |
+| Review required | A rule-less ADR judgment call — needs a human look, not a mechanical yes/no. |
+| Verified violation | A `constraints:` rule fired with direct structural evidence. |
+| No applicable constraint | An ADR covers this path but has no `constraints:` block. |
+
+When CHECK reports a `Verified violation`, it offers the user a choice
+rather than defaulting to "revert the code": (1) fix the code to match the
+existing ADR, (2) supersede the ADR with a new decision, (3) narrow or
+widen the ADR's `affected_paths`/`constraints`, (4) register a documented
+exception, or (5) mark it a false positive. This work is planned for Plan
+3 (CHECK), not implemented in Plan 1.
 
 ## 8. Harness support strategy
 
@@ -247,22 +313,45 @@ real hierarchical file tree.
 
 ## 11. Workflow data flow
 
-### INIT
+INIT and past-decision recovery are two separate user-facing operations,
+not one bundled flow — a repository can be initialized without immediately
+mining its history, and history mining can be re-run later on an
+already-initialized repository.
+
+### INIT (scaffolding only)
 
 ```text
-preflight --json
-  → discover --json            (deps, docker/k8s, entrypoints, git log, code comments)
-  → [significance rules]       classify candidates High/Medium/Low
-  → [interview planner]        ask only what evidence can't answer, ≤3/round
-  → [drafter]                  retrospective MADR draft per approved candidate
-  → user approval gate
+preflight --json              (stop if existing_adr_directory is already set)
+  → user confirms the directory that will be created
   → init --dir docs/decisions  (scaffold directory + template + ADR-0001)
-  → create --input draft.json  (per approved candidate)
   → validate --json
   → index                      (regenerate README.md)
 ```
 
+### DISCOVER (past-decision recovery, independently invokable)
+
+```text
+preflight --json               (must already have an ADR directory — tell the user to run INIT first if not)
+  → discover --json            (deps, docker/k8s, entrypoints, git log, code comments)
+  → [classify]                 structural vs. routine, using the "what belongs in an ADR" table (§6)
+  → [interview planner]        ask only what evidence can't answer, ≤1 question per candidate
+  → [drafter]                  retrospective MADR draft per approved candidate, with the
+                                mandatory Confirmed Evidence / Inferred Rationale / Unknown split (§6)
+  → user approval gate         (per candidate — any can be dropped)
+  → create --input draft.json  (per approved candidate)
+  → validate --json
+  → index
+```
+
 ### RECORD
+
+RECORD is not limited to decisions made *before* implementation. It equally
+supports capturing a decision that was made *during* or *just after*
+implementing a feature (e.g. "find what in this branch should become an
+ADR") — the workflow is identical, only the trigger differs (a user
+request vs. a diff/branch range instead of a forward-looking question). Not
+every change in a diff is ADR-worthy; RECORD applies the same "what belongs
+in an ADR" table (§6) before drafting anything.
 
 ```text
 [router matches record intent]
@@ -275,16 +364,33 @@ preflight --json
   → validate --json → index
 ```
 
+### Lifecycle operations (status changes, supersede, deprecate)
+
+Not implemented in Plan 1 (which only ever creates status `accepted` for
+ADR-0001 and whatever status a draft specifies at creation time). Plan 2
+adds explicit user-facing triggers and matching deterministic script verbs,
+enforced by `core.lifecycle.validate_transition` (already built in Plan 1):
+
+```text
+"이 ADR을 승인 상태로 변경해줘"       → adr.py status 0012 --to accepted
+"ADR-0012는 ADR-0021로 대체됐어"     → adr.py supersede 0012 --by 0021
+"이 결정은 더 이상 적용되지 않아"     → adr.py deprecate 0012
+```
+
+The agent may show the user a change plan, but the script only writes the
+new status after explicit user approval — same No Silent Mutation rule as
+`create`.
+
 ### CHECK
 
 ```text
 diff --since <ref> --json      (uncommitted / staged / branch / commit range)
   → classify changed files      (new dependency, new entrypoint, changed import)
   → related --paths <changed> --json
-  → [conservative conflict rules, §7]  structural evidence only
-  → Finding report (severity + evidence + confidence)
-  → intentional decision change? → recommend Supersede + RECORD
-  → otherwise → recommend reverting to the existing decision
+  → [structured constraint rules, §7]  match constraints: blocks only
+  → Finding report: Related / Review required / Verified violation / No applicable constraint (§7)
+  → for a Verified violation, present the 5 resolution options from §7
+    (fix code / supersede / narrow-or-widen the ADR / register exception / false positive)
 ```
 
 ## 12. Testing & CI (built from day one)
@@ -317,6 +423,10 @@ resolving them here so they don't block implementation:
 | Harness priority | Claude Code deep, Codex/Gemini CLI/Antigravity CLI light adapters (§8). |
 | i18n scope | Skill runtime text in 5 languages; templates/docs not translated in MVP (§9). |
 | License | MIT, proposed here for user confirmation on return — matches the PRD's own lean (§27.1) and is the least-friction choice for the stated goal of broad adoption/stars. Needs explicit sign-off before the repo goes public. |
+| INIT vs. history recovery | Split into two independently invokable operations — INIT (scaffolding only) and DISCOVER (past-decision mining) — instead of one bundled flow. Added after user feedback; see §11. |
+| Implementation Constraints format | Structured `constraints:` YAML block with a fixed rule-kind vocabulary, not free-form prose — prose alone can't be checked deterministically. Added after user feedback; see §6.1 and §7. |
+| Retrospective ADR body structure | Must separate Confirmed Evidence / Inferred Rationale / Unknown into distinct subsections, never merge into one narrative. Added after user feedback; see §6. |
+| CHECK finding classification | Four-way (Related / Review required / Verified violation / No applicable constraint) plus 5 resolution options on a verified violation, replacing a plain severity scale. Added after user feedback; see §7. |
 
 ## 14. What's deferred to `project-roadmap.md`
 

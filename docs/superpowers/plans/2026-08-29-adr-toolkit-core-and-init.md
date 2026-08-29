@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a self-contained `skills/adr-toolkit/` package with the deterministic script layer (frontmatter, IDs, lifecycle, schema, discovery, index, validation) and a fully working INIT workflow, packaged for Claude Code with CI enforcing it from the first commit.
+**Goal:** Ship a self-contained `skills/adr-toolkit/` package with the deterministic script layer (frontmatter, IDs, lifecycle, schema, discovery, index, validation) and two fully working operations — INIT (scaffolding) and DISCOVER (past-decision recovery, kept separate from INIT per user feedback) — packaged for Claude Code with CI enforcing it from the first commit.
 
 **Architecture:** Deterministic Python stdlib-only scripts under `skills/adr-toolkit/scripts/` (package name `scripts`, imported as `scripts.core.*` / `scripts.commands.*` / `scripts.evidence.*`) do all file I/O, ID assignment, and validation. `SKILL.md` carries the workflow contract the agent follows and never re-implements those deterministic steps in prose. A thin Claude Code adapter under `adapters/claude/` points at the skill folder; it carries no logic of its own.
 
@@ -1895,6 +1895,20 @@ def test_skill_md_documents_the_workflow_stages():
         assert stage in body
 
 
+def test_skill_md_separates_init_and_discover_operations():
+    _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
+    assert "## INIT" in body
+    assert "## DISCOVER" in body
+    assert "## What belongs in an ADR" in body
+
+
+def test_skill_md_requires_evidence_inference_separation_for_retrospective_adrs():
+    _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
+    assert "Confirmed Evidence" in body
+    assert "Inferred Rationale" in body
+    assert "## Unknown" in body
+
+
 def test_reference_files_exist():
     assert (REFERENCES / "lifecycle.md").is_file()
     assert (REFERENCES / "madr-guide.md").is_file()
@@ -1936,21 +1950,42 @@ PREFLIGHT
 → REPORT
 ```
 
-## INIT
+## INIT (scaffolding only)
 
-Use INIT when a repository has no ADR directory yet.
+Use INIT when a repository has no ADR directory yet. INIT does not mine
+history — it only sets up the structure. Run DISCOVER afterward (or any
+time later) to recover past decisions.
 
 1. **PREFLIGHT** — run `python scripts/adr.py preflight --json`. If
    `existing_adr_directory` is set, stop and tell the user an ADR directory
    already exists; do not scaffold a second one.
-2. **DISCOVER** — run `python scripts/adr.py discover --json` from the
-   repository root. Read the `dependencies` list; each entry is candidate
-   evidence for a past architectural decision (e.g. `pom.xml` suggests a
-   JVM build-tool decision was made, even if undocumented).
-3. **CLASSIFY** — for each dependency finding, decide whether it looks
-   structural (a database driver, a message broker, a web framework) versus
-   routine tooling (a linter, a test runner). Only structural choices are
-   candidates.
+2. **CONFIRM** — show the user the exact directory that will be created,
+   before writing anything.
+3. **MUTATE** — run `python scripts/adr.py init --dir docs/decisions` to
+   scaffold the directory, template, and ADR-0001.
+4. **VALIDATE** — run `python scripts/adr.py validate --dir docs/decisions --json`
+   and `python scripts/adr.py index --dir docs/decisions --json`.
+5. **REPORT** — tell the user INIT is done and that they can run DISCOVER
+   next if they want to recover past decisions from the repository's
+   history.
+
+## DISCOVER (past-decision recovery)
+
+Use DISCOVER on a repository that already has an ADR directory (run INIT
+first if it doesn't). DISCOVER can be run once right after INIT, skipped
+entirely, or re-run later to mine more of the history incrementally.
+
+1. **PREFLIGHT** — run `python scripts/adr.py preflight --json`. If
+   `existing_adr_directory` is `null`, stop and tell the user to run INIT
+   first.
+2. **GATHER EVIDENCE** — run `python scripts/adr.py discover --json` from
+   the repository root. Read the `dependencies` list; each entry is
+   candidate evidence for a past architectural decision (e.g. `pom.xml`
+   suggests a JVM build-tool decision was made, even if undocumented).
+3. **CLASSIFY** — for each finding, decide whether it looks structural (a
+   database driver, a message broker, a web framework) versus routine
+   tooling (a linter, a test runner), using the table below. Only
+   structural choices are candidates.
 4. **ASK-IF-NEEDED** — for each candidate, ask the user at most one
    question: why was this chosen, only if the reason is not evident from
    comments, README, or commit history. Do not ask about anything
@@ -1958,31 +1993,65 @@ Use INIT when a repository has no ADR directory yet.
 5. **PLAN** — draft a `retrospective: true` MADR body for each ADR the user
    wants recorded, following `templates/madr-minimal.md` (see
    `references/madr-guide.md` for when to use the full template instead).
-6. **CONFIRM** — show the user the exact directory that will be created and
-   the titles of any retrospective ADRs, before writing anything.
-7. **MUTATE** — run `python scripts/adr.py init --dir docs/decisions` to
-   scaffold the directory, template, and ADR-0001. For each approved
-   retrospective ADR, write a draft JSON file (`title`, `status`, `body`,
-   plus any of `date`/`decision_makers`/`related`/`affected_paths`/`tags`/
-   `retrospective`) and run
+   Every retrospective body MUST contain three separate subsections, never
+   merged into one narrative:
+
+   ```markdown
+   ## Confirmed Evidence
+
+   * {only facts `discover` or the user's own words actually established}
+
+   ## Inferred Rationale
+
+   * {the agent's best guess at *why*, explicitly labeled as a guess}
+
+   ## Unknown
+
+   * {anything about the original decision that cannot be recovered from this repository}
+   ```
+
+6. **CONFIRM** — show the user each candidate's title, confirmed evidence,
+   and inferred rationale before writing anything; the user can drop any
+   candidate.
+7. **MUTATE** — for each approved candidate, write a draft JSON file
+   (`title`, `status`, `body` — body includes the three-part structure
+   above — plus any of `date`/`decision_makers`/`related`/
+   `affected_paths`/`tags`/`retrospective`) and run
    `python scripts/adr.py create --input <draft.json> --dir docs/decisions`.
-8. **VALIDATE** — run `python scripts/adr.py validate --dir docs/decisions --json`
-   and `python scripts/adr.py index --dir docs/decisions --json`. If
-   validate reports errors, fix the draft and re-run `create` — never
-   hand-edit the generated file to patch a validation error.
+8. **VALIDATE** — same as INIT step 4. If validate reports errors, fix the
+   draft and re-run `create` — never hand-edit the generated file to patch
+   a validation error.
 9. **REPORT** — tell the user what was created, in this order: facts
    found, judgment, questions asked, files created, validation result,
    remaining uncertainty.
 
+## What belongs in an ADR
+
+Not every structural-looking finding deserves a new file. Apply this table
+during CLASSIFY, in both INIT/DISCOVER and (once built) RECORD:
+
+| Content | Where it belongs |
+|---|---|
+| Structural, long-lived decision | ADR |
+| Feature implementation detail | Pull request |
+| Routine code-change rationale | Commit message |
+| Usage/behavior explanation | README or docs |
+| Incident/outage response | Incident report / postmortem |
+| A rule that must hold going forward | ADR's Implementation Constraints |
+
 ## Prohibited
 
 - Creating `docs/decisions/` when `preflight` already found one.
+- Running DISCOVER when `preflight` reports no ADR directory — tell the
+  user to run INIT first instead.
 - Writing any ADR file before the user has seen and approved its title,
   problem, and decision.
 - Marking a retrospective ADR `status: accepted` without the user
   confirming the reconstruction is accurate.
 - Guessing a dependency's purpose instead of asking, when it's not evident
   from the repository.
+- Merging Confirmed Evidence, Inferred Rationale, and Unknown into a single
+  undifferentiated narrative for a retrospective ADR.
 
 ## Script reference
 
@@ -2302,6 +2371,21 @@ git commit -m "ci: run pytest across unit and integration tests on every push an
 ```
 
 ---
+
+## Revision note
+
+After this plan was first written, the user reviewed a separate improvement
+proposal and asked to fold in several low-cost refinements before
+execution began (no code had been written yet). Applied in this revision:
+INIT and DISCOVER split into two SKILL.md operations instead of one bundled
+flow (Task 15), retrospective ADRs now require a Confirmed
+Evidence/Inferred Rationale/Unknown structure (Task 15), and a "what
+belongs in an ADR" classification table was added (Task 15, and spec §6.1).
+No script-level tasks changed — `discover.py` (Task 8) already existed as
+its own command, so this was purely a SKILL.md/documentation restructuring.
+Structured `constraints:` YAML blocks and CHECK's four-way finding
+classification were accepted too, but recorded only in the design spec
+(§6.1, §7) since CHECK isn't implemented until Plan 3.
 
 ## Plan self-review notes
 
