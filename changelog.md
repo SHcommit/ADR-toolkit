@@ -12,3 +12,8 @@ Lightweight human-readable summary of meaningful repository changes.
   safeguards.
 - Added optional relationship fields to runtime and JSON Schema validation,
   with parity coverage to prevent schema drift.
+- Closed out Plan 2 with a final whole-branch review: hardened `related`,
+  `significance`, `status`, and `supersede` against malformed input
+  (bad frontmatter, non-list fields, missing IDs, bad JSON) and added a
+  supersede invariant requiring the superseding ADR to already be
+  `accepted`.

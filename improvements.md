@@ -27,6 +27,14 @@ the current session.
 
 ## Done
 
+- [x] Closed out Plan 2: final whole-branch review of `37067b1..HEAD` found
+  six confirmed robustness gaps (malformed frontmatter aborting `related`
+  instead of degrading like `validate`/`index`; `significance`/`status`
+  missing the specific-error-code handling `create`/`validate` already use;
+  `supersede` not validating the superseding ADR's own status or guarding
+  missing IDs; a swallowed second failure in `supersede`'s rollback path).
+  Fixed all six in one wave with regression tests. Full suite: 114/114
+  passing (up from 105).
 - [x] Completed Plan 2 of 4 (RECORD + lifecycle): all 11 tasks are implemented
   and task-reviewed, lifecycle defects found during review are fixed, and the
   full unit/integration suite passes 105 tests.

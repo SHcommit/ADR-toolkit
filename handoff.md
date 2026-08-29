@@ -2,17 +2,23 @@
 
 ## Current state (as of 2026-08-30)
 
-Branch: `SHcommit/feat-plan-adr-toolkit`.
+Branch: `SHcommit/feat-plan-adr-toolkit`. Master holds only the initial
+commit — all Plan 1-4 work accumulates on this one branch and merges to
+master only once the full MVP (all 4 plans) is done; do not open a PR for
+a partial plan without asking first.
 
 - **Plan 1 of 4** (core scripts + INIT/DISCOVER) is complete. It delivered
   the self-contained `skills/adr-toolkit/` package, Claude Code and generic
   harness entry points, deterministic scaffolding/discovery commands, and
   the standalone interactive creation flow.
-- **Plan 2 of 4** (RECORD + lifecycle) is implemented across all 11 planned
-  tasks. Each task used a fresh implementer/reviewer cycle, with fix rounds
-  for body preservation, supersession write-failure guards, behavioral guidance,
-  and stronger golden workflow assertions. The current full suite has 105
-  passing unit and integration tests.
+- **Plan 2 of 4** (RECORD + lifecycle) is complete and closed out. All 11
+  planned tasks were implemented with a fresh implementer/reviewer cycle
+  each, plus a final whole-branch review (`37067b1..HEAD`) that found and
+  fixed six confirmed robustness gaps in `related`/`significance`/`status`/
+  `supersede` (malformed-frontmatter handling, specific error codes for bad
+  input files, a missing supersede-status invariant, and a silently
+  swallowed rollback failure). The full suite has 114 passing unit and
+  integration tests.
 - Plan 2 delivers deterministic significance scoring, related-ADR search,
   evidence-first RECORD guidance, optional `supersedes`/`superseded_by`
   schema fields, validated `status`/`deprecate`/`supersede` commands, and an
@@ -21,9 +27,6 @@ Branch: `SHcommit/feat-plan-adr-toolkit`.
 
 ## Next work
 
-- [ ] **Close Plan 2:** complete the final whole-branch review for
-  `37067b1..HEAD`, address any confirmed findings in one fix wave, rerun the
-  full unit/integration suite, and choose how to integrate the branch.
 - [ ] **Design Plan 3 (CHECK):** use the brainstorming skill against
   `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` sections 7 and 11,
   then use the writing-plans skill to create the task-by-task plan under
@@ -75,7 +78,15 @@ detection. Its implementation plan must cover:
 
 ## Closeout files touched
 
-- `adapters/generic/README.md`
+- `skills/adr-toolkit/scripts/commands/related.py`
+- `skills/adr-toolkit/scripts/commands/significance.py`
+- `skills/adr-toolkit/scripts/commands/status.py`
+- `skills/adr-toolkit/scripts/commands/supersede.py`
+- `skills/adr-toolkit/references/lifecycle.md`
+- `tests/unit/test_related.py`
+- `tests/unit/test_significance_command.py`
+- `tests/unit/test_status.py`
+- `tests/unit/test_supersede.py`
 - `improvements.md`
 - `changelog.md`
 - `handoff.md`
