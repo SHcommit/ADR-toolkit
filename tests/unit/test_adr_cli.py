@@ -3,6 +3,19 @@ import json
 from scripts import adr
 
 
+def test_supersede_command_is_registered_with_required_arguments():
+    args = adr.build_parser().parse_args(
+        ["supersede", "1", "--by", "2", "--dir", "custom/decisions", "--dry-run"]
+    )
+
+    assert args.operation == "supersede"
+    assert args.adr_number == 1
+    assert args.by == 2
+    assert args.dir == "custom/decisions"
+    assert args.dry_run is True
+    assert adr.HANDLERS["supersede"].__module__ == "scripts.commands.supersede"
+
+
 def test_main_safety_net_converts_unexpected_exception_to_json_error(tmp_path, monkeypatch, capsys):
     def _boom(_args):
         raise RuntimeError("simulated unexpected failure")

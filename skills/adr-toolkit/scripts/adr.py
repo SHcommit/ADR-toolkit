@@ -16,6 +16,7 @@ from scripts.commands import (
     related,
     significance,
     status,
+    supersede,
     validate,
 )
 
@@ -77,6 +78,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_deprecate.add_argument("--json", action="store_true")
     p_deprecate.set_defaults(to="deprecated")
 
+    p_supersede = sub.add_parser("supersede")
+    p_supersede.add_argument("adr_number", type=int)
+    p_supersede.add_argument("--by", type=int, required=True)
+    p_supersede.add_argument("--dir", default="docs/decisions")
+    p_supersede.add_argument("--dry-run", dest="dry_run", action="store_true")
+    p_supersede.add_argument("--json", action="store_true")
+
     return parser
 
 
@@ -91,6 +99,7 @@ HANDLERS = {
     "validate": validate.run,
     "status": status.run,
     "deprecate": status.run,
+    "supersede": supersede.run,
 }
 
 
