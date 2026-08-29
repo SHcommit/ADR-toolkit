@@ -479,3 +479,138 @@ Carried from PRD §22.3, scoped to what MVP actually attempts:
   three workflows once, manually verified, without full fixture coverage.
 - The `skills/adr-toolkit/` folder, copied alone into a fresh location,
   passes its own test suite.
+
+## 16. Plan 3 (CHECK) implementation decisions
+
+Resolved during Plan 3 brainstorming, in the same spirit as §13 — these fill
+gaps §7 and §11 leave open at the product-design level, without changing
+either section's MVP boundary.
+
+### 16.1 Module split
+
+- `scripts/commands/diff.py` — wraps `git diff` via `subprocess` for three
+  modes (`--staged`, `--uncommitted`, `--since <ref>` diffing `<ref>..HEAD`).
+  Returns per-file entries with both the changed path and the actual added
+  line content (`{path, change_type, added_lines, removed_lines}`), because
+  content-pattern rules (below) need to see *what* was added, not just
+  *which file* changed.
+- `scripts/rules/conflict.py` — pure functions taking a parsed diff plus
+  `(adr_data, constraints)` pairs, returning findings. No file or git I/O,
+  mirroring the existing `scripts/rules/significance.py` split so the
+  matching logic stays unit-testable in isolation.
+- `scripts/commands/check.py` — orchestrates: calls `diff.run()`, scans
+  Accepted ADRs for `affected_paths` overlap (reusing `related.py`'s
+  overlap logic), scans Superseded ADRs separately for the
+  superseded-reference check, calls `rules/conflict.py`, and assembles the
+  four-way finding report.
+
+### 16.2 Constraint-matching semantics
+
+The six `constraints:` rule kinds collapse into four deterministic,
+glob/regex-only mechanisms — no per-language import parsing, no
+dependency-manifest-format parsing:
+
+| Mechanism | Kinds | Fires when |
+|---|---|---|
+| Content pattern in diff | `forbidden_import`, `dependency_forbidden` | An added line in a file matching `paths` (glob) matches any regex in `pattern`. `dependency_forbidden` is mechanically identical to `forbidden_import`; the distinction is purely which paths (e.g. manifest files) the ADR author scopes it to. |
+| Required companion path | `required_path` | The diff touches a file matching `paths`, but no file matching `pattern` (glob) is touched by the diff or already exists in the working tree. |
+| Forbidden companion path | `forbidden_path` | The diff touches a file matching `paths` AND also touches a file matching `pattern` (glob). |
+| Existence check | `file_must_exist`, `test_must_exist` | None of the paths matching `paths` (glob) exist in the working tree after the diff. Identical mechanism for both; `test_must_exist` is a semantic label for the ADR author, not different logic. |
+
+A small `**`-aware glob-to-regex translator is added under `core/` (stdlib
+`fnmatch`/`PurePath.match` don't handle `**` well), reusable by future
+`related.py` path matching too.
+
+### 16.3 Four-way classification algorithm
+
+For each Accepted ADR whose `affected_paths` overlaps the diff, two checks
+run independently (an ADR can produce more than one finding):
+
+1. **Constraints evaluation** — only if the ADR has a `constraints:` block:
+   run every rule via §16.2's mechanisms. Any rule that fires → `Verified
+   violation`. Block exists but nothing fires → `Related`.
+2. **Missing-realization heuristic** — always runs regardless of a
+   `constraints:` block: scans the ADR body's `Verification` checklist
+   section for path/test-like tokens; if the diff removes one or it was
+   never created → `Review required`. This is prose-scanning, not a
+   `constraints:` rule, so it is capped at `Review required` rather than
+   `Verified violation` even though the check itself is mechanical — it
+   isn't backed by the same structured evidence the other rule kinds are.
+
+If neither check produces anything and the ADR has no `constraints:` block
+at all → `No applicable constraint`.
+
+**Superseded reference** is a separate pass: for each *Superseded* (not
+Accepted) ADR, reuse `related.py`'s `affected_paths` overlap check only —
+not that ADR's old `constraints:` block, since a superseded ADR's rules are
+no longer "in force" as enforceable evidence. Any overlap → `Verified
+violation`, `kind: superseded_reference`, pointing at both the old ADR and
+its `superseded_by` target.
+
+Every `Verified violation` (from `constraints:` or from
+`superseded_reference`) carries the fixed 5-option `resolutions` array from
+§7 (fix code / supersede / narrow-or-widen / register exception / false
+positive) as static text, not computed per finding.
+
+### 16.4 Constraints scope
+
+`constraints:` rules are evaluated only against ADRs with `status:
+accepted`, matching `lifecycle.md`'s existing "currently in force"
+language. Proposed/rejected/deprecated ADRs impose no enforceable
+constraints; superseded ADRs are handled by the separate
+superseded-reference pass in §16.3, not by re-running their constraints.
+
+### 16.5 `diff` CLI shape
+
+`git diff`-style flags rather than a single raw range argument:
+`--staged`, `--uncommitted` (booleans for those two modes), `--since <ref>`
+(diffs `<ref>..HEAD`). Mirrors familiar `git diff` semantics instead of
+requiring the caller to construct raw revision syntax.
+
+### 16.6 Output shape and error handling
+
+`check`'s JSON output follows the existing `related`/`validate` convention:
+
+```json
+{
+  "ok": true,
+  "operation": "check",
+  "diff": {"mode": "since", "ref": "main", "files_changed": 4},
+  "findings": [
+    {"adr_id": "ADR-0007", "kind": "verified_violation", "rule_id": "no-provider-sdk-in-feature",
+     "severity": "major", "file": "src/features/x.py", "message": "...",
+     "evidence": {"line": "import openai", "pattern": "openai.*"},
+     "resolutions": ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]},
+    {"adr_id": "ADR-0003", "kind": "related"},
+    {"adr_id": "ADR-0012", "kind": "review_required"},
+    {"adr_id": "ADR-0002", "kind": "no_applicable_constraint"}
+  ],
+  "warnings": []
+}
+```
+
+Error handling follows the pattern the Plan 2 closeout review established:
+malformed ADR frontmatter is caught per-file and degrades to a `warnings`
+entry rather than aborting the whole `check`; a `diff` failure (not a git
+repo, unknown ref) returns a specific code (`NOT_A_GIT_REPO`,
+`INVALID_REF`) rather than surfacing a raw `subprocess` traceback through
+`main()`'s `INTERNAL_ERROR` fallback.
+
+### 16.7 Testing strategy
+
+- `rules/conflict.py`'s 4 mechanisms: pure unit tests against synthetic
+  diff dicts, no git or filesystem — mirrors `test_significance.py`.
+- `diff.py`: unit tests against real `tmp_path` git repos (init, commit,
+  diff), since it is the one new module that actually shells out to git.
+- `check.py`: integration tests combining a fixture repo with an Accepted
+  ADR carrying a `constraints:` block plus a violating diff, plus a golden
+  test extending `tests/golden/` for a full RECORD-then-CHECK flow.
+- Zero files written before an explicit user approval.
+- Zero re-asked questions for facts already visible in code/config/existing
+  ADRs, measured against fixtures.
+- Zero citations of nonexistent ADR IDs or file paths.
+- All three workflows (INIT/RECORD/CHECK) run correctly on Claude Code
+  against the fixture set; Codex/Gemini CLI/Antigravity CLI each run the
+  three workflows once, manually verified, without full fixture coverage.
+- The `skills/adr-toolkit/` folder, copied alone into a fresh location,
+  passes its own test suite.
