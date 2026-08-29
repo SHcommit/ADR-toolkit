@@ -23,8 +23,19 @@ def run(args) -> dict:
             "operation": "supersede",
             "errors": [{"code": "ADR_NOT_FOUND", "id": args.by}],
         }
+    if args.adr_number == args.by or old_file.resolve() == new_file.resolve():
+        return {
+            "ok": False,
+            "operation": "supersede",
+            "errors": [{
+                "code": "SELF_SUPERSEDE",
+                "detail": "An ADR cannot supersede itself.",
+                "id": args.adr_number,
+            }],
+        }
 
-    old_data, old_body = fm.parse(old_file.read_text(encoding="utf-8"))
+    old_text = old_file.read_text(encoding="utf-8")
+    old_data, old_body = fm.parse(old_text)
     try:
         validate_transition(old_data["status"], "superseded")
     except InvalidTransitionError as exc:
@@ -52,12 +63,19 @@ def run(args) -> dict:
             supersedes.append(adr_id)
     new_data["supersedes"] = supersedes
 
-    old_file.write_text(
-        fm.serialize(old_data, old_body, body_is_parsed=True), encoding="utf-8"
-    )
-    new_file.write_text(
-        fm.serialize(new_data, new_body, body_is_parsed=True), encoding="utf-8"
-    )
+    old_output = fm.serialize(old_data, old_body, body_is_parsed=True)
+    new_output = fm.serialize(new_data, new_body, body_is_parsed=True)
+
+    old_file.write_text(old_output, encoding="utf-8")
+    try:
+        new_file.write_text(new_output, encoding="utf-8")
+    except Exception:
+        # Preserve the original failure while making the completed first write recoverable.
+        try:
+            old_file.write_text(old_text, encoding="utf-8")
+        except Exception:
+            pass
+        raise
 
     return {
         "ok": True,

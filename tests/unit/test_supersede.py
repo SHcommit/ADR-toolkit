@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from scripts.commands import supersede
 from scripts.core import frontmatter as fm
 
@@ -95,6 +97,29 @@ def test_supersede_missing_old_adr_is_reported(tmp_path):
     assert result["errors"][0]["code"] == "ADR_NOT_FOUND"
 
 
+def test_supersede_missing_new_adr_is_reported(tmp_path):
+    (tmp_path / "0001-use-rabbitmq.md").write_text(OLD_ADR, encoding="utf-8")
+
+    result = supersede.run(_args(tmp_path))
+
+    assert result["ok"] is False
+    assert result["errors"][0] == {"code": "ADR_NOT_FOUND", "id": 2}
+
+
+def test_supersede_rejects_self_reference_without_writes(tmp_path):
+    old_path = tmp_path / "0001-use-rabbitmq.md"
+    old_path.write_text(OLD_ADR, encoding="utf-8")
+    before = old_path.read_text(encoding="utf-8")
+
+    result = supersede.run(
+        SimpleNamespace(adr_number=1, by=1, dir=str(tmp_path), dry_run=False)
+    )
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "SELF_SUPERSEDE"
+    assert old_path.read_text(encoding="utf-8") == before
+
+
 def test_supersede_invalid_transition_writes_neither_file(tmp_path):
     old_path = tmp_path / "0001-use-rabbitmq.md"
     new_path = tmp_path / "0002-use-kafka.md"
@@ -107,6 +132,29 @@ def test_supersede_invalid_transition_writes_neither_file(tmp_path):
 
     assert result["ok"] is False
     assert result["errors"][0]["code"] == "INVALID_TRANSITION"
+    assert old_path.read_text(encoding="utf-8") == old_before
+    assert new_path.read_text(encoding="utf-8") == new_before
+
+
+def test_supersede_rolls_back_old_file_when_new_file_write_fails(tmp_path, monkeypatch):
+    old_path = tmp_path / "0001-use-rabbitmq.md"
+    new_path = tmp_path / "0002-use-kafka.md"
+    old_path.write_text(OLD_ADR, encoding="utf-8")
+    new_path.write_text(NEW_ADR, encoding="utf-8")
+    old_before = old_path.read_text(encoding="utf-8")
+    new_before = new_path.read_text(encoding="utf-8")
+    original_write_text = type(old_path).write_text
+
+    def fail_new_file_write(path, text, *args, **kwargs):
+        if path == new_path:
+            raise OSError("simulated new ADR write failure")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(type(old_path), "write_text", fail_new_file_write)
+
+    with pytest.raises(OSError, match="simulated new ADR write failure"):
+        supersede.run(_args(tmp_path))
+
     assert old_path.read_text(encoding="utf-8") == old_before
     assert new_path.read_text(encoding="utf-8") == new_before
 
