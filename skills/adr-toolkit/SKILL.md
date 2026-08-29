@@ -9,7 +9,9 @@ version: 0.1.0
 
 ## Workflow contract
 
-Every operation follows the same nine stages:
+Operations use the applicable stages from this model. Each operation-specific
+section governs omitted or renamed stages; for example, Lifecycle operations
+do not run DISCOVER, and RECORD names evidence gathering explicitly.
 
 ```text
 PREFLIGHT
@@ -146,11 +148,12 @@ workflow does not.
    by the request, repository, diff, discovery, or related ADRs. Each
    independently answerable priority item counts as one question; never bundle
    items to bypass the cap, and defer lower-priority items after three.
-5. **PLAN** — draft a minimal or full MADR per `references/madr-guide.md`. If
-   a retrospective rationale is reconstructed, preserve the separate
-   Confirmed Evidence, Inferred Rationale, and Unknown subsections defined in
-   DISCOVER. Use `related` results to identify a possible replacement, but do
-   not assume supersession.
+5. **PLAN** — draft per `references/madr-guide.md`: use the full MADR for at
+   least three realistic alternatives and for the guide's other full-template
+   triggers; otherwise use the minimal MADR. Every retrospective RECORD MUST
+   preserve the separate Confirmed Evidence, Inferred Rationale, and Unknown
+   subsections defined in DISCOVER. Use `related` results to identify a
+   possible replacement, but do not assume supersession.
 6. **CONFIRM** — before any `create`, show the title, problem, considered
    options, decision, primary driver, accepted downside, and affected paths.
    Get explicit approval of the draft. If it may replace an Accepted ADR,
