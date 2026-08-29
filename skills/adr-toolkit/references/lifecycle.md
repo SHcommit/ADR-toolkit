@@ -21,3 +21,11 @@ superseded -> (terminal)
 `scripts/core/lifecycle.py` enforces this table. If a user asks for a
 transition that isn't in it, confirm they understand it's non-standard
 before doing anything, and never write a status that violates the table.
+
+## Supersede invariant
+
+`supersede` additionally requires the superseding ("new") ADR to already
+have `status: accepted`. An ADR that is only `proposed` or was `rejected`
+cannot be the replacement for a currently in-force decision — the command
+rejects the attempt with `INVALID_SUPERSEDING_STATUS` instead of writing a
+`superseded_by`/`supersedes` link between them.

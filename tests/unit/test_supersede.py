@@ -159,6 +159,66 @@ def test_supersede_rolls_back_old_file_when_new_file_write_fails(tmp_path, monke
     assert new_path.read_text(encoding="utf-8") == new_before
 
 
+def test_supersede_rejects_non_accepted_superseding_adr(tmp_path):
+    old_path = tmp_path / "0001-use-rabbitmq.md"
+    new_path = tmp_path / "0002-use-kafka.md"
+    old_path.write_text(OLD_ADR, encoding="utf-8")
+    new_path.write_text(NEW_ADR.replace("status: accepted", "status: proposed"), encoding="utf-8")
+    old_before = old_path.read_text(encoding="utf-8")
+    new_before = new_path.read_text(encoding="utf-8")
+
+    result = supersede.run(_args(tmp_path))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "INVALID_SUPERSEDING_STATUS"
+    assert old_path.read_text(encoding="utf-8") == old_before
+    assert new_path.read_text(encoding="utf-8") == new_before
+
+
+def test_supersede_reports_bad_frontmatter_on_old_file(tmp_path):
+    (tmp_path / "0001-use-rabbitmq.md").write_text("not frontmatter at all", encoding="utf-8")
+    (tmp_path / "0002-use-kafka.md").write_text(NEW_ADR, encoding="utf-8")
+
+    result = supersede.run(_args(tmp_path))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "BAD_FRONTMATTER"
+
+
+def test_supersede_reports_bad_frontmatter_on_new_file(tmp_path):
+    (tmp_path / "0001-use-rabbitmq.md").write_text(OLD_ADR, encoding="utf-8")
+    (tmp_path / "0002-use-kafka.md").write_text("not frontmatter at all", encoding="utf-8")
+
+    result = supersede.run(_args(tmp_path))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "BAD_FRONTMATTER"
+
+
+def test_supersede_double_write_failure_reports_inconsistent_state_not_silent(tmp_path, monkeypatch):
+    old_path = tmp_path / "0001-use-rabbitmq.md"
+    new_path = tmp_path / "0002-use-kafka.md"
+    old_path.write_text(OLD_ADR, encoding="utf-8")
+    new_path.write_text(NEW_ADR, encoding="utf-8")
+
+    call_count = {"old_writes": 0}
+    original_write_text = type(old_path).write_text
+
+    def fail_new_then_rollback(path, text, *args, **kwargs):
+        if path == new_path:
+            raise OSError("simulated new ADR write failure")
+        if path == old_path:
+            call_count["old_writes"] += 1
+            if call_count["old_writes"] == 2:
+                raise OSError("simulated rollback failure")
+        return original_write_text(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(type(old_path), "write_text", fail_new_then_rollback)
+
+    with pytest.raises(RuntimeError, match="rollback of .* also failed"):
+        supersede.run(_args(tmp_path))
+
+
 def test_supersede_dry_run_writes_nothing(tmp_path):
     old_path = tmp_path / "0001-use-rabbitmq.md"
     new_path = tmp_path / "0002-use-kafka.md"

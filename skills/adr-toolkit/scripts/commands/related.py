@@ -7,6 +7,10 @@ from scripts.core import identifiers
 SKIP_FILES = {"README.md", "adr-template.md"}
 
 
+def _as_list(value) -> list:
+    return value if isinstance(value, list) else []
+
+
 def run(args) -> dict:
     adr_dir = Path(args.dir)
     query_paths = set(getattr(args, "paths", None) or [])
@@ -14,18 +18,24 @@ def run(args) -> dict:
     keyword = (getattr(args, "keyword", None) or "").lower()
 
     matches = []
+    warnings = []
     for entry in sorted(adr_dir.glob("*.md")):
         if entry.name in SKIP_FILES or identifiers.parse_filename(entry.name) is None:
             continue
 
-        data, _ = fm.parse(entry.read_text(encoding="utf-8"))
+        try:
+            data, _ = fm.parse(entry.read_text(encoding="utf-8"))
+        except fm.FrontmatterError as exc:
+            warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
+            continue
+
         reasons = []
 
-        path_overlap = query_paths & set(data.get("affected_paths", []))
+        path_overlap = query_paths & set(_as_list(data.get("affected_paths")))
         if path_overlap:
             reasons.append(f"affected_paths overlap: {sorted(path_overlap)}")
 
-        tag_overlap = query_tags & set(data.get("tags", []))
+        tag_overlap = query_tags & set(_as_list(data.get("tags")))
         if tag_overlap:
             reasons.append(f"tag overlap: {sorted(tag_overlap)}")
 
@@ -41,4 +51,10 @@ def run(args) -> dict:
                 "reasons": reasons,
             })
 
-    return {"ok": True, "operation": "related", "count": len(matches), "matches": matches}
+    return {
+        "ok": True,
+        "operation": "related",
+        "count": len(matches),
+        "matches": matches,
+        "warnings": warnings,
+    }

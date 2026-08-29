@@ -35,14 +35,60 @@ def run(args) -> dict:
         }
 
     old_text = old_file.read_text(encoding="utf-8")
-    old_data, old_body = fm.parse(old_text)
+    new_text = new_file.read_text(encoding="utf-8")
     try:
-        validate_transition(old_data["status"], "superseded")
+        old_data, old_body = fm.parse(old_text)
+    except fm.FrontmatterError as exc:
+        return {
+            "ok": False,
+            "operation": "supersede",
+            "errors": [{"code": "BAD_FRONTMATTER", "file": old_file.name, "detail": str(exc)}],
+        }
+    try:
+        new_data, new_body = fm.parse(new_text)
+    except fm.FrontmatterError as exc:
+        return {
+            "ok": False,
+            "operation": "supersede",
+            "errors": [{"code": "BAD_FRONTMATTER", "file": new_file.name, "detail": str(exc)}],
+        }
+
+    missing_ids = [
+        number for number, data in ((args.adr_number, old_data), (args.by, new_data))
+        if not data.get("id")
+    ]
+    if missing_ids:
+        return {
+            "ok": False,
+            "operation": "supersede",
+            "errors": [{
+                "code": "BAD_FRONTMATTER",
+                "detail": "ADR file is missing a required 'id' field",
+                "ids": missing_ids,
+            }],
+        }
+
+    try:
+        validate_transition(old_data.get("status"), "superseded")
     except InvalidTransitionError as exc:
         return {
             "ok": False,
             "operation": "supersede",
             "errors": [{"code": "INVALID_TRANSITION", "detail": str(exc)}],
+        }
+
+    if new_data.get("status") != "accepted":
+        return {
+            "ok": False,
+            "operation": "supersede",
+            "errors": [{
+                "code": "INVALID_SUPERSEDING_STATUS",
+                "detail": (
+                    f"Superseding ADR {new_data['id']} must have status 'accepted', "
+                    f"found {new_data.get('status')!r}."
+                ),
+                "id": args.by,
+            }],
         }
 
     if getattr(args, "dry_run", False):
@@ -53,7 +99,6 @@ def run(args) -> dict:
             "would_update": [str(old_file), str(new_file)],
         }
 
-    new_data, new_body = fm.parse(new_file.read_text(encoding="utf-8"))
     old_data["status"] = "superseded"
     old_data["superseded_by"] = new_data["id"]
 
@@ -69,12 +114,15 @@ def run(args) -> dict:
     old_file.write_text(old_output, encoding="utf-8")
     try:
         new_file.write_text(new_output, encoding="utf-8")
-    except Exception:
+    except Exception as write_exc:
         # Preserve the original failure while making the completed first write recoverable.
         try:
             old_file.write_text(old_text, encoding="utf-8")
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            raise RuntimeError(
+                f"Failed to write {new_file} ({write_exc!r}); rollback of {old_file} also "
+                f"failed ({rollback_exc!r}); {old_file} may be left in an inconsistent state"
+            ) from write_exc
         raise
 
     return {

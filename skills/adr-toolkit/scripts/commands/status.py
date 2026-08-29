@@ -17,10 +17,17 @@ def run(args) -> dict:
             "errors": [{"code": "ADR_NOT_FOUND", "id": args.adr_number}],
         }
 
-    data, body = fm.parse(target_file.read_text(encoding="utf-8"))
+    try:
+        data, body = fm.parse(target_file.read_text(encoding="utf-8"))
+    except fm.FrontmatterError as exc:
+        return {
+            "ok": False,
+            "operation": "status",
+            "errors": [{"code": "BAD_FRONTMATTER", "file": target_file.name, "detail": str(exc)}],
+        }
 
     try:
-        validate_transition(data["status"], args.to)
+        validate_transition(data.get("status"), args.to)
     except InvalidTransitionError as exc:
         return {
             "ok": False,

@@ -69,6 +69,17 @@ def test_missing_adr_is_reported(tmp_path):
     assert result["errors"][0]["code"] == "ADR_NOT_FOUND"
 
 
+def test_bad_frontmatter_is_reported(tmp_path):
+    (tmp_path / "0001-use-kafka.md").write_text("not frontmatter at all", encoding="utf-8")
+
+    result = status.run(
+        SimpleNamespace(adr_number=1, to="accepted", dir=str(tmp_path), dry_run=False)
+    )
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "BAD_FRONTMATTER"
+
+
 def test_dry_run_does_not_write(tmp_path):
     (tmp_path / "0001-use-kafka.md").write_text(ACCEPTED_ADR, encoding="utf-8")
 
