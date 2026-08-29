@@ -125,10 +125,14 @@ workflow does not.
    `existing_adr_directory` is `null`, stop and tell the user to run INIT
    first.
 2. **GATHER EVIDENCE** — inspect the affected repository paths; for a
-   retrospective request, inspect the requested branch/diff range. Then run
-   `python skills/adr-toolkit/scripts/adr.py related --paths <affected-paths> --tags <tags> --dir docs/decisions --json`
-   before drafting, to find ADRs that already cover, conflict with, or may be
-   replaced by the candidate.
+   retrospective request, inspect the requested branch/diff range. Before
+   drafting, run `related` with only evidence-backed optional filters, for
+   example:
+   `python skills/adr-toolkit/scripts/adr.py related --paths src/events deploy/kafka --tags kafka messaging --keyword broker --dir docs/decisions --json`.
+   Values after `--paths` and `--tags` are space-separated, not comma-joined.
+   Omit `--paths`, `--tags`, or `--keyword` when that evidence is unknown;
+   never invent a path, tag, or keyword. Use the results to find ADRs that
+   already cover, conflict with, or may be replaced by the candidate.
 3. **CLASSIFY** — apply the table above, then read
    `references/significance-rules.md`. Score only evidence-supported 0/1/2
    values; never guess or inflate a score to force a band. Write all seven
@@ -139,7 +143,9 @@ workflow does not.
    override any band and ask to record the ADR.
 4. **ASK-IF-NEEDED** — follow `references/interview-guide.md`, ask no more
    than 3 substantive questions per round, and skip facts already established
-   by the request, repository, diff, discovery, or related ADRs.
+   by the request, repository, diff, discovery, or related ADRs. Each
+   independently answerable priority item counts as one question; never bundle
+   items to bypass the cap, and defer lower-priority items after three.
 5. **PLAN** — draft a minimal or full MADR per `references/madr-guide.md`. If
    a retrospective rationale is reconstructed, preserve the separate
    Confirmed Evidence, Inferred Rationale, and Unknown subsections defined in
@@ -164,7 +170,10 @@ workflow does not.
 
 ## Lifecycle operations
 
-Lifecycle changes are explicit and user-triggered. Always preview with
+Lifecycle changes are explicit and user-triggered. First run
+`python skills/adr-toolkit/scripts/adr.py preflight --json`. If
+`existing_adr_directory` is `null`, stop and direct the user to INIT; do not
+run a lifecycle dry-run against an absent directory. Otherwise, preview with
 `--dry-run --json`, show the old status -> new status or the supersession link
 pair, and ask for confirmation. Only then run the same command without
 `--dry-run`. Never hand-edit `status`, `superseded_by`, or `supersedes`.
