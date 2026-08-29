@@ -27,5 +27,6 @@ Ask the highest-priority unanswered question first:
 
 ## If the user's answer is ambiguous
 
-Ask one focused follow-up rather than guessing. That follow-up still counts
-against the 3-question cap for the round.
+Do not treat an ambiguous answer as complete or advance to lower-priority
+questions. Ask one focused follow-up first rather than guessing. That
+follow-up still counts against the 3-question cap for the round.
