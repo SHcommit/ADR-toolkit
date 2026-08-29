@@ -59,7 +59,14 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    result = HANDLERS[args.operation](args)
+    try:
+        result = HANDLERS[args.operation](args)
+    except Exception as exc:  # noqa: BLE001 - last-resort safety net for the JSON-only-stdout contract
+        result = {
+            "ok": False,
+            "operation": args.operation,
+            "errors": [{"code": "INTERNAL_ERROR", "detail": str(exc)}],
+        }
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result.get("ok") else 1
 

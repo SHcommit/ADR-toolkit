@@ -53,3 +53,13 @@ def test_index_skips_readme_and_template_files(tmp_path):
     (tmp_path / "adr-template.md").write_text("not an ADR", encoding="utf-8")
     result = index.run(SimpleNamespace(dir=str(tmp_path)))
     assert result["count"] == 0
+
+
+def test_index_skips_malformed_frontmatter_file_with_warning_instead_of_raising(tmp_path):
+    (tmp_path / "0001-malformed.md").write_text("not frontmatter at all\n", encoding="utf-8")
+
+    result = index.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is True
+    assert result["count"] == 0
+    assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0001-malformed.md" for w in result["warnings"])

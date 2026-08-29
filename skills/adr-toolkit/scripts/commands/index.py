@@ -10,6 +10,7 @@ SKIP_FILES = {"README.md", "adr-template.md"}
 def run(args) -> dict:
     adr_dir = Path(args.dir)
     entries = []
+    warnings = []
 
     for entry in sorted(adr_dir.glob("*.md")):
         if entry.name in SKIP_FILES:
@@ -17,7 +18,11 @@ def run(args) -> dict:
         parsed = identifiers.parse_filename(entry.name)
         if parsed is None:
             continue
-        data, _ = fm.parse(entry.read_text(encoding="utf-8"))
+        try:
+            data, _ = fm.parse(entry.read_text(encoding="utf-8"))
+        except fm.FrontmatterError as exc:
+            warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
+            continue
         entries.append({
             "id": data.get("id", f"ADR-{parsed[0]:04d}"),
             "filename": entry.name,
@@ -30,7 +35,13 @@ def run(args) -> dict:
 
     (adr_dir / "README.md").write_text(_render(entries), encoding="utf-8")
 
-    return {"ok": True, "operation": "index", "count": len(entries), "path": str(adr_dir / "README.md")}
+    return {
+        "ok": True,
+        "operation": "index",
+        "count": len(entries),
+        "path": str(adr_dir / "README.md"),
+        "warnings": warnings,
+    }
 
 
 def _render(entries: list) -> str:
