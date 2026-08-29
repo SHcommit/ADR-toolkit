@@ -1,42 +1,54 @@
 # handoff.md
 
 Current task:
-- Brainstorming (architectural path) for ADR Toolkit MVP, based on
-  `adr-toolkit-prd.md` v0.1 draft. Design decisions made in-session with the
-  user (index structure, CHECK depth, harness priority, i18n scope) are
-  written up in `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md`.
+- ADR Toolkit MVP, Plan 1 of 4 ("core scripts + INIT/DISCOVER") is fully
+  implemented, reviewed clean (per-task review + final whole-branch review
+  + one fix wave + scoped re-review, all clean), and committed on
+  `SHcommit/feat-plan-adr-toolkit`. 73/73 tests pass. Branch kept as-is
+  (not merged to `master`) and pushed to `origin` per user request.
 
-Touched files:
-- `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` (new design doc)
-- `project-roadmap.md` (new, holds everything deferred out of MVP)
-- `handoff.md` (this file)
+Touched files (this round):
+- `handoff.md`, `improvements.md` (this update)
+- Everything under `skills/adr-toolkit/`, `adapters/`, `tests/`,
+  `.github/workflows/test.yml`, `.claude-plugin/`, `.gitignore` (Plan 1
+  implementation + final-review fixes, already committed)
 
-Next step:
-- Done while user was away: design spec self-reviewed (no placeholders/
-  contradictions found), `project-roadmap.md` written, and Plan 1 of 4
-  ("core scripts + INIT") written in full to
-  `docs/superpowers/plans/2026-08-29-adr-toolkit-core-and-init.md`
-  (18 bite-sized TDD tasks, self-reviewed for spec coverage and type
-  consistency). All committed locally (no pushes made).
-- Deliberately stopped before executing the plan (writing actual
-  scripts/*.py code) and before writing Plans 2-4 (RECORD, CHECK,
-  i18n+other adapters+release) — that crosses from planning into
-  implementation, which per the brainstorming skill's hard gate needs the
-  user's explicit go-ahead, and they haven't yet done a line-by-line
-  review of the spec itself.
-- On the user's return: (1) confirm the MIT license call in spec §13,
-  decided in their absence; (2) confirm they're still happy with CHECK's
-  structural-only scope (spec §7) now that the concrete rule table exists;
-  (3) pick an execution approach for Plan 1 — subagent-driven (fresh
-  subagent per task) or inline (executing-plans skill, batched with
-  checkpoints); (4) decide whether to write Plans 2-4 now or after Plan 1
-  lands.
+Next step — in priority order:
+1. **Confirm 3 open decisions before going further:**
+   - License: MIT was proposed in the design spec (§13) while the user was
+     away; needs explicit sign-off before any public release.
+   - Final MVP scope: whether to keep 5 languages / 4 harnesses as
+     originally agreed, or trim further (raised once, user hasn't answered
+     yet — Plan 1 itself is unaffected either way, since it only built
+     English + Claude Code).
+   - Trivial: `adapters/generic/README.md` line 29 has a leftover bare
+     `python scripts/adr.py` reference in prose (should say
+     `python skills/adr-toolkit/scripts/adr.py` like the rest of the file)
+     — noted by the final review as non-blocking, still unfixed.
+2. **Write and execute Plan 2 (RECORD workflow):** significance scoring
+   (0–14 scale, spec §8.3 lineage), related-ADR search, lifecycle CLI verbs
+   (`status`/`supersede`/`deprecate`, spec's "Lifecycle operations"
+   section), RECORD's dual forward-looking/retrospective support, the
+   "what belongs in an ADR" classification table already shared with
+   INIT/DISCOVER.
+3. **Plan 3 (CHECK workflow):** structured `constraints:` YAML rule
+   matching (spec §7), four-way finding classification (Related/Review
+   required/Verified violation/No applicable constraint), five resolution
+   options on a verified violation.
+4. **Plan 4:** i18n wiring (5 locales) into the skill's runtime text,
+   Codex/Gemini CLI/Antigravity CLI adapters (their manifest formats are
+   NOT yet verified against real docs — the Claude adapter mistake found in
+   final review, where the "skills" key and manifest location were wrong,
+   is a concrete warning to verify before building these, not just guess),
+   release automation (version sync, CHANGELOG, GitHub Release).
+5. Decide when to make the GitHub repo actually public / promote it, given
+   the stated goal of open-source adoption and stars.
 
 Open risk:
-- CHECK's conflict detection is scoped to structural/path evidence only for
-  MVP (semantic taxonomy deferred) — this was an explicit trade discussed
-  with the user, not an oversight, but worth re-confirming they're still
-  comfortable with it once they see the concrete rule table in §7 of the
-  design doc.
-- License (MIT) was decided without the user present; must be confirmed,
-  not assumed final.
+- CHECK's conflict detection is scoped to structural/`constraints:`-block
+  evidence only for MVP (semantic taxonomy deferred to
+  `project-roadmap.md`) — an explicit trade already agreed with the user,
+  not an oversight.
+- Whichever future plan builds the Codex/Gemini CLI/Antigravity adapters
+  must verify each harness's actual manifest/discovery convention against
+  real documentation first — do not assume it mirrors Claude Code's.
