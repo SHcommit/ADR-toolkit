@@ -150,3 +150,23 @@ def test_malformed_adr_frontmatter_degrades_to_warning(tmp_path):
 
     assert result["ok"] is True
     assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0009-broken.md" for w in result["warnings"])
+
+
+def test_unreadable_adr_file_degrades_to_warning_and_keeps_other_findings(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    (adr_dir / "0010-invalid-utf8.md").write_bytes(b"\xff\xfe not valid utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    assert result["ok"] is True
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert violation["adr_id"] == "ADR-0001"
+    assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0010-invalid-utf8.md" for w in result["warnings"])

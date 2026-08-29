@@ -65,7 +65,7 @@ def _load_adrs(adr_dir: Path) -> tuple:
             continue
         try:
             data, body = fm.parse(entry.read_text(encoding="utf-8"))
-        except fm.FrontmatterError as exc:
+        except (fm.FrontmatterError, OSError, UnicodeDecodeError) as exc:
             warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
             continue
         entries.append({"data": data, "body": body})
