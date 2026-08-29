@@ -103,7 +103,7 @@ entirely, or re-run later to mine more of the history incrementally.
 ## What belongs in an ADR
 
 Not every structural-looking finding deserves a new file. Apply this table
-during CLASSIFY, in both INIT/DISCOVER and (once built) RECORD:
+during CLASSIFY, in INIT/DISCOVER and RECORD:
 
 | Content | Where it belongs |
 |---|---|
@@ -113,6 +113,72 @@ during CLASSIFY, in both INIT/DISCOVER and (once built) RECORD:
 | Usage/behavior explanation | README or docs |
 | Incident/outage response | Incident report / postmortem |
 | A rule that must hold going forward | ADR's Implementation Constraints |
+
+## RECORD
+
+Use RECORD for both a forward-looking decision question and a retrospective
+request to find decisions in a branch or diff. The trigger changes; the
+workflow does not.
+
+1. **PREFLIGHT** — run
+   `python skills/adr-toolkit/scripts/adr.py preflight --json`. If
+   `existing_adr_directory` is `null`, stop and tell the user to run INIT
+   first.
+2. **GATHER EVIDENCE** — inspect the affected repository paths; for a
+   retrospective request, inspect the requested branch/diff range. Then run
+   `python skills/adr-toolkit/scripts/adr.py related --paths <affected-paths> --tags <tags> --dir docs/decisions --json`
+   before drafting, to find ADRs that already cover, conflict with, or may be
+   replaced by the candidate.
+3. **CLASSIFY** — apply the table above, then read
+   `references/significance-rules.md`. Score only evidence-supported 0/1/2
+   values; never guess or inflate a score to force a band. Write all seven
+   scores to `scores.json` and run
+   `python skills/adr-toolkit/scripts/adr.py significance --input scores.json --json`.
+   For `not_needed`, recommend a commit message or code comment instead; for
+   `optional`, let the user decide; for `recommended`, continue. The user may
+   override any band and ask to record the ADR.
+4. **ASK-IF-NEEDED** — follow `references/interview-guide.md`, ask no more
+   than 3 substantive questions per round, and skip facts already established
+   by the request, repository, diff, discovery, or related ADRs.
+5. **PLAN** — draft a minimal or full MADR per `references/madr-guide.md`. If
+   a retrospective rationale is reconstructed, preserve the separate
+   Confirmed Evidence, Inferred Rationale, and Unknown subsections defined in
+   DISCOVER. Use `related` results to identify a possible replacement, but do
+   not assume supersession.
+6. **CONFIRM** — before any `create`, show the title, problem, considered
+   options, decision, primary driver, accepted downside, and affected paths.
+   Get explicit approval of the draft. If it may replace an Accepted ADR,
+   separately confirm that supersession is intended.
+7. **MUTATE** — write the approved draft JSON and run
+   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions --json`.
+   Only after explicit supersession intent and approval, follow the
+   supersede preview and mutation sequence in Lifecycle operations; never
+   hand-edit lifecycle fields or links.
+8. **VALIDATE** — run
+   `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
+   and
+   `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
+9. **REPORT** — report facts found, judgment and significance result,
+   questions asked, files created or updated, validation result, and remaining
+   uncertainty.
+
+## Lifecycle operations
+
+Lifecycle changes are explicit and user-triggered. Always preview with
+`--dry-run --json`, show the old status -> new status or the supersession link
+pair, and ask for confirmation. Only then run the same command without
+`--dry-run`. Never hand-edit `status`, `superseded_by`, or `supersedes`.
+
+| User intent | Preview | After confirmation |
+|---|---|---|
+| Accept an ADR | `python skills/adr-toolkit/scripts/adr.py status <N> --to accepted --dir docs/decisions --dry-run --json` | `python skills/adr-toolkit/scripts/adr.py status <N> --to accepted --dir docs/decisions --json` |
+| Deprecate an ADR without a replacement | `python skills/adr-toolkit/scripts/adr.py deprecate <N> --dir docs/decisions --dry-run --json` | `python skills/adr-toolkit/scripts/adr.py deprecate <N> --dir docs/decisions --json` |
+| Supersede an ADR with another | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --dry-run --json` | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --json` |
+
+After a successful mutation, run the same validate and index commands as
+RECORD. If a preview or mutation returns `INVALID_TRANSITION`, stop and
+explain the rejected transition using `references/lifecycle.md`; do not retry
+with a different status or bypass the script.
 
 ## Prohibited
 
@@ -131,8 +197,9 @@ during CLASSIFY, in both INIT/DISCOVER and (once built) RECORD:
 ## Script reference
 
 All mutating and validating operations are deterministic scripts under
-`scripts/`; this skill never re-implements ID assignment, file writes, or
-schema validation in prose — it only decides what to ask and what to draft.
+`skills/adr-toolkit/scripts/`; this skill never re-implements ID assignment,
+file writes, or schema validation in prose — it only decides what to ask and
+what to draft.
 
-RECORD and CHECK workflows are not yet implemented (see `project-roadmap.md`
-in the repository root and the design spec this skill is built from).
+CHECK is not yet implemented (see `project-roadmap.md` in the repository root
+and the design spec this skill is built from).
