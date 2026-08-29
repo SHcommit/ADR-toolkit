@@ -24,7 +24,6 @@ def run(args) -> dict:
             "errors": [{"code": "MISSING_DRAFT_FIELD", "fields": sorted(missing)}],
         }
 
-    adr_dir.mkdir(parents=True, exist_ok=True)
     next_num = identifiers.next_id(adr_dir)
     slug = identifiers.slugify(draft["title"])
     filename = identifiers.format_filename(next_num, slug)
@@ -60,8 +59,9 @@ def run(args) -> dict:
     content = fm.serialize(frontmatter_data, draft["body"].strip() + "\n")
 
     if dry_run:
-        return {"ok": True, "operation": "create", "dry_run": True, "would_create": str(target)}
+        return {"ok": True, "operation": "create", "dry_run": True, "would_create": str(target), "id": frontmatter_data["id"]}
 
+    adr_dir.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
 
     return {

@@ -65,3 +65,28 @@ def test_missing_required_draft_field_is_an_error(tmp_path):
 
     assert result["ok"] is False
     assert result["errors"][0]["code"] == "MISSING_DRAFT_FIELD"
+
+
+def test_dry_run_against_nonexistent_dir_does_not_create_dir(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    # Note: adr_dir is NOT created beforehand
+    draft_path = _write_draft(tmp_path)
+
+    result = create.run(SimpleNamespace(input=str(draft_path), dir=str(adr_dir), dry_run=True))
+
+    assert result["ok"] is True
+    assert result["dry_run"] is True
+    assert not adr_dir.exists()
+
+
+def test_dry_run_response_includes_id(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    draft_path = _write_draft(tmp_path)
+
+    result = create.run(SimpleNamespace(input=str(draft_path), dir=str(adr_dir), dry_run=True))
+
+    assert result["ok"] is True
+    assert result["dry_run"] is True
+    assert "id" in result
+    assert result["id"] == "ADR-0001"
