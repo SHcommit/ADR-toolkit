@@ -12,11 +12,6 @@ the current session.
   — left over from before the local rename to
   `feat/adr-toolkit-mvp-implement`; delete it on `origin` once confirmed
   it's not needed (e.g. no open PR references it).
-- [ ] **Write a real root `README.md`.** Still a one-line stub at
-  MVP-complete. Should point a new user at the four
-  `adapters/*/README.md` install guides and at `create --interactive`'s
-  no-agent-needed path. Do this before any public release, alongside the
-  license decision below.
 - [ ] `scripts/adr.py`'s `--json` flag is parsed on every subcommand but never
   read (output is always JSON regardless). Either implement a non-JSON
   mode or drop the flag.
