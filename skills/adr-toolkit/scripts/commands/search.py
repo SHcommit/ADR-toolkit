@@ -8,7 +8,7 @@ from pathlib import Path
 
 from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
-from scripts.core.query import matches_tags_any, path_governed_by
+from scripts.core.query import matches_tags_any, path_governed_by, rank_key
 
 
 def run(args) -> dict:
@@ -17,6 +17,7 @@ def run(args) -> dict:
     query_tags = set(getattr(args, "tags", None) or [])
     status = getattr(args, "status", None)
     path = getattr(args, "path", None)
+    limit = getattr(args, "limit", None)
 
     results = []
     warnings = []
@@ -66,12 +67,33 @@ def run(args) -> dict:
             "status": data.get("status"),
             "tags": data.get("tags", []),
             "matched_in": matched_in,
+            "_body": body,  # used only for ranking below, stripped before returning
         })
+
+    results.sort(key=lambda r: rank_key({"id": r["id"], "title": r["title"], "body": r["_body"]}, keyword))
+    for r in results:
+        del r["_body"]
+
+    total = len(results)
+    if limit is not None:
+        truncated = total > limit
+        results = results[:limit]
+    else:
+        truncated = False
 
     return {
         "ok": True,
         "operation": "search",
+        "query": {
+            "keyword": getattr(args, "keyword", None),
+            "tags": getattr(args, "tags", None),
+            "status": status,
+            "path": path,
+            "limit": limit,
+        },
         "count": len(results),
+        "total": total,
+        "truncated": truncated,
         "results": results,
         "warnings": warnings,
     }

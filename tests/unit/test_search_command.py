@@ -120,6 +120,51 @@ def test_search_combines_same_field_values_with_or(tmp_path):
     assert result["count"] == 2
 
 
+def test_search_orders_exact_title_match_before_substring_match(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="cache policy extended")
+    _write_adr(adr_dir, "0002-b.md", id="ADR-0002", title="cache")
+
+    result = search.run(_args(adr_dir, keyword="cache"))
+
+    assert [r["id"] for r in result["results"]] == ["ADR-0002", "ADR-0001"]
+
+
+def test_search_limit_truncates_and_reports_total(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="A")
+    _write_adr(adr_dir, "0002-b.md", id="ADR-0002", title="B")
+    _write_adr(adr_dir, "0003-c.md", id="ADR-0003", title="C")
+
+    result = search.run(_args(adr_dir, limit=2))
+
+    assert result["count"] == 2
+    assert result["total"] == 3
+    assert result["truncated"] is True
+    assert len(result["results"]) == 2
+
+
+def test_search_no_limit_is_not_truncated(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="A")
+
+    result = search.run(_args(adr_dir))
+
+    assert result["total"] == 1
+    assert result["truncated"] is False
+
+
+def test_search_echoes_the_query(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="A", tags=["cli"])
+
+    result = search.run(_args(adr_dir, keyword="a", tags=["cli"], status="accepted"))
+
+    assert result["query"] == {
+        "keyword": "a", "tags": ["cli"], "status": "accepted", "path": None, "limit": None,
+    }
+
+
 def test_search_malformed_adr_degrades_to_warning(tmp_path):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
