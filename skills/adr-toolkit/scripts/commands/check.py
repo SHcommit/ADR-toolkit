@@ -7,6 +7,7 @@ from scripts.commands import diff as diff_command
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.constraints import ConstraintsError, extract_constraints
+from scripts.core.git_paths import GitPathsError, list_existing_paths
 from scripts.rules import conflict
 
 SKIP_FILES = {"README.md", "adr-template.md"}
@@ -29,7 +30,14 @@ def run(args) -> dict:
     diff_files = diff_result["files"]
 
     root = Path(getattr(args, "root", ".")).resolve()
-    existing_paths = _existing_paths(root)
+    try:
+        existing_paths = list_existing_paths(root)
+    except GitPathsError as exc:
+        return {
+            "ok": False,
+            "operation": "check",
+            "errors": [{"code": "GIT_LS_FILES_FAILED", "detail": str(exc)}],
+        }
 
     # `--dir` is relative to `--root`, so `check --root /repo --dir docs/decisions`
     # means the same directory no matter what the process CWD happens to be.
@@ -160,15 +168,3 @@ def _missing_realization(body: str, diff_files: list, existing_paths: set):
         ),
         "evidence": {"unrealized_paths": missing},
     }
-
-
-def _existing_paths(root: Path) -> set:
-    paths = set()
-    for entry in root.rglob("*"):
-        if not entry.is_file():
-            continue
-        relative = entry.relative_to(root)
-        if ".git" in relative.parts:
-            continue
-        paths.add(relative.as_posix())
-    return paths

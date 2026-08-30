@@ -367,6 +367,57 @@ def test_review_required_fires_when_a_confirmation_path_was_never_created(tmp_pa
     assert finding["evidence"]["unrealized_paths"] == ["tests/test_replay.py"]
 
 
+def test_ignored_artifact_does_not_satisfy_file_must_exist(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs/decisions"
+    adr_dir.mkdir(parents=True)
+    adr = """---
+id: ADR-0011
+title: Require generated policy manifest
+status: accepted
+date: 2026-08-03
+decision_makers: []
+related: []
+affected_paths:
+  - src/
+tags: []
+retrospective: false
+---
+
+# Require generated policy manifest
+
+## Implementation Constraints
+
+```yaml
+constraints:
+  - id: generated-policy-must-be-versioned
+    kind: file_must_exist
+    paths: ["build/generated-policy.json"]
+    pattern: []
+    severity: major
+    message: "The generated policy manifest must be versioned."
+```
+"""
+    (adr_dir / "0011-require-generated-policy-manifest.md").write_text(
+        adr, encoding="utf-8"
+    )
+    (tmp_path / ".gitignore").write_text("build/\n", encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("value = 1\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+
+    (tmp_path / "build").mkdir()
+    (tmp_path / "build/generated-policy.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / "src/app.py").write_text("value = 2\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert violation["rule_id"] == "generated-policy-must-be-versioned"
+    assert violation["evidence"]["missing_paths"] == ["build/generated-policy.json"]
+
+
 STRING_AFFECTED_PATHS_ADR = """---
 id: ADR-0020
 title: Scalar affected paths
