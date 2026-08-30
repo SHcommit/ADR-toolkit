@@ -135,11 +135,13 @@ governance is kept separate in `docs/enterprise-adoption.md`.
 
 `improvements.md` has exactly one open item left: the P0 release gate.
 **PR #2 is open, CI green, `mergeable`**
-(https://github.com/SHcommit/ADR-toolkit/pull/2). Everything left needs
-separate, explicit owner approval not yet given, in order:
+(https://github.com/SHcommit/ADR-toolkit/pull/2). Remaining steps, each
+needing separate, explicit owner approval:
 
-1. The v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`;
-   run `scripts/sync_version.py` after bumping to propagate).
+1. ✅ **Done** (`29b2e22`) — v0.2.0 version bump. `skills/adr-toolkit/VERSION`
+   is `0.2.0`; `scripts/sync_version.py` propagated it to
+   `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`,
+   `SKILL.md`. Pushed; CI re-ran green (6/6) on this commit too.
 2. Merging PR #2 (into `develop`) — normal merge or squash, per repo
    convention; no merge has been authorized in this session.
 3. Cutting a `release/*` branch into `master` and back into `develop`, per
@@ -148,8 +150,9 @@ separate, explicit owner approval not yet given, in order:
    then runs the full suite, verifies manifest versions against the tag,
    and publishes the GitHub Release automatically.
 
-Do not perform 1-4 without asking first — each is a separate explicit
-approval point, not implied by "CI is green."
+Do not perform 2-4 without asking first — each is a separate explicit
+approval point, not implied by "CI is green" or by an earlier step's
+approval.
 
 `project-roadmap.md` was updated to mark "ADR navigation and scale"'s first
 bullet done, with the remaining three (graph *rendering* specifically,
