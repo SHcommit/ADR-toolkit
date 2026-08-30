@@ -17,11 +17,13 @@ from scripts.commands import (
     init,
     preflight,
     related,
+    search,
     significance,
     status,
     supersede,
     validate,
 )
+from scripts.core.lifecycle import STATUSES
 from scripts.core.locale import SUPPORTED_LOCALES
 
 
@@ -136,6 +138,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_exception.add_argument("--dry-run", dest="dry_run", action="store_true")
     _add_json_flag(p_exception)
 
+    p_search = sub.add_parser("search")
+    p_search.add_argument("--keyword")
+    p_search.add_argument("--tags", nargs="*")
+    p_search.add_argument("--status", choices=sorted(STATUSES))
+    p_search.add_argument("--path")
+    p_search.add_argument("--limit", type=int)
+    p_search.add_argument("--dir", default="docs/decisions")
+    _add_json_flag(p_search)
+
     return parser
 
 
@@ -154,6 +165,7 @@ HANDLERS = {
     "diff": diff.run,
     "check": check.run,
     "exception": exception.run,
+    "search": search.run,
 }
 
 
