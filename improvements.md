@@ -15,11 +15,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ### P1 — strongly recommended
 
-- [ ] **Correct Codex adapter claims.** Scope the README to the root
-  `.claude-plugin/marketplace.json` flow actually exercised and explain why the
-  adapter-local symlink remains relevant to native `.codex-plugin` discovery.
-  **Done when:** every claim maps to a verified command or is explicitly marked
-  structural-only.
 - [ ] **Decide manifest-description ownership.** Description text has drifted
   across manifests while only versions are synchronized.
   **Done when:** one canonical source and a check are implemented, or an ADR
@@ -41,6 +36,13 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Corrected `adapters/codex/README.md`: re-verified against Codex CLI
+  0.151.0 that the documented install flow works with zero
+  `adapters/codex/skills/` symlink present (marketplace root resolves to the
+  repo root's own `.claude-plugin/plugin.json`, whose sibling `skills/` is
+  the real package), removed the misleading symlink as install step 1, and
+  added an explicit section marking `.codex-plugin/plugin.json` and its
+  optional symlink as structural-only, not exercised by the verified path.
 - [x] Centralized ADR directory loading: `related`, `index`, `validate`, and
   `check` now share `core.adr_directory.iter_adr_files` instead of each
   redefining `SKIP_FILES` and re-walking the directory; each command keeps its
