@@ -20,3 +20,13 @@ def resolve(entries: list) -> list:
         if superseded_by:
             edges.append(Relationship(source=source, type="superseded_by", target=superseded_by))
     return edges
+
+
+def missing_targets(relationships: list, known_ids: set) -> list:
+    return [r for r in relationships if r.target not in known_ids]
+
+
+def supersession_mismatches(relationships: list) -> list:
+    supersedes_edges = {(r.source, r.target) for r in relationships if r.type == "supersedes"}
+    superseded_by_edges = {(r.target, r.source) for r in relationships if r.type == "superseded_by"}
+    return sorted(supersedes_edges - superseded_by_edges)
