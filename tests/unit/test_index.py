@@ -205,3 +205,43 @@ def test_index_survives_a_completely_absent_i18n_directory(tmp_path, monkeypatch
     assert "## Chronological (newest first)" in readme
     assert "### Accepted" in readme
     assert "ADR-0001" in readme
+
+
+def test_index_relationships_section_shows_supersession_with_titles(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0003-old.md").write_text(
+        "---\nid: ADR-0003\ntitle: Old decision\nstatus: superseded\n"
+        "date: 2026-08-31\ndecision_makers: []\nrelated: []\naffected_paths: []\n"
+        "tags: []\nretrospective: false\nsuperseded_by: ADR-0006\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    (adr_dir / "0006-new.md").write_text(
+        "---\nid: ADR-0006\ntitle: New decision\nstatus: accepted\n"
+        "date: 2026-08-31\ndecision_makers: []\nrelated: []\naffected_paths: []\n"
+        "tags: []\nretrospective: false\nsupersedes:\n  - ADR-0003\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+
+    index.run(SimpleNamespace(dir=str(adr_dir), root=str(tmp_path), locale=None))
+
+    readme = (adr_dir / "README.md").read_text(encoding="utf-8")
+    assert "## Relationships" in readme
+    assert "ADR-0003" in readme and "Old decision" in readme
+    assert "ADR-0006" in readme and "New decision" in readme
+
+
+def test_index_relationships_section_omits_adr_with_no_relationships(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-lonely.md").write_text(
+        "---\nid: ADR-0001\ntitle: Lonely decision\nstatus: accepted\n"
+        "date: 2026-08-31\ndecision_makers: []\nrelated: []\naffected_paths: []\n"
+        "tags: []\nretrospective: false\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+
+    index.run(SimpleNamespace(dir=str(adr_dir), root=str(tmp_path), locale=None))
+
+    readme = (adr_dir / "README.md").read_text(encoding="utf-8")
+    assert "Lonely decision" not in readme.split("## Relationships")[1]
