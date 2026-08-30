@@ -4,6 +4,25 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added repository-configured deterministic ADR localization for eight locales
+  (`en`, `ko`, `ja`, `zh`, `fr`, `es`, `de`, `pt-BR`) across INIT, CREATE,
+  templates, prompts, and INDEX, with strict config/schema validation and
+  explicit override precedence.
+- Added portable multilingual ADR creation: Unicode titles and bodies are
+  preserved, an approved semantic ASCII slug can be supplied, and non-ASCII
+  titles safely fall back to an ID-qualified `decision` filename.
+- Hardened CHECK against false-clean results by failing closed on incomplete git
+  evidence, retaining both sides of renames and Unicode paths, detecting
+  working-tree deletions, exposing invalid ADRs, following Git ignore/path
+  semantics, and rejecting conflicting diff modes.
+- Made relative ADR directories resolve consistently from `--root` for every
+  repository-scoped generation and validation command.
+- Improved the repository's own ADR evidence and lifecycle history, including
+  the accepted ADR-0006 decision that supersedes the MVP index-only
+  localization decision ADR-0003.
+- Expanded README, quickstart, and skill guidance with real multilingual
+  workflows and CHECK confidence boundaries, and added separate Korean v0.2.0
+  readiness and enterprise-adoption reports.
 - Added the self-contained `skills/adr-toolkit/` package: deterministic
   scaffolding/discovery commands (`init`, `discover`, `preflight`,
   `validate`, `index`), ADR frontmatter/ID/lifecycle core logic, MADR

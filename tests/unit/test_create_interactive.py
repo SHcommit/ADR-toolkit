@@ -1,6 +1,20 @@
 from types import SimpleNamespace
 
+import pytest
+
 from scripts.commands import create
+
+
+INTERACTIVE_LOCALE_CASES = {
+    "en": ("Title of the decision?", "Context and Problem Statement"),
+    "ko": ("결정의 제목은 무엇인가요?", "맥락 및 문제 설명"),
+    "ja": ("決定のタイトルは何ですか？", "コンテキストと問題"),
+    "zh": ("决策标题是什么？", "背景与问题陈述"),
+    "fr": ("Quel est le titre de la décision ?", "Contexte et problème"),
+    "es": ("¿Cuál es el título de la decisión?", "Contexto y problema"),
+    "de": ("Wie lautet der Titel der Entscheidung?", "Kontext und Problemstellung"),
+    "pt-BR": ("Qual é o título da decisão?", "Contexto e problema"),
+}
 
 
 def test_gather_draft_interactively_builds_valid_minimal_body():
@@ -84,3 +98,20 @@ def test_gather_draft_interactively_localizes_korean_structure():
     assert "## 맥락 및 문제 설명" in draft["body"]
     assert "장애 격리가 필요하다" in draft["body"]
     assert draft["locale"] == "ko"
+
+
+@pytest.mark.parametrize("locale", INTERACTIVE_LOCALE_CASES)
+def test_interactive_create_prompts_and_renders_every_supported_locale(locale, capsys):
+    expected_prompt, expected_heading = INTERACTIVE_LOCALE_CASES[locale]
+    answers = iter([
+        "Decision title", "Problem", "Option A, Option B", "Option A",
+        "Rationale", "Benefit", "Cost", "CI evidence", "Trigger",
+    ])
+
+    draft = create.gather_draft_interactively(
+        locale, input_fn=lambda _prompt: next(answers)
+    )
+
+    assert expected_prompt in capsys.readouterr().err
+    assert f"## {expected_heading}" in draft["body"]
+    assert draft["locale"] == locale

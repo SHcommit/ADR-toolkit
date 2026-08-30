@@ -5,16 +5,18 @@ from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.config import ConfigError, load_repository_config
 from scripts.core.schema import validate_frontmatter
+from scripts.core.repository_paths import resolve_from_root
 
 SKIP_FILES = {"README.md", "adr-template.md"}
 
 
 def run(args) -> dict:
-    adr_dir = Path(args.dir)
+    root = Path(getattr(args, "root", "."))
+    adr_dir = resolve_from_root(root, args.dir)
     errors = []
 
     try:
-        load_repository_config(Path(getattr(args, "root", ".")))
+        load_repository_config(root)
     except ConfigError as exc:
         return {
             "ok": False,

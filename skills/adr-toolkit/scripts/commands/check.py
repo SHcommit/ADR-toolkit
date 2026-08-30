@@ -8,6 +8,8 @@ from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.constraints import ConstraintsError, extract_constraints
 from scripts.core.git_paths import GitPathsError, list_existing_paths
+from scripts.core.repository_paths import resolve_from_root
+from scripts.core.schema import validate_frontmatter
 from scripts.rules import conflict
 
 SKIP_FILES = {"README.md", "adr-template.md"}
@@ -41,9 +43,7 @@ def run(args) -> dict:
 
     # `--dir` is relative to `--root`, so `check --root /repo --dir docs/decisions`
     # means the same directory no matter what the process CWD happens to be.
-    adr_dir = Path(args.dir)
-    if not adr_dir.is_absolute():
-        adr_dir = root / adr_dir
+    adr_dir = resolve_from_root(root, args.dir)
     if not adr_dir.is_dir():
         # Silently proceeding here would emit a confident "no conflicts" for
         # what is really a configuration error.
@@ -136,6 +136,14 @@ def _load_adrs(adr_dir: Path) -> tuple:
             data, body = fm.parse(entry.read_text(encoding="utf-8"))
         except (fm.FrontmatterError, OSError, UnicodeDecodeError) as exc:
             warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
+            continue
+        schema_errors = validate_frontmatter(data)
+        if schema_errors:
+            warnings.extend({
+                "code": "SCHEMA_ERROR",
+                "file": entry.name,
+                "detail": detail,
+            } for detail in schema_errors)
             continue
         entries.append({"data": data, "body": body})
     return entries, warnings

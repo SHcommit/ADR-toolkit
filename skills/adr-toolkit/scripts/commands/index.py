@@ -5,6 +5,7 @@ from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
+from scripts.core.repository_paths import resolve_from_root
 
 SKIP_FILES = {"README.md", "adr-template.md"}
 
@@ -22,12 +23,13 @@ FALLBACK_STRINGS = {
 
 
 def run(args) -> dict:
-    adr_dir = Path(args.dir)
+    root = Path(getattr(args, "root", "."))
+    adr_dir = resolve_from_root(root, args.dir)
     try:
         locale = resolve_locale(
             cli_locale=getattr(args, "locale", None),
             draft_locale=None,
-            root=Path(getattr(args, "root", ".")),
+            root=root,
         )
     except ConfigError as exc:
         return {

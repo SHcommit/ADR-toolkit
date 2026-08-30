@@ -169,6 +169,21 @@ def test_input_create_uses_repo_locale_and_semantic_slug(tmp_path):
     assert "locale: ko" in Path(result["created"]).read_text(encoding="utf-8")
 
 
+def test_relative_adr_directory_is_resolved_against_root(tmp_path, monkeypatch):
+    caller = tmp_path / "caller"
+    repo = tmp_path / "repo"
+    caller.mkdir()
+    repo.mkdir()
+    draft_path = _write_draft(repo)
+    monkeypatch.chdir(caller)
+
+    result = create.run(_args(repo, draft_path, Path("docs/decisions")))
+
+    assert result["ok"] is True
+    assert Path(result["created"]).parent == repo / "docs/decisions"
+    assert not (caller / "docs/decisions").exists()
+
+
 def test_cli_locale_overrides_draft_and_repo(tmp_path):
     result = _run_with_locales(tmp_path, repo="ko", draft="fr", cli="ja")
     data, _ = fm.parse(Path(result["created"]).read_text(encoding="utf-8"))

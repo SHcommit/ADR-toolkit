@@ -39,7 +39,10 @@ def run(args) -> dict:
         mode, diff_options, range_args = "uncommitted", [], []
 
     name_status = subprocess.run(
-        ["git", "-C", str(root), "diff", "--name-status", *diff_options, "--end-of-options", *range_args],
+        [
+            "git", "-C", str(root), "-c", "core.quotePath=false", "diff",
+            "--name-status", "-z", *diff_options, "--end-of-options", *range_args,
+        ],
         capture_output=True, text=True,
     )
     if name_status.returncode != 0:
@@ -47,7 +50,10 @@ def run(args) -> dict:
         return {"ok": False, "operation": "diff", "errors": [{"code": code, "detail": name_status.stderr.strip()}]}
 
     patch = subprocess.run(
-        ["git", "-C", str(root), "diff", "--unified=0", *diff_options, "--end-of-options", *range_args],
+        [
+            "git", "-C", str(root), "-c", "core.quotePath=false", "diff",
+            "--unified=0", *diff_options, "--end-of-options", *range_args,
+        ],
         capture_output=True, text=True,
     )
     if patch.returncode != 0:
@@ -79,7 +85,10 @@ def _untracked_files(root: Path) -> list:
     # the kind of change CHECK needs to see (e.g. a new module that violates
     # a forbidden_import rule) — surface it as if it were entirely "added".
     listing = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "--others", "--exclude-standard"],
+        [
+            "git", "-C", str(root), "ls-files", "--others",
+            "--exclude-standard", "-z",
+        ],
         capture_output=True, text=True,
     )
     if listing.returncode != 0:
@@ -88,7 +97,7 @@ def _untracked_files(root: Path) -> list:
             listing.stderr.strip() or "git ls-files failed",
         )
     entries = []
-    for rel_path in listing.stdout.splitlines():
+    for rel_path in listing.stdout.split("\0"):
         if not rel_path.strip():
             continue
         try:
@@ -107,6 +116,28 @@ def _untracked_files(root: Path) -> list:
 def _parse_name_status(output: str) -> list:
     status_map = {"A": "added", "M": "modified", "D": "deleted"}
     files = []
+    if "\0" in output:
+        parts = output.split("\0")
+        if parts and parts[-1] == "":
+            parts.pop()
+        index = 0
+        while index < len(parts):
+            status = parts[index]
+            index += 1
+            status_char = status[0]
+            if status_char in {"R", "C"}:
+                old_path, new_path = parts[index], parts[index + 1]
+                index += 2
+                files.extend([
+                    _file_entry(old_path, "deleted"),
+                    _file_entry(new_path, "added"),
+                ])
+            else:
+                path = parts[index]
+                index += 1
+                files.append(_file_entry(path, status_map.get(status_char, "modified")))
+        return files
+
     for line in output.splitlines():
         if not line.strip():
             continue
@@ -115,28 +146,22 @@ def _parse_name_status(output: str) -> list:
         if status_char == "R" and len(parts) == 3:
             old_path, new_path = parts[1], parts[2]
             files.extend([
-                {
-                    "path": old_path,
-                    "change_type": "deleted",
-                    "added_lines": [],
-                    "removed_lines": [],
-                },
-                {
-                    "path": new_path,
-                    "change_type": "added",
-                    "added_lines": [],
-                    "removed_lines": [],
-                },
+                _file_entry(old_path, "deleted"),
+                _file_entry(new_path, "added"),
             ])
             continue
         path = parts[-1]
-        files.append({
-            "path": path,
-            "change_type": status_map.get(status_char, "modified"),
-            "added_lines": [],
-            "removed_lines": [],
-        })
+        files.append(_file_entry(path, status_map.get(status_char, "modified")))
     return files
+
+
+def _file_entry(path: str, change_type: str) -> dict:
+    return {
+        "path": path,
+        "change_type": change_type,
+        "added_lines": [],
+        "removed_lines": [],
+    }
 
 
 def _attach_line_content(files: list, patch_output: str) -> None:

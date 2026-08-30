@@ -120,6 +120,23 @@ def test_index_uses_repository_default_when_locale_omitted(tmp_path):
     assert (adr_dir / "README.md").read_text(encoding="utf-8").startswith("# 결정 기록")
 
 
+def test_relative_adr_directory_is_resolved_against_root(tmp_path, monkeypatch):
+    caller = tmp_path / "caller"
+    repo = tmp_path / "repo"
+    adr_dir = repo / "docs/decisions"
+    caller.mkdir()
+    adr_dir.mkdir(parents=True)
+    monkeypatch.chdir(caller)
+
+    result = index.run(SimpleNamespace(
+        dir="docs/decisions", root=str(repo), locale="en",
+    ))
+
+    assert result["ok"] is True
+    assert (adr_dir / "README.md").is_file()
+    assert not (caller / "docs/decisions/README.md").exists()
+
+
 def test_index_unknown_status_falls_back_to_capitalized_label(tmp_path):
     _write_adr(
         tmp_path, "0001-use-kafka.md",

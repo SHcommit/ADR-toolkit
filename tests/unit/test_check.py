@@ -173,6 +173,59 @@ def test_unreadable_adr_file_degrades_to_warning_and_keeps_other_findings(tmp_pa
     assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0010-invalid-utf8.md" for w in result["warnings"])
 
 
+def test_schema_invalid_adr_is_visible_as_a_warning_instead_of_silent_skip(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    invalid = ACCEPTED_ADR_WITH_RULE.replace(
+        "affected_paths:\n  - src/features/", "affected_paths: src/features/"
+    )
+    (adr_dir / "0001-use-a-provider-port.md").write_text(invalid, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "결제.py").write_text(
+        "import openai\n", encoding="utf-8"
+    )
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    assert result["ok"] is True
+    assert result["findings"] == []
+    warning = next(w for w in result["warnings"] if w["code"] == "SCHEMA_ERROR")
+    assert warning["file"] == "0001-use-a-provider-port.md"
+    assert "affected_paths" in warning["detail"]
+
+
+def test_deleted_tracked_file_does_not_satisfy_file_must_exist(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    adr = ACCEPTED_ADR_WITH_RULE.replace(
+        "  - id: no-provider-sdk-in-feature\n"
+        "    kind: forbidden_import\n"
+        "    paths: [\"src/features/**\"]\n"
+        "    pattern: [\"openai\"]\n",
+        "  - id: registry-must-exist\n"
+        "    kind: file_must_exist\n"
+        "    paths: [\"src/features/registry.py\"]\n"
+        "    pattern: []\n",
+    )
+    (adr_dir / "0001-use-a-provider-port.md").write_text(adr, encoding="utf-8")
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    registry = tmp_path / "src" / "features" / "registry.py"
+    registry.write_text("REGISTRY = {}\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    registry.unlink()
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f.get("rule_id") == "registry-must-exist")
+    assert violation["kind"] == "verified_violation"
+    assert violation["evidence"] == {"missing_paths": ["src/features/registry.py"]}
+
+
 ACCEPTED_ADR_WITH_VERIFICATION = """---
 id: ADR-0003
 title: Add event replay

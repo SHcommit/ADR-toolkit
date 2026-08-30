@@ -94,6 +94,21 @@ def test_uncommitted_mode_includes_untracked_new_files(tmp_path):
     assert "import openai" in entry["added_lines"]
 
 
+def test_uncommitted_mode_preserves_unicode_untracked_path_and_content(tmp_path):
+    _init_repo(tmp_path)
+    unicode_path = tmp_path / "src" / "결제.py"
+    unicode_path.parent.mkdir()
+    unicode_path.write_text("import openai\n", encoding="utf-8")
+
+    result = diff.run(SimpleNamespace(
+        root=str(tmp_path), staged=False, uncommitted=True, since=None,
+    ))
+
+    entry = next(f for f in result["files"] if f["path"] == "src/결제.py")
+    assert entry["change_type"] == "added"
+    assert entry["added_lines"] == ["import openai"]
+
+
 def test_since_value_cannot_smuggle_a_git_option_that_writes_a_file(tmp_path):
     """CHECK is read-only: a `--since` starting with `-` must not reach git as an option."""
     _init_repo(tmp_path)

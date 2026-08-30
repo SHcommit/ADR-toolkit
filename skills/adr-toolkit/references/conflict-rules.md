@@ -100,7 +100,10 @@ Present all five options; never default to "revert the code":
 2. `supersede_adr` — the old decision no longer holds; record a new ADR
    that supersedes it (`adr.py supersede`).
 3. `adjust_scope` — the ADR's `affected_paths` or `constraints:` are too
-   broad or too narrow; edit them instead of the code.
+   broad or too narrow. If the ADR is still Proposed, revise it through the
+   RECORD approval flow. If it is Accepted, record and approve a replacement
+   ADR, then supersede the old one; never weaken an accepted record in place
+   merely to clear CHECK.
 4. `register_exception` — this specific case is a deliberate, documented
    exception to an otherwise-still-valid rule.
 5. `false_positive` — the rule fired but there is no real conflict; note

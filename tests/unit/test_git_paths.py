@@ -32,6 +32,15 @@ def test_existing_paths_include_tracked_and_untracked_but_not_ignored(tmp_path):
     assert "build/generated.py" not in paths
 
 
+def test_existing_paths_excludes_a_tracked_file_deleted_from_worktree(tmp_path):
+    _init_repo(tmp_path)
+    (tmp_path / "existing.py").unlink()
+
+    paths = git_paths.list_existing_paths(tmp_path)
+
+    assert "existing.py" not in paths
+
+
 def test_git_path_listing_failure_includes_stderr(tmp_path, monkeypatch):
     def fail(command, **kwargs):
         return subprocess.CompletedProcess(command, 128, "", "not a repository")

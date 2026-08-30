@@ -83,3 +83,20 @@ def test_invalid_repository_config_fails_before_reporting_adr_success(tmp_path):
     assert result["ok"] is False
     assert result["checked"] == 0
     assert result["errors"][0]["code"] == "CONFIG_ERROR"
+
+
+def test_relative_adr_directory_is_resolved_against_root(tmp_path, monkeypatch):
+    caller = tmp_path / "caller"
+    repo = tmp_path / "repo"
+    adr_dir = repo / "docs/decisions"
+    caller.mkdir()
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-record-architecture-decisions.md").write_text(
+        VALID_ADR, encoding="utf-8"
+    )
+    monkeypatch.chdir(caller)
+
+    result = validate.run(SimpleNamespace(dir="docs/decisions", root=str(repo)))
+
+    assert result["ok"] is True
+    assert result["checked"] == 1

@@ -2,10 +2,11 @@
 
 ## Current task (2026-08-30)
 
-Prepare ADR Toolkit `v0.2.0` as a minor feature release: repository-configured
-eight-locale ADR generation, portable multilingual filenames, CHECK
-false-confidence fixes, dogfooded ADR quality corrections, and separate Korean
-readiness/enterprise-adoption reports.
+ADR Toolkit `v0.2.0` minor-release implementation and local release evidence
+are complete: repository-configured eight-locale ADR generation, portable
+multilingual filenames, CHECK false-confidence fixes, dogfooded ADR quality
+corrections, user documentation, and separate Korean readiness/enterprise
+reports.
 
 The work runs in the linked worktree `develop-2`. Its base is the current
 `origin/develop` history plus the approved design commits:
@@ -16,31 +17,30 @@ The work runs in the linked worktree `develop-2`. Its base is the current
 
 Baseline verification before implementation: `212 passed` on 2026-08-30.
 
-## Touched files
+Latest local release evidence on 2026-08-30:
 
-- `docs/superpowers/specs/2026-08-30-adr-toolkit-localization-and-readiness-design.md`
-- `handoff.md`
-- `improvements.md`
-- `project-roadmap.md`
+- `python3 -m pytest -q` → `290 passed`, exit 0
+- `python3 scripts/sync_version.py --check` → exit 0
+- repository validation → 6 ADRs, no errors
+- regenerated decision index → byte-identical
 
-Local execution plans live under ignored `docs/superpowers/plans/`.
+The detailed evidence and maturity assessment are in
+`docs/adr-toolkit-v0.2.0-readiness-report.md`; post-release governance is kept
+separate in `docs/enterprise-adoption.md`.
 
 ## Next step
 
-Document repository locale defaults, overrides, semantic slugs, and CHECK
-confidence in README/quickstart/SKILL. Then write the Korean v0.2.0 readiness
-report and the separate enterprise-adoption report. ADR-0006 now supersedes
-ADR-0003 bidirectionally; validation, repository ADR quality checks, and
-idempotent index generation pass.
+Commit the final reports and tracking reconciliation, then open the final PR.
+After required CI passes, obtain explicit approval for the v0.2.0 version bump,
+release branch, push, and tag. Until then the readiness decision is conditional
+GO and tag release is NO-GO.
 
 ## Open risks
 
-- Locale precedence must distinguish an omitted CLI flag from explicit English.
-- Translation catalogs need exact key parity and human-readable terminology.
-- ADR-0003's MVP decision is replaced by v0.2.0 and must be superseded through
-  the lifecycle command, not silently rewritten.
-- Known CHECK rename/path/subprocess defects can produce false confidence until
-  fixed and regression-tested.
+- Catalog structure is deterministic, but terminology still benefits from
+  native-speaker review in each supported language.
+- CHECK deliberately cannot prove prose, business rationale, or organizational
+  claims; those remain human-review evidence.
 - GitHub protection is intentionally unavailable in the current private plan;
   configure and API-verify it after the repository becomes public.
 - Version bump, release branch, push, and tag are not authorized by this task.

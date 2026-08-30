@@ -253,9 +253,9 @@ since CHECK is read-only and never fixes anything itself.
    operation. If they pick `supersede_adr` or `adjust_scope`, follow the
    RECORD or Lifecycle operations flow above — never hand-edit
    `constraints:`, `affected_paths`, or `status`.
-6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`,
-   `BAD_CONSTRAINTS`) mean one ADR was skipped, not that CHECK failed —
-   report them, but don't block on them.
+6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`, `SCHEMA_ERROR`,
+   `BAD_CONSTRAINTS`) mean one ADR or constraint was skipped, not that CHECK
+   failed — report them and never describe a warning-bearing result as clean.
 
 ## Prohibited
 

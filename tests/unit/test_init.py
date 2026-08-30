@@ -103,3 +103,20 @@ def test_init_never_overwrites_existing_config(tmp_path):
     adr = (tmp_path / "docs/decisions/0001-record-architecture-decisions.md").read_text(encoding="utf-8")
     assert "locale: ja" in adr
     assert "## コンテキストと問題" in adr
+
+
+def test_relative_adr_directory_is_resolved_against_root(tmp_path, monkeypatch):
+    caller = tmp_path / "caller"
+    repo = tmp_path / "repo"
+    caller.mkdir()
+    repo.mkdir()
+    monkeypatch.chdir(caller)
+
+    result = init.run(SimpleNamespace(
+        dir="docs/decisions", root=str(repo), locale="ko", dry_run=False,
+    ))
+
+    assert result["ok"] is True
+    assert (repo / ".adr-toolkit.json").is_file()
+    assert (repo / "docs/decisions/0001-record-architecture-decisions.md").is_file()
+    assert not (caller / "docs/decisions").exists()
