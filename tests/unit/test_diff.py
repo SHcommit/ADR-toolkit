@@ -153,3 +153,47 @@ def test_untracked_listing_failure_is_not_reported_as_clean(tmp_path, monkeypatc
     assert result["ok"] is False
     assert result["errors"][0]["code"] == "GIT_LS_FILES_FAILED"
     assert "listing failed" in result["errors"][0]["detail"]
+
+
+def test_parse_rename_preserves_old_and_new_paths():
+    files = diff._parse_name_status("R100\tsrc/old.py\tsrc/new.py\n")
+
+    assert [(item["path"], item["change_type"]) for item in files] == [
+        ("src/old.py", "deleted"),
+        ("src/new.py", "added"),
+    ]
+
+
+def test_staged_rename_reports_deletion_and_addition(tmp_path):
+    _init_repo(tmp_path)
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/old.py").write_text("one\ntwo\nthree\n", encoding="utf-8")
+    _git(["add", "src/old.py"], tmp_path)
+    _git(["commit", "-q", "-m", "add old path"], tmp_path)
+    _git(["mv", "src/old.py", "src/new.py"], tmp_path)
+
+    result = diff.run(SimpleNamespace(
+        root=str(tmp_path), staged=True, uncommitted=False, since=None,
+    ))
+
+    changes = {(item["path"], item["change_type"]) for item in result["files"]}
+    assert ("src/old.py", "deleted") in changes
+    assert ("src/new.py", "added") in changes
+
+
+def test_rename_patch_lines_are_attached_to_the_corresponding_path():
+    files = diff._parse_name_status("R090\tsrc/old.py\tsrc/new.py\n")
+    patch = (
+        "diff --git a/src/old.py b/src/new.py\n"
+        "--- a/src/old.py\n"
+        "+++ b/src/new.py\n"
+        "@@ -1 +1 @@\n"
+        "-old value\n"
+        "+new value\n"
+    )
+
+    diff._attach_line_content(files, patch)
+
+    by_path = {item["path"]: item for item in files}
+    assert by_path["src/old.py"]["removed_lines"] == ["old value"]
+    assert by_path["src/new.py"]["added_lines"] == ["new value"]

@@ -111,7 +111,25 @@ def _parse_name_status(output: str) -> list:
         if not line.strip():
             continue
         parts = line.split("\t")
-        status_char, path = parts[0][0], parts[-1]
+        status_char = parts[0][0]
+        if status_char == "R" and len(parts) == 3:
+            old_path, new_path = parts[1], parts[2]
+            files.extend([
+                {
+                    "path": old_path,
+                    "change_type": "deleted",
+                    "added_lines": [],
+                    "removed_lines": [],
+                },
+                {
+                    "path": new_path,
+                    "change_type": "added",
+                    "added_lines": [],
+                    "removed_lines": [],
+                },
+            ])
+            continue
+        path = parts[-1]
         files.append({
             "path": path,
             "change_type": status_map.get(status_char, "modified"),
@@ -123,19 +141,20 @@ def _parse_name_status(output: str) -> list:
 
 def _attach_line_content(files: list, patch_output: str) -> None:
     by_path = {f["path"]: f for f in files}
-    current = None
+    removed_target = None
+    added_target = None
     for line in patch_output.splitlines():
         if line.startswith("--- "):
             src = line[6:] if line.startswith("--- a/") else None
-            current = by_path.get(src) if src else current
+            removed_target = by_path.get(src) if src else None
             continue
         if line.startswith("+++ "):
             dst = line[6:] if line.startswith("+++ b/") else None
-            current = by_path.get(dst) if dst else current
-            continue
-        if current is None:
+            added_target = by_path.get(dst) if dst else None
             continue
         if line.startswith("+"):
-            current["added_lines"].append(line[1:])
+            if added_target is not None:
+                added_target["added_lines"].append(line[1:])
         elif line.startswith("-"):
-            current["removed_lines"].append(line[1:])
+            if removed_target is not None:
+                removed_target["removed_lines"].append(line[1:])

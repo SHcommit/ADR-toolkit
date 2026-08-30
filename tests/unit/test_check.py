@@ -232,6 +232,30 @@ def test_review_required_when_verification_reference_is_removed(tmp_path):
     assert "src/events/replay.py" in finding["evidence"]["unrealized_paths"]
 
 
+def test_review_required_when_confirmed_path_is_renamed(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs/decisions"
+    adr_dir.mkdir(parents=True)
+    adr = ACCEPTED_ADR_WITH_VERIFICATION.replace(
+        "src/events/replay.py", "src/old.py"
+    ).replace("src/events/", "src/old.py")
+    (adr_dir / "0003-add-event-replay.md").write_text(adr, encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/old.py").write_text("def replay(): pass\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _git(["mv", "src/old.py", "src/new.py"], tmp_path)
+
+    args = _args(tmp_path, adr_dir)
+    args.staged = True
+    args.uncommitted = False
+    result = check.run(args)
+
+    finding = next(f for f in result["findings"] if f["kind"] == "review_required")
+    assert finding["adr_id"] == "ADR-0003"
+    assert finding["evidence"]["unrealized_paths"] == ["src/old.py"]
+
+
 def test_superseded_reference_fires_on_affected_path_overlap(tmp_path):
     _init_repo(tmp_path)
     adr_dir = tmp_path / "docs" / "decisions"
