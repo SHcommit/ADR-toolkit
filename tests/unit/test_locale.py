@@ -1,4 +1,4 @@
-from scripts.core.locale import DEFAULT_LOCALE, load_locale
+from scripts.core.locale import DEFAULT_LOCALE, SUPPORTED_LOCALES, load_locale
 
 REQUIRED_KEYS = {
     "decision_log_title", "by_status", "by_tag", "by_affected_path",
@@ -9,6 +9,12 @@ REQUIRED_KEYS = {
 
 def test_default_locale_is_english():
     assert DEFAULT_LOCALE == "en"
+
+
+def test_supported_locales_are_canonical_and_ordered():
+    assert SUPPORTED_LOCALES == (
+        "en", "ko", "ja", "zh", "fr", "es", "de", "pt-BR",
+    )
 
 
 def test_english_locale_has_all_required_keys():

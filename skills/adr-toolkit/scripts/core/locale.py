@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 I18N_DIR = Path(__file__).resolve().parent.parent / "i18n"
+SUPPORTED_LOCALES = ("en", "ko", "ja", "zh", "fr", "es", "de", "pt-BR")
 DEFAULT_LOCALE = "en"
 
 
