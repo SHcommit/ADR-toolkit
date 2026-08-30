@@ -47,6 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_create.add_argument("--input")
     p_create.add_argument("--interactive", action="store_true")
     p_create.add_argument("--dir", default="docs/decisions")
+    p_create.add_argument("--root", default=".")
+    p_create.add_argument("--locale", choices=SUPPORTED_LOCALES)
+    p_create.add_argument("--slug")
     p_create.add_argument("--dry-run", dest="dry_run", action="store_true")
     p_create.add_argument("--json", action="store_true")
 

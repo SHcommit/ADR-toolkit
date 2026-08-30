@@ -6,6 +6,8 @@ from pathlib import Path
 
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
+from scripts.core.config import ConfigError, resolve_locale
+from scripts.core.rendering import interactive_prompts, render_minimal
 from scripts.core.schema import validate_frontmatter
 
 REQUIRED_DRAFT_FIELDS = {"title", "status", "body"}
@@ -17,47 +19,54 @@ def _prompt(input_fn, question: str) -> str:
     return input_fn("").strip()
 
 
-def gather_draft_interactively(input_fn=None) -> dict:
+def gather_draft_interactively(locale: str, input_fn=None) -> dict:
     if input_fn is None:
         input_fn = input
-    title = _prompt(input_fn, "Title of the decision?")
-    problem = _prompt(input_fn, "What problem or constraint made this decision necessary?")
-    options_raw = _prompt(input_fn, "Options considered (comma-separated)?")
+    prompts = interactive_prompts(locale)
+    title = _prompt(input_fn, prompts[0])
+    problem = _prompt(input_fn, prompts[1])
+    options_raw = _prompt(input_fn, prompts[2])
     options = [o.strip() for o in options_raw.split(",") if o.strip()]
-    decision = _prompt(input_fn, "Which option was chosen?")
-    rationale = _prompt(input_fn, "Why was it chosen?")
-    good = _prompt(input_fn, "One good consequence?")
-    bad = _prompt(input_fn, "One accepted downside?")
-    confirmation = _prompt(input_fn, "How will this be verified in the code?")
-    revisit = _prompt(input_fn, "What condition should reopen this decision?")
+    decision = _prompt(input_fn, prompts[3])
+    rationale = _prompt(input_fn, prompts[4])
+    good = _prompt(input_fn, prompts[5])
+    bad = _prompt(input_fn, prompts[6])
+    confirmation = _prompt(input_fn, prompts[7])
+    revisit = _prompt(input_fn, prompts[8])
 
-    options_block = "\n".join(f"* {o}" for o in options) if options else f"* {decision}"
+    body = render_minimal(locale, {
+        "title": title,
+        "problem": problem,
+        "options": options or [decision],
+        "decision": decision,
+        "rationale": rationale,
+        "good": good,
+        "bad": bad,
+        "confirmation": confirmation,
+        "revisit": revisit,
+    })
 
-    body = (
-        f"# {title}\n\n"
-        "## Context and Problem Statement\n\n"
-        f"{problem}\n\n"
-        "## Considered Options\n\n"
-        f"{options_block}\n\n"
-        "## Decision Outcome\n\n"
-        f"Chosen option: **{decision}**, because {rationale}.\n\n"
-        "## Consequences\n\n"
-        f"* Good: {good}\n"
-        f"* Bad: {bad}\n\n"
-        "## Confirmation\n\n"
-        f"{confirmation}\n\n"
-        "## Revisit Triggers\n\n"
-        f"* {revisit}\n"
-    )
-
-    return {"title": title, "status": "proposed", "body": body}
+    return {"title": title, "status": "proposed", "body": body, "locale": locale}
 
 
 def run(args) -> dict:
     dry_run = getattr(args, "dry_run", False)
+    root = Path(getattr(args, "root", "."))
 
     if getattr(args, "interactive", False):
-        draft = gather_draft_interactively()
+        try:
+            locale = resolve_locale(
+                cli_locale=getattr(args, "locale", None),
+                draft_locale=None,
+                root=root,
+            )
+        except ConfigError as exc:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+            }
+        draft = gather_draft_interactively(locale)
     else:
         input_path = getattr(args, "input", None)
         if not input_path:
@@ -83,6 +92,19 @@ def run(args) -> dict:
                 "errors": [{"code": "DRAFT_FILE_INVALID_JSON", "path": input_path, "detail": str(exc)}],
             }
 
+        try:
+            locale = resolve_locale(
+                cli_locale=getattr(args, "locale", None),
+                draft_locale=draft.get("locale"),
+                root=root,
+            )
+        except ConfigError as exc:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+            }
+
     adr_dir = Path(args.dir)
     missing = REQUIRED_DRAFT_FIELDS - draft.keys()
     if missing:
@@ -92,14 +114,24 @@ def run(args) -> dict:
             "errors": [{"code": "MISSING_DRAFT_FIELD", "fields": sorted(missing)}],
         }
 
-    next_num = identifiers.next_id(adr_dir)
-    slug = identifiers.slugify(draft["title"])
-    if not slug:
+    cli_slug = getattr(args, "slug", None)
+    draft_slug = draft.get("slug")
+    if cli_slug is not None and draft_slug is not None and cli_slug != draft_slug:
         return {
             "ok": False,
             "operation": "create",
-            "errors": [{"code": "EMPTY_SLUG", "detail": "title must contain at least one ASCII letter or digit"}],
+            "errors": [{"code": "CONFLICTING_SLUG_INPUT"}],
         }
+    try:
+        slug = identifiers.slug_for_title(draft["title"], cli_slug or draft_slug)
+    except ValueError as exc:
+        return {
+            "ok": False,
+            "operation": "create",
+            "errors": [{"code": "INVALID_SLUG", "detail": str(exc)}],
+        }
+
+    next_num = identifiers.next_id(adr_dir)
     filename = identifiers.format_filename(next_num, slug)
     target = adr_dir / filename
 
@@ -115,6 +147,7 @@ def run(args) -> dict:
         "title": draft["title"],
         "status": draft["status"],
         "date": draft.get("date") or date.today().isoformat(),
+        "locale": locale,
         "decision_makers": draft.get("decision_makers", []),
         "related": draft.get("related", []),
         "affected_paths": draft.get("affected_paths", []),

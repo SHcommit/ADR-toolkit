@@ -59,3 +59,19 @@ def test_init_locale_is_optional_and_constrained():
 
     with pytest.raises(SystemExit):
         parser.parse_args(["init", "--locale", "xx"])
+
+
+def test_create_locale_and_slug_are_optional_and_constrained():
+    parser = adr.build_parser()
+
+    args = parser.parse_args(["create", "--input", "draft.json"])
+    assert args.locale is None
+    assert args.slug is None
+    assert args.root == "."
+
+    args = parser.parse_args([
+        "create", "--input", "draft.json", "--locale", "de",
+        "--slug", "separate-payment-system",
+    ])
+    assert args.locale == "de"
+    assert args.slug == "separate-payment-system"
