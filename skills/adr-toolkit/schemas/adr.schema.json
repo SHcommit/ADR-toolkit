@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ADR Frontmatter",
+  "type": "object",
+  "required": ["id", "title", "status", "date", "decision_makers", "related", "affected_paths", "tags", "retrospective"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^ADR-[0-9]{4}$" },
+    "title": { "type": "string" },
+    "status": { "type": "string", "enum": ["proposed", "accepted", "rejected", "deprecated", "superseded"] },
+    "date": { "type": "string", "format": "date" },
+    "decision_makers": { "type": "array", "items": { "type": "string" } },
+    "related": { "type": "array", "items": { "type": "string" } },
+    "affected_paths": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "retrospective": { "type": "boolean" },
+    "supersedes": { "type": "array", "items": { "type": "string" } },
+    "superseded_by": { "type": "string" }
+  }
+}

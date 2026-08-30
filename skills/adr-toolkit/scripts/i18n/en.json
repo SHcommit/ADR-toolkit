@@ -1,0 +1,12 @@
+{
+  "decision_log_title": "Decision Log",
+  "by_status": "By status",
+  "by_tag": "By tag",
+  "by_affected_path": "By affected path",
+  "chronological": "Chronological (newest first)",
+  "status.proposed": "Proposed",
+  "status.accepted": "Accepted",
+  "status.rejected": "Rejected",
+  "status.deprecated": "Deprecated",
+  "status.superseded": "Superseded"
+}
