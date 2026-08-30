@@ -28,8 +28,12 @@ current `origin/develop` history plus the approved design commits:
 
 Baseline verification before implementation: `212 passed` on 2026-08-30.
 
-**Branch renamed**: `develop-2` → `feature/v0.2.0-multilingual-and-check-confidence`
-(local rename only; not yet pushed, no upstream configured).
+**Branch renamed**: `develop-2` → `feature/v0.2.0-multilingual-and-check-confidence`.
+**Pushed to `origin` and PR opened**: owner approved push + PR (not yet the
+version bump/tag). PR #2 against `develop`:
+https://github.com/SHcommit/ADR-toolkit/pull/2 — CI (5-leg pytest matrix +
+`version-drift` job) triggered on open; check its status before assuming
+green.
 
 ## Touched since the last handoff
 
@@ -116,15 +120,14 @@ governance is kept separate in `docs/enterprise-adoption.md`.
 
 ## Next step
 
-`improvements.md` has exactly one open item left: the P0 release gate. Open
-the final PR (from `feature/v0.2.0-multilingual-and-check-confidence`
-against `develop`), get required CI green, get the owner's approval for the
-v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`), merge
-through a release branch, and verify the tag lands on the intended `master`
-commit. The branch has not been pushed to `origin` yet (no upstream
-configured) — the owner has said they'll handle the public-repository
-transition themselves later, and push/PR have not been authorized in this
-session.
+`improvements.md` has exactly one open item left: the P0 release gate.
+**PR #2 is open** (https://github.com/SHcommit/ADR-toolkit/pull/2), CI
+running. Next: confirm all 6 checks (5-leg pytest matrix + version-drift)
+are green — `gh pr checks 2` — before treating this as mergeable. Still
+required after that, each needing separate owner approval not yet given:
+the v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`),
+merging through a release branch, and verifying the tag lands on the
+intended `master` commit.
 
 `project-roadmap.md` was updated to mark "ADR navigation and scale"'s first
 bullet done, with the remaining three (graph *rendering* specifically,
