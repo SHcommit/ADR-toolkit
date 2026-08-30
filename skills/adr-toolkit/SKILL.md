@@ -238,6 +238,9 @@ since CHECK is read-only and never fixes anything itself.
 3. **CLASSIFY** — each finding already carries its classification
    (`related`, `review_required`, `verified_violation`,
    `no_applicable_constraint`); do not re-judge it, report it as returned.
+   Interpret their confidence as `VERIFIED`, `VIOLATED`, or `UNVERIFIABLE`
+   using `references/conflict-rules.md`. No related finding is
+   `NOT_APPLICABLE`, not proof that the repository is compliant.
 4. **REPORT** — group findings by classification. For every Verified violation
    finding, present all five resolutions from
    `references/conflict-rules.md` (`fix_code`, `supersede_adr`,
@@ -274,6 +277,6 @@ file writes, or schema validation in prose — it only decides what to ask and
 what to draft.
 
 CHECK's conflict detection is deliberately limited to structural evidence
-from `constraints:` blocks (see `references/conflict-rules.md`) — it never
-attempts semantic or AST-level analysis; see `project-roadmap.md` for what
-that fuller scope would look like.
+from `constraints:` blocks (see `references/conflict-rules.md`). It does not certify the entire architecture
+and never attempts semantic or AST-level
+analysis; see `project-roadmap.md` for what that fuller scope would look like.

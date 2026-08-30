@@ -45,6 +45,9 @@ def test_skill_md_documents_check():
     assert "adr.py check" in body
     assert "Verified violation" in body
     assert "CHECK is not yet implemented" not in body
+    assert "does not certify the entire architecture" in body
+    for label in ["VERIFIED", "VIOLATED", "UNVERIFIABLE", "NOT_APPLICABLE"]:
+        assert label in body
 
 
 def test_record_points_at_the_conflict_rules_reference_for_constraints_blocks():

@@ -23,6 +23,21 @@ Each rule needs `id`, `kind`, `paths` (glob list, `**` matches any depth),
 existence-check kinds. `paths`/`pattern` values must be a JSON-style array
 on one line — not YAML block-list syntax.
 
+### Pattern syntax is kind-specific
+
+Every value in `paths` uses the toolkit's **glob** syntax. For
+`forbidden_import` and `dependency_forbidden`, each `pattern` value is a
+Python **regular expression** matched against added lines. For `required_path`
+and `forbidden_path`, each `pattern` value is another glob matched against
+repository paths. `file_must_exist` and `test_must_exist` use their `paths`
+globs directly and do not require `pattern`.
+
+For example, the glob `src/**/*.py` matches Python files at any depth below
+`src/`. Writing `src/**\\.py` as though it were a regular expression is
+incorrect: glob `**` traversal and regex escaping are different languages.
+Conversely, a `forbidden_import` content pattern such as `openai\\.` is a
+regular expression, not a path glob.
+
 ## The six rule kinds
 
 - `forbidden_import` — fires if an added line in a file matching `paths`
@@ -60,6 +75,22 @@ enforce — that's a legitimate state, not an error.
   Confirmation/Verification reference. An unparseable block (unknown field,
   unknown `kind`, or an invalid regex in `pattern`) also lands here, with a
   `BAD_CONSTRAINTS` warning — it is never silently reported as Related.
+
+## Evidence confidence
+
+The JSON finding names remain stable, while their governance meaning is:
+
+| Existing result | Confidence meaning |
+|---|---|
+| `related` | **VERIFIED** only for the applicable explicit structural rules in this diff. |
+| `verified_violation` | **VIOLATED** by direct structural evidence. |
+| `review_required` | **UNVERIFIABLE** without human review. |
+| `no_applicable_constraint` | **UNVERIFIABLE** for the related ADR because no usable rule proved the policy. |
+| No related ADR or finding | **NOT_APPLICABLE** to the known scoped rules, not a global pass. |
+
+CHECK does not certify the entire architecture. A successful command means
+the requested evidence was collected and evaluated; it does not prove prose,
+organizational rationale, runtime behavior, or every architectural invariant.
 
 ## Resolving a Verified violation
 
