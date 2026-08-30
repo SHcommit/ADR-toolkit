@@ -69,7 +69,9 @@ def sync(version_file: Path, manifest_specs: list, check_only: bool) -> list:
         changed.append(path)
         if not check_only:
             target[key_path[-1]] = version
-            path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            path.write_text(
+                json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
     return changed
 
 
@@ -101,8 +103,27 @@ def require_known_paths() -> None:
     if not SKILL_MD_PATH.is_file():
         missing.append(SKILL_MD_PATH)
     if missing:
-        names = ", ".join(str(p.relative_to(REPO_ROOT)) for p in missing)
+        names = ", ".join(_display_path(p) for p in missing)
         raise SystemExit(f"missing tracked file(s): {names}")
+
+    keyless = []
+    for path, key_path in MANIFEST_SPECS:
+        target = json.loads(path.read_text(encoding="utf-8"))
+        for key in key_path:
+            if not isinstance(target, dict) or key not in target:
+                keyless.append(path)
+                break
+            target = target[key]
+    if keyless:
+        names = ", ".join(_display_path(p) for p in keyless)
+        raise SystemExit(f"tracked manifest(s) lost their version key: {names}")
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
 
 
 def main(argv=None) -> int:

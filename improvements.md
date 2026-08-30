@@ -24,10 +24,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
   adapter-local symlink remains relevant to native `.codex-plugin` discovery.
   **Done when:** every claim maps to a verified command or is explicitly marked
   structural-only.
-- [ ] **Harden version synchronization.** Fail when a tracked manifest loses
-  its version key, preserve intended `SystemExit` outside the repo root, and use
-  `ensure_ascii=False` for JSON writes.
-  **Done when:** focused regression tests cover all three paths.
 - [ ] **Decide manifest-description ownership.** Description text has drifted
   across manifests while only versions are synchronized.
   **Done when:** one canonical source and a check are implemented, or an ADR
@@ -53,6 +49,11 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Hardened `sync_version.py`: a tracked manifest that keeps its file but
+  loses its `version` key now fails `--check` instead of reporting no drift;
+  a manifest path outside the repo root raises the intended `SystemExit`
+  instead of an unrelated `ValueError`; JSON writes use `ensure_ascii=False`
+  so non-ASCII manifest content survives a sync unescaped.
 - [x] Added the versioned `.adr-toolkit.json` locale contract with strict
   validation and CLI → draft → repository → English precedence.
 - [x] Added deterministic INIT, CREATE, template, prompt, and INDEX rendering

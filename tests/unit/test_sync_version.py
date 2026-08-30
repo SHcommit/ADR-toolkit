@@ -215,3 +215,40 @@ def test_sync_still_tolerates_a_missing_fixture_path_for_testability(tmp_path):
     version_file.write_text("1.2.3\n", encoding="utf-8")
 
     assert sync(version_file, [(tmp_path / "absent.json", ["version"])], check_only=True) == []
+
+
+def test_require_known_paths_raises_when_a_tracked_manifest_loses_its_version_key(
+    tmp_path, monkeypatch
+):
+    manifest = tmp_path / "plugin.json"
+    manifest.write_text(json.dumps({"name": "x"}), encoding="utf-8")
+    monkeypatch.setattr(_sync_version, "MANIFEST_SPECS", [(manifest, ["version"])])
+
+    with pytest.raises(SystemExit) as excinfo:
+        require_known_paths()
+
+    assert "plugin.json" in str(excinfo.value)
+
+
+def test_require_known_paths_raises_a_clean_error_for_a_manifest_outside_repo_root(
+    tmp_path, monkeypatch
+):
+    outside = tmp_path / "definitely-missing.json"
+    monkeypatch.setattr(_sync_version, "MANIFEST_SPECS", [(outside, ["version"])])
+
+    with pytest.raises(SystemExit) as excinfo:
+        require_known_paths()
+
+    assert "definitely-missing.json" in str(excinfo.value)
+
+
+def test_sync_preserves_non_ascii_content_in_manifest_writes(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    manifest = _write(
+        tmp_path, "plugin.json", {"name": "x", "description": "한국어 설명", "version": "0.0.0"}
+    )
+
+    sync(version_file, [(manifest, ["version"])], check_only=False)
+
+    assert "한국어 설명" in manifest.read_text(encoding="utf-8")
