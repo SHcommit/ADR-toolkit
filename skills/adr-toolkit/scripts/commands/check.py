@@ -1,12 +1,15 @@
 """Match a git diff against Accepted ADRs' constraints: rules and
 Superseded ADRs' affected_paths, per §7/§16 of the design spec."""
+import json
 import re
+from datetime import date
 from pathlib import Path
 
 from scripts.commands import diff as diff_command
 from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
 from scripts.core.constraints import ConstraintsError, extract_constraints
+from scripts.core.exceptions import applies_to, is_expired, validate_exception
 from scripts.core.git_paths import GitPathsError, list_existing_paths
 from scripts.core.repository_paths import resolve_from_root
 from scripts.core.schema import validate_frontmatter
@@ -63,6 +66,8 @@ def run(args) -> dict:
         }
 
     entries, warnings = _load_adrs(adr_dir)
+    active_exceptions, exception_warnings = _load_exceptions(adr_dir)
+    warnings += exception_warnings
 
     findings = []
     for entry in entries:
@@ -129,6 +134,23 @@ def run(args) -> dict:
 
     for finding in findings:
         finding["confidence"] = CONFIDENCE_BY_KIND[finding["kind"]]
+        if finding["kind"] == "verified_violation":
+            match = _matching_exception(
+                active_exceptions,
+                adr_id=finding.get("adr_id"),
+                rule_id=finding.get("rule_id"),
+                file_path=finding.get("file"),
+            )
+            # Annotate only — an exception never hides or downgrades a
+            # violation. Confidence stays VIOLATED; a human/agent still sees
+            # and reports it, now with the approved exception attached.
+            if match is not None:
+                finding["exception"] = {
+                    "id": match["id"],
+                    "owner": match["owner"],
+                    "reason": match["reason"],
+                    "expiry": match["expiry"],
+                }
 
     return {
         "ok": True,
@@ -137,6 +159,41 @@ def run(args) -> dict:
         "findings": findings,
         "warnings": warnings,
     }
+
+
+def _load_exceptions(adr_dir: Path) -> tuple:
+    """Load active (non-expired, schema-valid) exceptions from adr_dir/exceptions.
+
+    A malformed exception file degrades to a warning, same as a malformed ADR
+    — it must never silently vanish, and it must never abort the whole run.
+    """
+    exceptions_dir = adr_dir / "exceptions"
+    active, warnings = [], []
+    if not exceptions_dir.is_dir():
+        return active, warnings
+    for path in sorted(exceptions_dir.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
+            warnings.append({"code": "BAD_EXCEPTION", "file": path.name, "detail": str(exc)})
+            continue
+        schema_errors = validate_exception(data) if isinstance(data, dict) else ["not a JSON object"]
+        if schema_errors:
+            warnings.extend({
+                "code": "BAD_EXCEPTION", "file": path.name, "detail": detail,
+            } for detail in schema_errors)
+            continue
+        if is_expired(data["expiry"], today=date.today()):
+            continue
+        active.append(data)
+    return active, warnings
+
+
+def _matching_exception(exceptions: list, *, adr_id: str, rule_id: str, file_path):
+    for exception in exceptions:
+        if applies_to(exception, adr_id=adr_id, rule_id=rule_id, file_path=file_path):
+            return exception
+    return None
 
 
 def _load_adrs(adr_dir: Path) -> tuple:

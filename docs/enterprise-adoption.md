@@ -177,9 +177,13 @@ Toolkit 자체에 계정 시스템을 서둘러 넣기보다 GitHub의 인증·�
    자체가 없으면 `NOT_APPLICABLE`, 이는 빈 `findings` 배열로 표현되고 별도
    finding을 만들지 않는다). README, SKILL.md, `conflict-rules.md`, quickstart
    예제 출력을 모두 갱신했다.
-4. 예외에 owner, reason, scope, expiry를 요구하는 작은 schema부터 시작한다.
-   **아직 시작 전.** 현재 `register_exception`은 CHECK finding의 해결 옵션
-   문자열로만 존재하고, 실제 저장·검증하는 schema나 명령은 없다.
+4. ~~예외에 owner, reason, scope, expiry를 요구하는 작은 schema부터
+   시작한다.~~ **완료 (2026-08-30).** `adr.py exception --input <file.json>`이
+   `owner`/`reason`/`scope`/`expiry`를 요구하는 schema로 검증한 뒤
+   `docs/decisions/exceptions/NNNN.json`에 `EXC-NNNN`으로 기록한다. CHECK는
+   일치하는 만료 전 예외를 finding의 `exception` 필드로 주석만 달고, `kind`나
+   `confidence`는 절대 낮추거나 숨기지 않는다 — "no false governance
+   confidence" 원칙 유지.
 5. 두 개 이상의 저장소가 같은 운영 문제를 보일 때 reusable workflow와 조직
    taxonomy를 설계한다. **시작 조건(2개 이상 저장소) 미충족.**
 

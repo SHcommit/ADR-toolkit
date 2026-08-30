@@ -253,10 +253,17 @@ since CHECK is read-only and never fixes anything itself.
    user picks `fix_code`, that's a normal code edit, not an ADR Toolkit
    operation. If they pick `supersede_adr` or `adjust_scope`, follow the
    RECORD or Lifecycle operations flow above — never hand-edit
-   `constraints:`, `affected_paths`, or `status`.
+   `constraints:`, `affected_paths`, or `status`. If they pick
+   `register_exception`, gather `adr_id`, `rule_id`, `owner`, `reason`, a
+   narrow `scope` (never the whole rule), and an `expiry`, then run
+   `python skills/adr-toolkit/scripts/adr.py exception --input <file.json> --dir docs/decisions --json`
+   — never hand-write a file under `docs/decisions/exceptions/`. A finding
+   already carrying an `exception` field has a matching, non-expired record;
+   report it, don't re-register it.
 6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`, `SCHEMA_ERROR`,
-   `BAD_CONSTRAINTS`) mean one ADR or constraint was skipped, not that CHECK
-   failed — report them and never describe a warning-bearing result as clean.
+   `BAD_CONSTRAINTS`, `BAD_EXCEPTION`) mean one ADR, constraint, or exception
+   was skipped, not that CHECK failed — report them and never describe a
+   warning-bearing result as clean.
 
 ## Prohibited
 

@@ -124,6 +124,26 @@ Warnings mean some evidence could not be evaluated and must be reported. A
 clean result never proves prose rationale, runtime behavior, or every
 architecture invariant.
 
+### Exceptions
+
+`register_exception` — one of a Verified violation's five resolutions — is a
+real, deterministic record, not just a label:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py exception --input exception.json \
+  --dir docs/decisions --json
+```
+
+`exception.json` requires `adr_id`, `rule_id`, `owner`, `reason`, a `scope`
+(path patterns the exception is narrowed to), and an `expiry`
+(`YYYY-MM-DD`). The command assigns the next `EXC-NNNN` id and writes
+`docs/decisions/exceptions/NNNN.json`. CHECK annotates a matching, non-expired
+exception onto its finding's `exception` field — the finding's `kind` and
+`confidence` stay exactly what the structural evidence says
+(`verified_violation`/`VIOLATED`); an exception is visible, reviewable
+evidence, never a silent pass. Once `expiry` passes, CHECK stops applying it
+automatically.
+
 ## Scope
 
 - MADR 4.x format, no new standard.

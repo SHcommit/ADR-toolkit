@@ -107,6 +107,21 @@ Present all five options; never default to "revert the code":
    ADR, then supersede the old one; never weaken an accepted record in place
    merely to clear CHECK.
 4. `register_exception` — this specific case is a deliberate, documented
-   exception to an otherwise-still-valid rule.
+   exception to an otherwise-still-valid rule. Record it deterministically:
+
+   ```bash
+   python skills/adr-toolkit/scripts/adr.py exception --input exception.json \
+     --dir docs/decisions --json
+   ```
+
+   `exception.json` must provide `adr_id`, `rule_id`, `owner`, `reason`,
+   `scope` (path patterns the exception is narrowed to — never the whole
+   rule), and `expiry` (`YYYY-MM-DD`); the command assigns the next `EXC-NNNN`
+   id and writes `docs/decisions/exceptions/NNNN.json`. A future CHECK run on
+   a matching, non-expired exception annotates the finding with an
+   `exception` field — the finding's `kind` and `confidence` stay
+   `verified_violation`/`VIOLATED`; an exception is visible evidence, never a
+   silent pass. An expired exception stops applying automatically; register a
+   new one to extend it, never edit the `expiry` of an existing record.
 5. `false_positive` — the rule fired but there is no real conflict; note
    why so the rule can be tightened.

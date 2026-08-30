@@ -87,6 +87,106 @@ def test_verified_violation_when_rule_fires(tmp_path):
     assert violation["rule_id"] == "no-provider-sdk-in-feature"
     assert violation["resolutions"] == RESOLUTIONS
     assert violation["confidence"] == "VIOLATED"
+    assert "exception" not in violation
+
+
+def _write_exception(adr_dir, **overrides):
+    import json as _json
+    exceptions_dir = adr_dir / "exceptions"
+    exceptions_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "id": "EXC-0001",
+        "adr_id": "ADR-0001",
+        "rule_id": "no-provider-sdk-in-feature",
+        "owner": "YangSeungHyun",
+        "reason": "Vendor migration is in progress.",
+        "scope": ["src/features/**"],
+        "expiry": "2999-12-31",
+        "created": "2026-08-30",
+    }
+    data.update(overrides)
+    (exceptions_dir / "0001.json").write_text(_json.dumps(data), encoding="utf-8")
+    return data
+
+
+def test_verified_violation_is_annotated_with_a_matching_active_exception(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir)
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    # An active exception annotates the finding; it never hides or downgrades it.
+    assert violation["confidence"] == "VIOLATED"
+    assert violation["exception"]["id"] == "EXC-0001"
+    assert violation["exception"]["owner"] == "YangSeungHyun"
+    assert violation["exception"]["expiry"] == "2999-12-31"
+
+
+def test_expired_exception_is_not_applied(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir, expiry="2020-01-01")
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
+
+
+def test_exception_outside_scope_is_not_applied(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir, scope=["src/features/legacy/**"])
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
+
+
+def test_malformed_exception_file_degrades_to_warning(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    exceptions_dir = adr_dir / "exceptions"
+    exceptions_dir.mkdir(parents=True)
+    (exceptions_dir / "0001.json").write_text("{not valid json", encoding="utf-8")
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    assert result["ok"] is True
+    assert any(w["code"] == "BAD_EXCEPTION" for w in result["warnings"])
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
 
 
 def test_related_when_rule_present_but_does_not_fire(tmp_path):

@@ -28,6 +28,14 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Added a small, deterministic schema for CHECK policy exceptions:
+  `adr.py exception --input <file.json>` validates `owner`/`reason`/`scope`/
+  `expiry`/`adr_id`/`rule_id` and writes `docs/decisions/exceptions/NNNN.json`
+  as `EXC-NNNN`. CHECK loads active (non-expired, schema-valid) exceptions and
+  annotates a matching finding's `exception` field — it never suppresses or
+  downgrades the finding itself, keeping `kind`/`confidence` exactly what the
+  structural evidence says. A malformed exception file degrades to a
+  `BAD_EXCEPTION` warning, matching the existing ADR/constraints pattern.
 - [x] Promoted CHECK's confidence classification to a stable field: every
   finding now carries `confidence` (`VERIFIED`/`VIOLATED`/`UNVERIFIABLE`)
   computed directly from its `kind`, instead of leaving that mapping for the

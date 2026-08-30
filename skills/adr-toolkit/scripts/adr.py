@@ -12,6 +12,7 @@ from scripts.commands import (
     create,
     diff,
     discover,
+    exception,
     index,
     init,
     preflight,
@@ -128,6 +129,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_check.add_argument("--dir", default="docs/decisions")
     _add_json_flag(p_check)
 
+    p_exception = sub.add_parser("exception")
+    p_exception.add_argument("--input", required=True)
+    p_exception.add_argument("--dir", default="docs/decisions")
+    p_exception.add_argument("--root", default=".")
+    p_exception.add_argument("--dry-run", dest="dry_run", action="store_true")
+    _add_json_flag(p_exception)
+
     return parser
 
 
@@ -145,6 +153,7 @@ HANDLERS = {
     "supersede": supersede.run,
     "diff": diff.run,
     "check": check.run,
+    "exception": exception.run,
 }
 
 
