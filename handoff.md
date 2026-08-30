@@ -2,7 +2,8 @@
 
 ## Current state (as of 2026-08-30)
 
-Branch: `SHcommit/feat-plan-adr-toolkit`. **All 4 plans of the ADR Toolkit
+Branch: `feat/adr-toolkit-mvp-implement` (renamed from
+`SHcommit/feat-plan-adr-toolkit`). **All 4 plans of the ADR Toolkit
 MVP are complete and closed out on this branch.** Master still holds only
 the initial commit — integrating this branch (merge locally, open a PR, or
 keep as-is) is now a live decision for the user, not a deferred one; do
