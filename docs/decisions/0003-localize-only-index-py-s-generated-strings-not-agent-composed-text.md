@@ -1,7 +1,7 @@
 ---
 id: ADR-0003
 title: Localize only index.py's generated strings, not agent-composed text
-status: accepted
+status: superseded
 date: 2026-08-30
 decision_makers:
   - YangSeungHyun
@@ -21,6 +21,7 @@ tags:
   - i18n
   - architecture
 retrospective: true
+superseded_by: ADR-0006
 ---
 
 # Localize only index.py's generated strings, not agent-composed text
