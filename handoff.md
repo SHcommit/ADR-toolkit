@@ -72,22 +72,58 @@ items 1, 3, and 4 as done.
 
 ## Next step
 
-**In progress**: implementing the ADR search + relationship navigation design
-from `docs/superpowers/specs/2026-08-31-adr-search-and-relationships-design.md`
-(committed `300456a`, revised after external review verification `f8b6423`,
-owner-approved). This came from `project-roadmap.md`'s "ADR navigation and
-scale" item, promoted out of roadmap after research into comparable OSS ADR
-tools (`npryce/adr-tools`, `thomvaill/log4brains`) showed search + relationship
-visibility are proven table-stakes regardless of this repo's current 10-ADR
-size. Scope: `core/globs.py` gains `path_under()` (extracted from
-`rules/conflict.py`), new `core/query.py` + `core/relationships.py`, `related.py`
-fixed (body-search) with policy unchanged, new `search` command, `index.py`
-Relationships section (8-locale), `validate.py` relationship-integrity checks.
-9-step sequencing is in the spec's "Implementation sequencing" section — follow
-it in order, each step's own tests green before the next. Next action: invoke
-`writing-plans` to turn the spec into a task-level plan (per the brainstorming
-skill's architectural path, this is the required next step before writing any
-implementation code).
+**In progress, executing inline (not subagent-driven) per owner's request for
+tight commit/handoff cadence in case the session runs out and Codex picks up
+next.** Implementing the ADR search + relationship navigation feature:
+
+- Design: `docs/superpowers/specs/2026-08-31-adr-search-and-relationships-design.md`
+  (`300456a`, revised after external review verification `f8b6423`, owner-approved).
+- Plan: `docs/superpowers/plans/2026-08-31-adr-search-and-relationships.md`
+  — **gitignored, not committed to git; it only exists in this worktree's
+  filesystem.** If a fresh session (this one or Codex) needs to resume and that
+  file is somehow gone, re-derive the remaining tasks from the spec above (which
+  *is* committed) plus the "Tasks completed so far" list below — the spec's own
+  "Implementation sequencing" section has the same 9-step order the plan's 14
+  tasks were broken out from.
+- The plan has 14 bite-sized TDD tasks. **Follow strict TDD**: write the failing
+  test, watch it fail, write minimal code, watch it pass, commit — one task at a
+  time, in order, exactly as the plan file specifies (real code and test bodies
+  are already written out in the plan; don't improvise different ones).
+
+**Tasks completed so far (commits, in order):**
+1. `20254cf` — extracted `path_under` into `core/globs.py`, refactored
+   `rules/conflict.py` to use it (pure refactor, `test_conflict.py`/
+   `test_check.py` still pass unmodified).
+2. `7c95692` — `core/query.py`: `matches_keyword` (title+body fix),
+   `matches_tags_any`, `matches_paths_exact`, `path_governed_by`.
+3. `ff25b68` — `core/query.py`: `rank_key` deterministic ranking (5 tiers,
+   no numeric score exposed publicly).
+
+**Tasks remaining (plan file has full code for each):**
+4. `core/relationships.py` — `Relationship` NamedTuple + `resolve()`.
+5. `core/relationships.py` — `missing_targets()` + `supersession_mismatches()`.
+6. Migrate `related.py` onto `core/query.py`, fix body-search bug, policy
+   unchanged (all pre-existing `test_related.py` tests must stay green).
+7. `search` command — core filtering (browse mode, AND-across-fields,
+   OR-within-field, `--path` via `path_governed_by`).
+8. `search` command — ranking, `--limit`/`total`/`truncated`, `query` echo.
+9. Wire `search` into `adr.py`'s CLI (needs `STATUSES` import from
+   `scripts.core.lifecycle`).
+10. `index.py` — Relationships section (English/fallback strings first).
+11. Localize the 5 new keys across all 8 `scripts/i18n/*.json` catalogs +
+    `test_locale.py`'s `REQUIRED_KEYS`.
+12. `validate.py` — `BROKEN_SUPERSESSION_LINK` + `SUPERSESSION_MISMATCH`
+    (errors, not warnings — `validate.py` has no warnings mechanism).
+13. Docs: README (search usage + AND/OR semantics statement) + SKILL.md
+    (`related` vs `search` framing) — run every shown command in a scratch
+    repo first, don't hand-write example output.
+14. Final verification: full suite, `sync_version.py --check`,
+    `validate`/`index` against this repo's real 10 ADRs, `git diff --check`,
+    commit the regenerated `docs/decisions/README.md`, then update
+    `improvements.md`/`handoff.md` to mark this feature done.
+
+After Task 14: `improvements.md` will have exactly one open item left, the P0
+release gate (unchanged from before this feature started).
 
 Once that work lands: `improvements.md` still has exactly one open item, the
 P0 release gate. Open the final PR (from
