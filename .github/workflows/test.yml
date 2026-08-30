@@ -24,3 +24,5 @@ jobs:
         run: pip install pytest
       - name: Run tests
         run: python -m pytest tests/unit tests/integration -v
+      - name: Check manifest versions are in sync
+        run: python scripts/sync_version.py --check
