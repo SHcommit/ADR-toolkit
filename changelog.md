@@ -37,3 +37,14 @@ Lightweight human-readable summary of meaningful repository changes.
   documentation, not guessed), a repo-root version-sync script, and a
   tag-triggered release workflow. This closes out Plan 4 of 4 — the full
   ADR Toolkit MVP is now complete on this branch.
+- Released v0.1.0 and adopted a Git Flow branch policy
+  (`develop`/`master`/`feature`/`release`/`hotfix`, direct-tag release
+  automation), recorded in `AGENTS.md`.
+- Dogfooded the toolkit on its own repo: initialized `docs/decisions/`
+  and recorded the four most significant architectural decisions made
+  while building it (CHECK's structural-only scope, i18n's index-only
+  scope, adapter packaging policy, the Git Flow adoption itself).
+- Wrote the root `README.md` (previously a one-line stub) and
+  `examples/quickstart.md`, a full INIT → RECORD → CHECK walkthrough with
+  real command output, including CHECK catching a live rule violation and
+  clearing it after a fix.

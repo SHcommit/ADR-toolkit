@@ -2,6 +2,26 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.egg-info/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Local secrets/config — never commit real credentials
+.env
+.env.*.local
 
 # Adapter install-time symlinks. Every adapter README tells the user to
 # create these inside this working tree; committing a real symlink breaks
@@ -9,3 +29,9 @@ __pycache__/
 adapters/codex/skills/adr-toolkit
 adapters/gemini-cli/skills/adr-toolkit
 adapters/antigravity/skills/adr-toolkit
+
+# Task-by-task implementation plans (superpowers subagent-driven-development
+# artifacts) — kept locally for reference, not part of the public tree.
+# docs/superpowers/specs/ (the design docs) stay tracked; only plans/ is
+# excluded. History from before this commit still has them if ever needed.
+docs/superpowers/plans/
