@@ -606,3 +606,122 @@ repo, unknown ref) returns a specific code (`NOT_A_GIT_REPO`,
   ADR carrying a `constraints:` block plus a violating diff, plus a golden
   test extending `tests/integration/` for a CHECK-only flow — flag a
   violation, fix the code, confirm the violation clears.
+
+## 17. Plan 4 (i18n, adapters, release) implementation decisions
+
+Resolved during Plan 4 brainstorming, in the same spirit as §13 and §16.
+Both open decisions from §13 are now closed: **license is MIT** (a
+`LICENSE` file already exists at repo root from the initial commit), and
+**final MVP scope keeps the original five languages and four harnesses** —
+no scope trim.
+
+### 17.1 i18n scope and mechanism
+
+The only deterministic, code-owned user-visible text in the toolkit is
+`index.py`'s generated `README.md` (section headers, status labels).
+Everything else RECORD/DISCOVER/CHECK surface to the user — interview
+questions, findings reports, summaries — is composed fresh by the agent
+each time following `SKILL.md`, and an LLM is already multilingual; it
+needs no phrase-book to ask a question in French. Treating agent-composed
+prose as an i18n target would mean building and maintaining a translation
+table for text that was never fixed-string in the first place.
+
+- `scripts/i18n/{en,fr,ja,ko,zh}.json` — flat key→string files holding
+  *only* `index.py`'s generated strings (section headers like "By status",
+  status labels like "Accepted"). This is the only place a JSON lookup
+  table earns its keep.
+- `index.py` gains a `--locale` flag (default `en`). It loads the matching
+  JSON file; a missing file or a missing key within it falls back to the
+  `en` value for that key (never a raw key name or a crash) — a repo
+  should never lose its index because a translation is incomplete.
+- `SKILL.md` gains one instruction, not a lookup table: detect the user's
+  language from their request and compose questions/reports in it
+  (default English), and pass the same locale to `index --locale <code>`.
+  This preserves the "Deterministic Core, Agentic Edge" split (§4) — the
+  script never guesses a language, the agent always does.
+- Explicitly out of scope: `adr.py`'s `--json`-always-emits-JSON standing
+  risk (tracked in `handoff.md`) is untouched by Plan 4 — locale affects
+  only the string *content* `index.py` writes to `README.md`, not the CLI's
+  JSON transport contract.
+
+### 17.2 Harness adapters — verified formats, not inferred
+
+Plan 1's Claude Code adapter guessed a `"skills"` key and a nested manifest
+path that turned out wrong, caught only by its final review. Plan 4 does
+not repeat that: each format below was looked up against real
+documentation during Plan 4's brainstorming, not inferred from Claude
+Code's adapter.
+
+| Harness | Manifest | Required fields | Notes |
+|---|---|---|---|
+| Codex CLI | `.codex-plugin/plugin.json` | `name` (optionally `$schema`) | Follows the cross-vendor **Agent Plugins 1.0.0** standard (Amazon/Anysphere/Microsoft/OpenAI/Vercel, released 2026-08-06); Codex's implementation shipped 2026-08-07 — very recent, worth re-verifying against `github.com/agentplugins/agent-plugins-spec` if this drifts before Plan 4 implements. |
+| Gemini CLI | `gemini-extension.json` | `name` (optionally `version`, `description`, `contextFileName`) | |
+| Antigravity CLI | `plugin.json` | `name` (optionally `description`, `$schema` pointing at `https://antigravity.google/schemas/v1/plugin.json`) | |
+
+All three documented examples show `skills/` as a subdirectory of the
+manifest's own location, not an externally-pointed path — no field in any
+of the three schemas lets a manifest reference a skill directory
+elsewhere. Since the toolkit's actual skill is the single self-contained
+`skills/adr-toolkit/` package (the whole point of Plan 1), each adapter
+gets a **symlinked** `skills/adr-toolkit` under its own directory
+(`adapters/codex/skills/adr-toolkit -> ../../../skills/adr-toolkit`, and
+equivalently for the other two) — the same pattern
+`adapters/generic/README.md` already documents for manual installs, never
+a duplicated copy of the package.
+
+**Manual end-to-end verification, not just schema tests**, per §8's
+already-stated depth ("manually verified to install and run
+INIT/RECORD/CHECK once end-to-end"). `codex` (0.151.0) and `gemini`
+(0.46.0) CLIs are present in this development environment, so their
+adapters can get a real install-into-a-scratch-repo-and-run verification
+during implementation. No `antigravity` CLI is available here — that
+adapter's task is scoped to structural/schema validation only, with the
+limitation stated plainly in its task report rather than a false claim of
+end-to-end verification.
+
+### 17.3 Version synchronization and release automation
+
+Version currently lives in three places already (`skills/adr-toolkit/VERSION`,
+`.claude-plugin/plugin.json`'s `"version"` field, `SKILL.md`'s frontmatter
+`version:` field). Of the three new adapter manifests, only Gemini's
+`gemini-extension.json` documents an optional `version` field in its
+schema; Codex's and Antigravity's minimal examples in §17.2 don't show
+one (their schemas may support it without it appearing in the examples
+found — confirm during implementation rather than assuming either way).
+
+- `skills/adr-toolkit/VERSION` remains the single source of truth.
+- A new `scripts/sync_version.py` at the repo root (tooling for the repo
+  itself, not part of the distributable `skills/adr-toolkit/` package, so
+  it lives outside that directory) reads `VERSION` and writes it into
+  every manifest confirmed to carry its own `version` field — checking
+  each new adapter manifest for one during implementation rather than
+  assuming all four need it. A `--check` mode reports drift without
+  writing, exit code 1 if anything would change.
+- `.github/workflows/test.yml` gains a step running
+  `python scripts/sync_version.py --check` — a forgotten version bump on
+  any manifest fails CI on every PR, not just at release time.
+- New `.github/workflows/release.yml`, triggered on a version-tag push
+  (`v*`): runs the full test suite, then creates a GitHub Release with
+  the changelog. It does not auto-bump the version — a human bumps
+  `VERSION`, runs `sync_version.py` (no `--check`) to propagate it,
+  commits, and pushes the tag; the workflow's job is packaging and
+  publishing an already-decided release, not deciding when to cut one.
+
+### 17.4 Testing strategy
+
+- i18n: unit tests that `index.py --locale <code>` renders each locale's
+  strings correctly, that a missing locale file falls back to English
+  content (not a crash or a raw key), and that a locale file missing one
+  key falls back to English for just that key.
+- Adapters: a structural/schema test per manifest (valid JSON, required
+  fields present, matches the documented schema) for all four adapters;
+  a manual end-to-end install-and-run report (not an automated pytest
+  case — no CI runner here has `codex`/`gemini`/`antigravity` installed)
+  for Codex and Gemini, explicitly noting Antigravity's is unverified.
+- Version sync: unit tests for `sync_version.py`'s `--check` mode
+  (detects drift, exits non-zero) and its write mode (updates every
+  tracked manifest correctly), run against fixture copies of each
+  manifest file, not the real repo files.
+- Release workflow: no automated test (GitHub Actions workflows aren't
+  unit-testable in this repo's stack); reviewed by reading the YAML
+  against `test.yml`'s existing conventions.
