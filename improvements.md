@@ -13,15 +13,13 @@ Concrete implementation backlog. Unscheduled product bets belong in
   **Done when:** the readiness report's conditional GO becomes GO. Creating the
   release branch, pushing, version bumping, and tagging require owner approval.
 
-### P1 — strongly recommended
-
-- [ ] **Clean stale remote branches after reference checks.** Candidates are
-  `origin/SHcommit/feat-plan-adr-toolkit` and
-  `origin/feat/adr-toolkit-mvp-implement`.
-  **Done when:** no open PR or release reference needs them and the owner
-  explicitly approves deletion.
-
 ## Done
+
+- [x] Cleaned stale remote branches: `origin/SHcommit/feat-plan-adr-toolkit`
+  and `origin/feat/adr-toolkit-mvp-implement` were both fully merged into
+  `origin/develop` with no open PR referencing either (`gh pr list --state
+  open` returned none repo-wide); owner approved deletion, deleted via
+  `git push origin --delete`, and confirmed gone via `git fetch --prune`.
 
 - [x] Decided Codex metadata compatibility: no code change needed.
   `quick_validate.py`'s rejection of `user-invocable`/`version` comes from
