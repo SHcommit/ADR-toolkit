@@ -7,6 +7,7 @@ from pathlib import Path
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.config import ConfigError, resolve_locale
+from scripts.core.locale import DEFAULT_LOCALE
 from scripts.core.rendering import interactive_prompts, render_minimal
 from scripts.core.schema import validate_frontmatter
 
@@ -19,7 +20,7 @@ def _prompt(input_fn, question: str) -> str:
     return input_fn("").strip()
 
 
-def gather_draft_interactively(locale: str, input_fn=None) -> dict:
+def gather_draft_interactively(locale: str = DEFAULT_LOCALE, input_fn=None) -> dict:
     if input_fn is None:
         input_fn = input
     prompts = interactive_prompts(locale)

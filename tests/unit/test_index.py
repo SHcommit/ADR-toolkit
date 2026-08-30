@@ -97,12 +97,27 @@ def test_index_defaults_to_english_when_locale_omitted(tmp_path):
         tags=["architecture"], affected_paths=["src/events/"],
     )
 
-    result = index.run(SimpleNamespace(dir=str(tmp_path)))
+    result = index.run(SimpleNamespace(dir=str(tmp_path), root=str(tmp_path), locale=None))
 
     assert result["ok"] is True
     readme = (tmp_path / "README.md").read_text(encoding="utf-8")
     assert "# Decision Log" in readme
     assert "## By status" in readme
+
+
+def test_index_uses_repository_default_when_locale_omitted(tmp_path):
+    (tmp_path / ".adr-toolkit.json").write_text(
+        '{"schema_version": 1, "locale": "ko"}', encoding="utf-8"
+    )
+    adr_dir = tmp_path / "docs/decisions"
+    adr_dir.mkdir(parents=True)
+
+    result = index.run(SimpleNamespace(
+        dir=str(adr_dir), root=str(tmp_path), locale=None,
+    ))
+
+    assert result["ok"] is True
+    assert (adr_dir / "README.md").read_text(encoding="utf-8").startswith("# 결정 기록")
 
 
 def test_index_unknown_status_falls_back_to_capitalized_label(tmp_path):

@@ -47,8 +47,10 @@ def test_index_locale_rejects_an_unrecognized_code_instead_of_silently_using_eng
         adr.build_parser().parse_args(["index", "--locale", "zz"])
 
 
-def test_index_locale_defaults_to_english_when_omitted():
-    assert adr.build_parser().parse_args(["index"]).locale == "en"
+def test_index_locale_is_unset_when_omitted_so_repository_default_can_win():
+    args = adr.build_parser().parse_args(["index"])
+    assert args.locale is None
+    assert args.root == "."
 
 
 def test_init_locale_is_optional_and_constrained():

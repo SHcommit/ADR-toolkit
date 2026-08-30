@@ -3,6 +3,7 @@ from pathlib import Path
 
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
+from scripts.core.config import ConfigError, load_repository_config
 from scripts.core.schema import validate_frontmatter
 
 SKIP_FILES = {"README.md", "adr-template.md"}
@@ -11,6 +12,16 @@ SKIP_FILES = {"README.md", "adr-template.md"}
 def run(args) -> dict:
     adr_dir = Path(args.dir)
     errors = []
+
+    try:
+        load_repository_config(Path(getattr(args, "root", ".")))
+    except ConfigError as exc:
+        return {
+            "ok": False,
+            "operation": "validate",
+            "checked": 0,
+            "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+        }
 
     adr_files = sorted(p for p in adr_dir.glob("*.md") if p.name not in SKIP_FILES)
 

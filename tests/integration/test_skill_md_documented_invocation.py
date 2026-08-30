@@ -32,11 +32,15 @@ def test_documented_relative_invocation_resolves_from_repo_root(tmp_path):
     assert preflight.returncode == 0, preflight.stderr
     assert json.loads(preflight.stdout)["ok"] is True
 
-    init_result = _run(["init", "--dir", str(adr_dir), "--json"])
+    init_result = _run([
+        "init", "--dir", str(adr_dir), "--root", str(tmp_path), "--json",
+    ])
     assert init_result.returncode == 0, init_result.stderr
     assert json.loads(init_result.stdout)["ok"] is True
 
-    validate_result = _run(["validate", "--dir", str(adr_dir), "--json"])
+    validate_result = _run([
+        "validate", "--dir", str(adr_dir), "--root", str(tmp_path), "--json",
+    ])
     assert validate_result.returncode == 0, validate_result.stderr
     payload = json.loads(validate_result.stdout)
     assert payload["ok"] is True

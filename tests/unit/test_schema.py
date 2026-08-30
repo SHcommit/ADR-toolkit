@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from scripts.core import schema
+from scripts.core.locale import SUPPORTED_LOCALES
 from scripts.core.schema import validate_frontmatter
 
 VALID = {
@@ -72,6 +73,12 @@ def test_absence_of_optional_fields_is_not_an_error():
     assert validate_frontmatter(VALID) == []
 
 
+def test_optional_locale_is_valid_and_unknown_locale_is_rejected():
+    assert validate_frontmatter({**VALID, "locale": "ko"}) == []
+    errors = validate_frontmatter({**VALID, "locale": "xx"})
+    assert any("locale" in error for error in errors)
+
+
 def test_json_schema_matches_runtime_frontmatter_fields():
     schema_path = Path(__file__).parents[2] / "skills/adr-toolkit/schemas/adr.schema.json"
     with schema_path.open() as schema_file:
@@ -87,3 +94,6 @@ def test_json_schema_matches_runtime_frontmatter_fields():
     for field, python_type in runtime_fields.items():
         assert field in json_schema["properties"]
         assert json_schema["properties"][field]["type"] == expected_json_types[python_type]
+
+    assert "locale" not in json_schema["required"]
+    assert tuple(json_schema["properties"]["locale"]["enum"]) == SUPPORTED_LOCALES

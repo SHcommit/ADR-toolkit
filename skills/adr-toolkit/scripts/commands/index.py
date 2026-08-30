@@ -3,6 +3,7 @@ from pathlib import Path
 
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
+from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
 
 SKIP_FILES = {"README.md", "adr-template.md"}
@@ -22,7 +23,18 @@ FALLBACK_STRINGS = {
 
 def run(args) -> dict:
     adr_dir = Path(args.dir)
-    locale = getattr(args, "locale", None) or "en"
+    try:
+        locale = resolve_locale(
+            cli_locale=getattr(args, "locale", None),
+            draft_locale=None,
+            root=Path(getattr(args, "root", ".")),
+        )
+    except ConfigError as exc:
+        return {
+            "ok": False,
+            "operation": "index",
+            "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+        }
     strings = load_locale(locale)
     entries = []
     warnings = []

@@ -23,6 +23,21 @@ def test_gather_draft_interactively_builds_valid_minimal_body():
     assert "Kafka" in draft["body"]
 
 
+def test_gather_draft_interactively_keeps_english_default_for_existing_callers():
+    answers = iter([
+        "Use Postgres", "Persistence is required", "SQLite, Postgres",
+        "Postgres", "it scales", "durability", "operations", "integration test",
+        "requirements change",
+    ])
+
+    draft = create.gather_draft_interactively(
+        input_fn=lambda _prompt: next(answers)
+    )
+
+    assert draft["locale"] == "en"
+    assert "## Context and Problem Statement" in draft["body"]
+
+
 def test_create_run_supports_interactive_mode_end_to_end(tmp_path, monkeypatch):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
