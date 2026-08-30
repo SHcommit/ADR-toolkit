@@ -109,3 +109,47 @@ def test_since_value_cannot_smuggle_a_git_option_that_writes_a_file(tmp_path):
     # git's `--output` writes to the literal argument, i.e. "<target>..HEAD".
     assert not target.exists()
     assert not (tmp_path / f"{target.name}..HEAD").exists()
+
+
+def test_patch_subprocess_failure_is_not_reported_as_clean(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    real_run = diff.subprocess.run
+    diff_calls = 0
+
+    def fake_run(command, **kwargs):
+        nonlocal diff_calls
+        if "diff" in command:
+            diff_calls += 1
+            if diff_calls == 2:
+                return subprocess.CompletedProcess(command, 2, "", "patch failed")
+        return real_run(command, **kwargs)
+
+    monkeypatch.setattr(diff.subprocess, "run", fake_run)
+
+    result = diff.run(SimpleNamespace(
+        root=str(tmp_path), staged=False, uncommitted=True, since=None,
+    ))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "GIT_DIFF_FAILED"
+    assert "patch failed" in result["errors"][0]["detail"]
+
+
+def test_untracked_listing_failure_is_not_reported_as_clean(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    real_run = diff.subprocess.run
+
+    def fake_run(command, **kwargs):
+        if "ls-files" in command:
+            return subprocess.CompletedProcess(command, 2, "", "listing failed")
+        return real_run(command, **kwargs)
+
+    monkeypatch.setattr(diff.subprocess, "run", fake_run)
+
+    result = diff.run(SimpleNamespace(
+        root=str(tmp_path), staged=False, uncommitted=True, since=None,
+    ))
+
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "GIT_LS_FILES_FAILED"
+    assert "listing failed" in result["errors"][0]["detail"]

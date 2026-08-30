@@ -3,6 +3,13 @@ import subprocess
 from pathlib import Path
 
 
+class _GitCommandError(RuntimeError):
+    def __init__(self, code: str, detail: str):
+        super().__init__(detail)
+        self.code = code
+        self.detail = detail
+
+
 def run(args) -> dict:
     root = Path(getattr(args, "root", ".")).resolve()
 
@@ -36,19 +43,33 @@ def run(args) -> dict:
         capture_output=True, text=True,
     )
     if name_status.returncode != 0:
-        code = "INVALID_REF" if since else "GIT_DIFF_FAILED"
+        code = "INVALID_REF" if mode == "since" else "GIT_DIFF_FAILED"
         return {"ok": False, "operation": "diff", "errors": [{"code": code, "detail": name_status.stderr.strip()}]}
 
     patch = subprocess.run(
         ["git", "-C", str(root), "diff", "--unified=0", *diff_options, "--end-of-options", *range_args],
         capture_output=True, text=True,
     )
+    if patch.returncode != 0:
+        code = "INVALID_REF" if mode == "since" else "GIT_DIFF_FAILED"
+        return {
+            "ok": False,
+            "operation": "diff",
+            "errors": [{"code": code, "detail": patch.stderr.strip()}],
+        }
 
     files = _parse_name_status(name_status.stdout)
     _attach_line_content(files, patch.stdout)
 
     if mode == "uncommitted":
-        files.extend(_untracked_files(root))
+        try:
+            files.extend(_untracked_files(root))
+        except _GitCommandError as exc:
+            return {
+                "ok": False,
+                "operation": "diff",
+                "errors": [{"code": exc.code, "detail": exc.detail}],
+            }
 
     return {"ok": True, "operation": "diff", "mode": mode, "ref": since, "files": files}
 
@@ -61,6 +82,11 @@ def _untracked_files(root: Path) -> list:
         ["git", "-C", str(root), "ls-files", "--others", "--exclude-standard"],
         capture_output=True, text=True,
     )
+    if listing.returncode != 0:
+        raise _GitCommandError(
+            "GIT_LS_FILES_FAILED",
+            listing.stderr.strip() or "git ls-files failed",
+        )
     entries = []
     for rel_path in listing.stdout.splitlines():
         if not rel_path.strip():
