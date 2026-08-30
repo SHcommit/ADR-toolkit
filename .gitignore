@@ -2,6 +2,26 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.egg-info/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Local secrets/config — never commit real credentials
+.env
+.env.*.local
 
 # Adapter install-time symlinks. Every adapter README tells the user to
 # create these inside this working tree; committing a real symlink breaks
