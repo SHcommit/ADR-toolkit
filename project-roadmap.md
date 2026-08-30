@@ -56,3 +56,41 @@ spec → plan) only once the MVP has proven the core loop with real usage.
 - Whether related-ADR search needs more than keyword/tag/affected-path
   matching (e.g. embedding-based similarity) — only worth it once keyword
   search demonstrably misses real cases.
+
+## CHECK follow-ups (deferred from Plan 3's final review)
+
+Minor/deferred findings from Plan 3's closeout review, not fixed in the
+fix wave since they're either narrow edge cases or refactors better done
+deliberately rather than folded into a fix commit:
+
+- `check.py`'s `_existing_paths` walks the whole working tree via
+  `rglob("*")`, skipping only `.git`. `diff.py` already shells out to
+  `git ls-files`; switching to
+  `git ls-files --cached --others --exclude-standard` would be faster on
+  large repos and correctly honor `.gitignore` (currently a gitignored
+  build artifact could satisfy a `required_path`/`file_must_exist` rule).
+- `SKIP_FILES = {"README.md", "adr-template.md"}` and the
+  glob/parse-filename/frontmatter-parse-with-per-file-warning loop are now
+  duplicated across `related.py`, `index.py`, `validate.py`, and
+  `check.py`. A shared `core/adr_dir.py::iter_adrs(adr_dir) -> (entries,
+  warnings)` would collapse all four call sites.
+- `references/conflict-rules.md` doesn't warn that `pattern`'s syntax
+  differs by rule kind (regex for `forbidden_import`/`dependency_forbidden`,
+  glob for `required_path`/`forbidden_path`) — an author copying the
+  `paths` glob style into a `forbidden_import` rule's `pattern` field gets
+  a regex where `**` silently never matches as expected.
+- `diff.py`'s `--name-status` parsing takes only the destination path for
+  a renamed file (git status char `R`), dropping the old path entirely —
+  a `constraints:` rule scoped to the old location won't fire on a rename,
+  and a Verification/Confirmation-referenced file that was renamed away
+  isn't recognized as removed.
+- `diff.py`'s second subprocess call (the `--unified=0` patch content)
+  doesn't independently check its own returncode — if it fails while the
+  first `--name-status` call succeeded, files get correct `change_type`
+  but empty `added_lines`/`removed_lines`, silently passing every
+  content-pattern rule instead of surfacing an error.
+- `diff.py`'s `INVALID_REF` vs `GIT_DIFF_FAILED` error-code selection
+  checks the raw `since` argument's truthiness rather than
+  `mode == "since"` — near-unreachable in practice (would need
+  `--staged --since <bad-ref>` together, which the CLI doesn't prevent),
+  but worth tightening to `mode == "since"` if `diff.py` is touched again.

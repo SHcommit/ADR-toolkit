@@ -17,42 +17,45 @@ a partial plan without asking first.
   fixed six confirmed robustness gaps in `related`/`significance`/`status`/
   `supersede` (malformed-frontmatter handling, specific error codes for bad
   input files, a missing supersede-status invariant, and a silently
-  swallowed rollback failure). The full suite has 114 passing unit and
-  integration tests.
-- Plan 2 delivers deterministic significance scoring, related-ADR search,
-  evidence-first RECORD guidance, optional `supersedes`/`superseded_by`
-  schema fields, validated `status`/`deprecate`/`supersede` commands, and an
-  end-to-end RECORD-to-supersession fixture.
-- **Plans 3 and 4** are not yet designed or implemented.
+  swallowed rollback failure).
+- **Plan 3 of 4** (CHECK) is complete and closed out. Designed via
+  brainstorming (resolved in spec §16) and implemented via
+  subagent-driven-development across 9 tasks: `core/globs.py` (`**`-aware
+  glob matcher), `core/constraints.py` (fenced `constraints:` block
+  parser), `commands/diff.py` (git diff wrapper, 3 range modes),
+  `rules/conflict.py` (4 structural matching mechanisms the 6 constraint
+  kinds collapse into), `commands/check.py` (4-way finding classification:
+  Related/Review required/Verified violation/No applicable constraint,
+  plus a Superseded-ADR pass), a `references/conflict-rules.md`
+  authoring guide, a `SKILL.md` CHECK section, and an end-to-end
+  fixture/golden test. One task-level fix round (Task 5, malformed-file
+  handling) plus a final whole-branch review that found and fixed 6
+  Important issues, including a git argument-injection vulnerability in
+  `diff.py`'s `--since` handling that could make the "read-only" CHECK
+  command write an arbitrary file (fixed with `--end-of-options`), and
+  several "silently reports clean when it actually failed/never
+  evaluated" bugs (malformed `affected_paths`, a malformed constraint
+  regex, an unknown rule `kind`, a nonexistent ADR directory, and a
+  missing-realization heuristic keyed on a heading — "Verification" —
+  the toolkit's own templates never produce, since they write
+  "Confirmation"). The full suite has 169 passing unit and integration
+  tests.
+- **Plan 4 of 4** is not yet designed or implemented.
 
 ## Next work
 
-- [ ] **Design Plan 3 (CHECK):** use the brainstorming skill against
-  `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md` sections 7 and 11,
-  then use the writing-plans skill to create the task-by-task plan under
-  `docs/superpowers/plans/`.
-- [ ] **Implement Plan 3:** execute the approved plan with TDD, task reviews,
-  a final whole-branch review, and fixture/golden coverage.
 - [ ] **Design and implement Plan 4:** add five-locale runtime text, build the
   remaining adapters only after verifying each harness's current format, and
   add version synchronization and release automation.
 - [ ] **Resolve release decisions:** obtain explicit approval for the license
   and confirm whether the final MVP retains five languages and four harnesses.
-
-Plan 3 must preserve the agreed MVP boundary: CHECK matches structured
-`constraints:` evidence only and does not attempt general semantic conflict
-detection. Its implementation plan must cover:
-
-1. Parsing `forbidden_import`, `required_path`, `forbidden_path`,
-   `dependency_forbidden`, `file_must_exist`, and `test_must_exist`.
-2. Matching a git diff against Accepted ADRs and their affected paths.
-3. Reporting Related, Review required, Verified violation, and No applicable
-   constraint findings.
-4. Presenting all five Verified violation resolutions: fix the code,
-   supersede the ADR, adjust its scope/constraints, register an exception,
-   or mark a false positive.
-5. Unit, integration, behavioral, and fixture/golden coverage consistent
-   with the deterministic-core and human-approval rules.
+- [ ] **CHECK follow-ups deferred from Plan 3's closeout review:** see
+  `project-roadmap.md`'s "CHECK follow-ups" section — a `git ls-files`
+  based existing-paths check (perf + `.gitignore` correctness), collapsing
+  the `SKIP_FILES`/ADR-loading loop duplicated across 4 command modules
+  into a shared helper, documenting that `pattern` syntax differs by rule
+  kind, rename handling in `diff.py`, and two narrow `diff.py` edge cases.
+  None are blocking; pick up opportunistically or fold into Plan 4.
 
 ## Open decisions
 
@@ -76,17 +79,23 @@ detection. Its implementation plan must cover:
 - `scripts/adr.py` accepts `--json` on every subcommand but always emits JSON;
   decide whether to implement a text mode or remove the ineffective flag.
 
-## Closeout files touched
+## Closeout files touched (Plan 3)
 
-- `skills/adr-toolkit/scripts/commands/related.py`
-- `skills/adr-toolkit/scripts/commands/significance.py`
-- `skills/adr-toolkit/scripts/commands/status.py`
-- `skills/adr-toolkit/scripts/commands/supersede.py`
-- `skills/adr-toolkit/references/lifecycle.md`
-- `tests/unit/test_related.py`
-- `tests/unit/test_significance_command.py`
-- `tests/unit/test_status.py`
-- `tests/unit/test_supersede.py`
+- `skills/adr-toolkit/scripts/core/globs.py`
+- `skills/adr-toolkit/scripts/core/constraints.py`
+- `skills/adr-toolkit/scripts/commands/diff.py`
+- `skills/adr-toolkit/scripts/commands/check.py`
+- `skills/adr-toolkit/scripts/rules/conflict.py`
+- `skills/adr-toolkit/scripts/adr.py`
+- `skills/adr-toolkit/references/conflict-rules.md`
+- `skills/adr-toolkit/SKILL.md`
+- `docs/superpowers/specs/2026-08-29-adr-toolkit-design.md`
+- `docs/superpowers/plans/2026-08-30-adr-toolkit-check.md`
+- `tests/unit/test_globs.py`, `test_constraints.py`, `test_diff.py`,
+  `test_conflict.py`, `test_check.py`, `test_conflict_rules_reference.py`,
+  `test_skill_manifest.py`
+- `tests/fixtures/check_provider_port/`, `tests/integration/test_check_workflow.py`
+- `project-roadmap.md`
 - `improvements.md`
 - `changelog.md`
 - `handoff.md`

@@ -17,3 +17,10 @@ Lightweight human-readable summary of meaningful repository changes.
   (bad frontmatter, non-list fields, missing IDs, bad JSON) and added a
   supersede invariant requiring the superseding ADR to already be
   `accepted`.
+- Added the CHECK workflow: `diff`/`check` CLI commands, a `**`-aware glob
+  matcher, a `constraints:` block parser, and a 4-way finding
+  classification (Related/Review required/Verified violation/No applicable
+  constraint) matching a git diff against Accepted ADRs' structural
+  constraint rules and Superseded ADRs' affected paths. Closed out with a
+  final whole-branch review that fixed a git argument-injection
+  vulnerability and several "silently reports clean" gaps.

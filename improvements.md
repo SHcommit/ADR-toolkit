@@ -27,6 +27,18 @@ the current session.
 
 ## Done
 
+- [x] Closed out Plan 3 (CHECK): all 9 tasks implemented via
+  subagent-driven-development, task-reviewed clean (one fix round on
+  Task 5's malformed-file handling), plus a final whole-branch review
+  that found and fixed 6 Important issues in one fix wave — a git
+  argument-injection vulnerability in `diff.py`'s `--since` handling
+  (could make the "read-only" CHECK command write an arbitrary file, now
+  closed with `--end-of-options`), and five "silently reports clean
+  instead of erroring/warning" bugs across `affected_paths` handling,
+  constraint-regex compilation, unknown rule kinds, a nonexistent ADR
+  directory, and a missing-realization heuristic keyed on a heading the
+  toolkit's own templates never produce. Full suite: 169/169 passing (up
+  from 154 at task completion, 114 baseline before Plan 3).
 - [x] Closed out Plan 2: final whole-branch review of `37067b1..HEAD` found
   six confirmed robustness gaps (malformed frontmatter aborting `related`
   instead of degrading like `validate`/`index`; `significance`/`status`
