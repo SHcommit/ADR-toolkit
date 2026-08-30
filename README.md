@@ -47,7 +47,7 @@ of these adapters at it:
 directly in a terminal — no agent required:
 
 ```bash
-python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisions
+python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisions --json
 ```
 
 ## Language and repository config

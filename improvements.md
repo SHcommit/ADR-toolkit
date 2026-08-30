@@ -15,10 +15,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ### P1 — strongly recommended
 
-- [ ] **Resolve `--json` semantics.** Every subcommand parses `--json` but always
-  emits JSON.
-  **Done when:** either a human-readable mode exists with compatibility tests or
-  a future breaking-release decision removes the inert flag.
 - [ ] **Resolve Codex metadata compatibility.** Codex `quick_validate.py`
   rejects `user-invocable` and `version`, while the cross-harness contract and
   repository tests require them.
@@ -32,6 +28,14 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Resolved `--json` semantics: adopted "always JSON to stdout" as the
+  deliberate, tested contract (matching the code's own existing
+  "JSON-only-stdout contract" comment and every real caller), rather than
+  inventing a human-readable mode or removing the flag in a breaking change.
+  `--json` is now documented via `--help` as a no-op kept for backward
+  compatibility; added a regression test proving output is JSON with or
+  without it; added it to the three doc examples that omitted it, for
+  consistency.
 - [x] Decided manifest-description ownership: `SKILL.md`'s frontmatter
   `description:` is now the single canonical source, synced by
   `sync_version.py` into `.claude-plugin/plugin.json`,

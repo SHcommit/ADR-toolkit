@@ -57,7 +57,7 @@ time later) to recover past decisions.
    already exists; do not scaffold a second one.
 2. **CONFIRM** — show the user the exact directory that will be created,
    before writing anything.
-3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --locale <code> --dir docs/decisions`
+3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --locale <code> --dir docs/decisions --json`
    to create `.adr-toolkit.json`, the directory, template, and ADR-0001.
 4. **VALIDATE** — run `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
    and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
@@ -115,7 +115,7 @@ entirely, or re-run later to mine more of the history incrementally.
    (`title`, `status`, `body` — body includes the three-part structure
    above — plus any of `date`/`decision_makers`/`related`/
    `affected_paths`/`tags`/`retrospective`) and run
-   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions`.
+   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions --json`.
 8. **VALIDATE** — same as INIT step 4. If validate reports errors, fix the
    draft and re-run `create` — never hand-edit the generated file to patch
    a validation error.
