@@ -24,3 +24,9 @@ Lightweight human-readable summary of meaningful repository changes.
   constraint rules and Superseded ADRs' affected paths. Closed out with a
   final whole-branch review that fixed a git argument-injection
   vulnerability and several "silently reports clean" gaps.
+- Added five-language i18n for `index`'s generated `README.md`
+  (`--locale en|fr|ja|ko|zh`), light adapters for Codex CLI, Gemini CLI,
+  and Antigravity CLI (manifest formats verified against real
+  documentation, not guessed), a repo-root version-sync script, and a
+  tag-triggered release workflow. This closes out Plan 4 of 4 — the full
+  ADR Toolkit MVP is now complete on this branch.

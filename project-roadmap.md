@@ -94,3 +94,62 @@ deliberately rather than folded into a fix commit:
   `mode == "since"` — near-unreachable in practice (would need
   `--staged --since <bad-ref>` together, which the CLI doesn't prevent),
   but worth tightening to `mode == "since"` if `diff.py` is touched again.
+
+## i18n, adapters, release follow-ups (deferred from Plan 4's final review)
+
+Minor/deferred findings from Plan 4's closeout review, not fixed in the
+fix wave since they're narrow polish or genuinely need Codex's Agent
+Plugins support to mature before a good fix exists:
+
+- `adapters/codex/README.md`'s opening line slightly overclaims which
+  manifest the verification exercised — it reads as endorsing
+  `.codex-plugin/plugin.json`'s sibling-`skills/` auto-discovery, but the
+  verified working path is Codex reading the repo-root
+  `.claude-plugin/marketplace.json` instead; `.codex-plugin/`'s own
+  auto-discovery was never actually exercised. Reword to scope the claim
+  to what was tested.
+- Relatedly, the Codex README's install step 1 (create the
+  `adapters/codex/skills/adr-toolkit` symlink, per spec §17.2) is
+  currently orphaned — the documented working install (steps 2-4) never
+  touches it, since Codex reads the repo-root marketplace file instead.
+  Kept because the spec mandates the symlink exist, but the README should
+  explain why step 1 still matters once Codex's own Agent Plugins support
+  (shipped 2026-08-07, very new) starts reading `.codex-plugin/` the way
+  the standard describes.
+- `codex plugin add` snapshots the entire repo root — including `.git/`,
+  `.superpowers/`, `.pytest_cache/` — into its plugin cache. Not a defect
+  in this repo's adapter, but worth knowing before ever publishing this as
+  a real, standalone marketplace listing (a dedicated distribution repo
+  might be warranted instead of pointing Codex at the full dev repo).
+- `scripts/sync_version.py`'s `sync()` still silently skips a manifest
+  that exists but has lost its declared `version` key (only a missing
+  *file* is now a hard error via `require_known_paths()`) — covered by a
+  test asserting the real manifests currently have the key, but the
+  script itself doesn't enforce it going forward.
+- `scripts/sync_version.py:104`'s `path.relative_to(REPO_ROOT)` in an
+  error-reporting path would raise `ValueError` instead of the intended
+  `SystemExit` if a future `MANIFEST_SPECS` entry were ever added outside
+  `REPO_ROOT` — only reachable via a deliberately malformed entry today,
+  not user-triggerable.
+- `SKILL.md`'s line documenting the lifecycle `index --locale` invocation
+  is noticeably longer than the file's otherwise-consistent ~72-column
+  wrap. Cosmetic.
+- Description text for the toolkit ("Initialize, record, and check
+  Architecture Decision Records...") is now duplicated across four
+  manifests (`.claude-plugin/plugin.json`, `SKILL.md`'s frontmatter, the
+  three adapter manifests, `.claude-plugin/marketplace.json`) with slight
+  wording drift between them and no sync mechanism — `sync_version.py`
+  only syncs the version field, not descriptions.
+- `sync_version.py`'s `json.dumps(..., indent=2)` defaults to
+  `ensure_ascii=True`; harmless today since all synced values are ASCII,
+  but a future non-ASCII description would get mangled into `\uXXXX`
+  escapes on the next sync. Pass `ensure_ascii=False` if that becomes a
+  real concern.
+- `.github/workflows/test.yml`'s version-drift check step runs redundantly
+  on all 5 matrix legs (3 OS × 2 Python versions minus one exclusion) —
+  it's a repo-invariant check, not a platform-specific one, so one leg
+  would suffice. Harmless, just slightly wasteful CI time.
+- Root `README.md` is still a one-line stub at MVP-complete. Nothing
+  points a new user at the four `adapters/*/README.md` install guides or
+  at `create --interactive`'s no-agent-needed path. Worth writing a real
+  README before any public release, alongside the license decision.

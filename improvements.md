@@ -27,6 +27,26 @@ the current session.
 
 ## Done
 
+- [x] Closed out Plan 4 (i18n, adapters, release automation) — the final
+  plan of the 4-plan MVP: all 8 tasks implemented via
+  subagent-driven-development, task-reviewed clean (one fix round on
+  Task 4's Codex adapter, disclosing an initial false "Codex CLI can't do
+  this" claim), plus a final whole-branch review that found and fixed 1
+  Critical and 6 Important issues in one fix wave — the Codex README's
+  documented install path was wrong (nested `skills/` instead of a spec
+  §17.2 sibling) and its "Codex is the gap" claim was false (re-verified:
+  `codex plugin marketplace add`/`plugin add` against this repo's own
+  `.claude-plugin/marketplace.json` actually works); `release.yml` was
+  missing `permissions: contents: write` (would likely 403 on the first
+  real tag) and never actually checked the pushed tag against `VERSION`;
+  `index --locale` hard-crashed on a malformed/missing locale file,
+  violating the spec's explicit "never a crash" rule; `.gitignore` didn't
+  cover the adapter symlink paths its own READMEs instruct users to
+  create; and `sync_version.py` neither validated `VERSION`'s content
+  (empty/multiline/regex-template-injection risk) nor caught a silently
+  missing real manifest. Full suite: 212/212 passing (up from 193 at task
+  completion, 169 before Plan 4). **The full 4-plan ADR Toolkit MVP is
+  now complete.**
 - [x] Closed out Plan 3 (CHECK): all 9 tasks implemented via
   subagent-driven-development, task-reviewed clean (one fix round on
   Task 5's malformed-file handling), plus a final whole-branch review
