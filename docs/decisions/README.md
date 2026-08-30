@@ -224,3 +224,13 @@
 - 2026-08-30 — [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - 2026-08-30 — [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - 2026-08-30 — [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
+
+## Relationships
+
+### Supersession chains
+
+- ADR-0003 "Localize only index.py's generated strings, not agent-composed text" → superseded by → ADR-0006 "Localize deterministic ADR generation through repository configuration"
+
+### Related
+
+- ADR-0006 "Localize deterministic ADR generation through repository configuration" related to: ADR-0003 "Localize only index.py's generated strings, not agent-composed text"
