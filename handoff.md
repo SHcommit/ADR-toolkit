@@ -98,17 +98,33 @@ next.** Implementing the ADR search + relationship navigation feature:
    `matches_tags_any`, `matches_paths_exact`, `path_governed_by`.
 3. `ff25b68` — `core/query.py`: `rank_key` deterministic ranking (5 tiers,
    no numeric score exposed publicly).
+4. `7ade27d` — `core/relationships.py`: `Relationship` NamedTuple + `resolve()`.
+5. `c597a30` — `core/relationships.py`: `missing_targets()` +
+   `supersession_mismatches()`.
+6. `c8c2b06` — migrated `related.py` onto `core/query.py`, fixed body-search
+   bug; **also found and fixed a real regression while doing this**: the
+   migration would have dropped `related.py`'s original `_as_list()` guard
+   against a malformed ADR carrying a non-list value for `affected_paths`/
+   `tags` (e.g. a plain YAML string instead of a list), which would silently
+   decompose into individual characters and produce nonsense matches. Fixed
+   by restoring the guard as `_as_list()` inside `core/query.py` itself,
+   applied to all three matchers including `path_governed_by` (which had the
+   same latent bug with no prior test catching it — added one).
+7. `5db2471` — `search` command core filtering (browse mode,
+   AND-across-fields, OR-within-field, `--path` via `path_governed_by`).
+   **Note for whoever writes ADR test fixtures next**: this repo's
+   `frontmatter.py` is a minimal custom parser, not real YAML — it only
+   understands `key: []` or block-style `key:\n  - item`. A flow-style
+   `tags: ['x']` silently parses as the literal string `"['x']"`, not a
+   list. Hit this exact bug writing `test_search_command.py`'s fixture
+   helper; fixed by rendering block-list YAML instead.
+8. `9a86666` — ranking, `--limit`/`total`/`truncated`, `query` echo.
+9. `36d7048` — wired `search` into `adr.py`'s CLI (added `STATUSES` import
+   from `scripts.core.lifecycle` for `--status` choices).
+
+Full suite at this point: `374 passed`.
 
 **Tasks remaining (plan file has full code for each):**
-4. `core/relationships.py` — `Relationship` NamedTuple + `resolve()`.
-5. `core/relationships.py` — `missing_targets()` + `supersession_mismatches()`.
-6. Migrate `related.py` onto `core/query.py`, fix body-search bug, policy
-   unchanged (all pre-existing `test_related.py` tests must stay green).
-7. `search` command — core filtering (browse mode, AND-across-fields,
-   OR-within-field, `--path` via `path_governed_by`).
-8. `search` command — ranking, `--limit`/`total`/`truncated`, `query` echo.
-9. Wire `search` into `adr.py`'s CLI (needs `STATUSES` import from
-   `scripts.core.lifecycle`).
 10. `index.py` — Relationships section (English/fallback strings first).
 11. Localize the 5 new keys across all 8 `scripts/i18n/*.json` catalogs +
     `test_locale.py`'s `REQUIRED_KEYS`.
