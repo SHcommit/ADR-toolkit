@@ -4,8 +4,14 @@ from scripts.commands import index
 
 
 def _write_adr(adr_dir, filename, *, id_, title, status, date, tags, affected_paths):
-    tags_block = "\n".join(f"  - {t}" for t in tags) or None
-    paths_block = "\n".join(f"  - {p}" for p in affected_paths) or None
+    if affected_paths:
+        paths_field = "affected_paths:\n" + "\n".join(f"  - {p}" for p in affected_paths)
+    else:
+        paths_field = "affected_paths: []"
+    if tags:
+        tags_field = "tags:\n" + "\n".join(f"  - {t}" for t in tags)
+    else:
+        tags_field = "tags: []"
     text = (
         "---\n"
         f"id: {id_}\n"
@@ -14,8 +20,8 @@ def _write_adr(adr_dir, filename, *, id_, title, status, date, tags, affected_pa
         f"date: {date}\n"
         "decision_makers: []\n"
         "related: []\n"
-        f"affected_paths:\n{paths_block}\n"
-        f"tags:\n{tags_block}\n"
+        f"{paths_field}\n"
+        f"{tags_field}\n"
         "retrospective: false\n"
         "---\n\n"
         f"# {title}\n"
@@ -63,3 +69,51 @@ def test_index_skips_malformed_frontmatter_file_with_warning_instead_of_raising(
     assert result["ok"] is True
     assert result["count"] == 0
     assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0001-malformed.md" for w in result["warnings"])
+
+
+def test_index_renders_french_headers_and_status_labels(tmp_path):
+    _write_adr(
+        tmp_path, "0001-use-kafka.md",
+        id_="ADR-0001", title="Use Kafka", status="accepted", date="2026-08-01",
+        tags=["architecture"], affected_paths=["src/events/"],
+    )
+
+    result = index.run(SimpleNamespace(dir=str(tmp_path), locale="fr"))
+
+    assert result["ok"] is True
+    readme = (tmp_path / "README.md").read_text(encoding="utf-8")
+    assert "Journal des décisions" in readme
+    assert "Par statut" in readme
+    assert "Accepté" in readme
+    assert "Par étiquette" in readme
+    assert "Par chemin concerné" in readme
+    assert "Chronologique (plus récent d'abord)" in readme
+
+
+def test_index_defaults_to_english_when_locale_omitted(tmp_path):
+    _write_adr(
+        tmp_path, "0001-use-kafka.md",
+        id_="ADR-0001", title="Use Kafka", status="accepted", date="2026-08-01",
+        tags=["architecture"], affected_paths=["src/events/"],
+    )
+
+    result = index.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is True
+    readme = (tmp_path / "README.md").read_text(encoding="utf-8")
+    assert "# Decision Log" in readme
+    assert "## By status" in readme
+
+
+def test_index_unknown_status_falls_back_to_capitalized_label(tmp_path):
+    _write_adr(
+        tmp_path, "0001-use-kafka.md",
+        id_="ADR-0001", title="Use Kafka", status="unknown", date="2026-08-01",
+        tags=[], affected_paths=[],
+    )
+
+    result = index.run(SimpleNamespace(dir=str(tmp_path), locale="fr"))
+
+    assert result["ok"] is True
+    readme = (tmp_path / "README.md").read_text(encoding="utf-8")
+    assert "### Unknown" in readme

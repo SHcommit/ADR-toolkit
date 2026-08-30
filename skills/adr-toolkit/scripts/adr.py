@@ -49,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_index = sub.add_parser("index")
     p_index.add_argument("--dir", default="docs/decisions")
+    p_index.add_argument("--locale", default="en")
     p_index.add_argument("--json", action="store_true")
 
     p_related = sub.add_parser("related")

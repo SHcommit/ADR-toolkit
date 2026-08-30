@@ -3,12 +3,15 @@ from pathlib import Path
 
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
+from scripts.core.locale import load_locale
 
 SKIP_FILES = {"README.md", "adr-template.md"}
 
 
 def run(args) -> dict:
     adr_dir = Path(args.dir)
+    locale = getattr(args, "locale", None) or "en"
+    strings = load_locale(locale)
     entries = []
     warnings = []
 
@@ -33,7 +36,7 @@ def run(args) -> dict:
             "affected_paths": data.get("affected_paths", []),
         })
 
-    (adr_dir / "README.md").write_text(_render(entries), encoding="utf-8")
+    (adr_dir / "README.md").write_text(_render(entries, strings), encoding="utf-8")
 
     return {
         "ok": True,
@@ -44,21 +47,22 @@ def run(args) -> dict:
     }
 
 
-def _render(entries: list) -> str:
-    lines = ["# Decision Log", ""]
+def _render(entries: list, strings: dict) -> str:
+    lines = [f"# {strings['decision_log_title']}", ""]
 
-    lines.append("## By status")
+    lines.append(f"## {strings['by_status']}")
     lines.append("")
     by_status: dict = {}
     for entry in entries:
         by_status.setdefault(entry["status"], []).append(entry)
     for status in sorted(by_status):
-        lines.append(f"### {status.capitalize()}")
+        label = strings.get(f"status.{status}", status.capitalize())
+        lines.append(f"### {label}")
         for entry in sorted(by_status[status], key=lambda e: e["filename"]):
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append("## By tag")
+    lines.append(f"## {strings['by_tag']}")
     lines.append("")
     by_tag: dict = {}
     for entry in entries:
@@ -70,7 +74,7 @@ def _render(entries: list) -> str:
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append("## By affected path")
+    lines.append(f"## {strings['by_affected_path']}")
     lines.append("")
     by_path: dict = {}
     for entry in entries:
@@ -82,7 +86,7 @@ def _render(entries: list) -> str:
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append("## Chronological (newest first)")
+    lines.append(f"## {strings['chronological']}")
     lines.append("")
     for entry in sorted(entries, key=lambda e: e["date"], reverse=True):
         lines.append(f"- {entry['date']} — [{entry['id']} — {entry['title']}]({entry['filename']})")
