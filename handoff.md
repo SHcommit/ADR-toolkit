@@ -1,28 +1,45 @@
 # handoff.md
 
-## Current state (as of 2026-08-30)
+## Current task (2026-08-30)
 
-The full 4-plan ADR Toolkit MVP is complete and pushed to `origin` on
-branch `feat/adr-toolkit-mvp-implement` (renamed from
-`SHcommit/feat-plan-adr-toolkit`; the old name still exists as a stale
-remote branch that was never deleted). Not yet merged to `master`, no PR
-open — see `improvements.md`'s `## Open` list for what's pending.
+Prepare ADR Toolkit `v0.2.0` as a minor feature release: repository-configured
+eight-locale ADR generation, portable multilingual filenames, CHECK
+false-confidence fixes, dogfooded ADR quality corrections, and separate Korean
+readiness/enterprise-adoption reports.
 
-For what shipped, see `changelog.md`. For deferred/follow-up work, see
-`improvements.md` and `project-roadmap.md` — this file no longer repeats
-that history; keeping it in three places was how it drifted.
+The work runs in the linked worktree `develop-2`. Its base is the current
+`origin/develop` history plus the approved design commits:
 
-## Standing risks
+- `7b9bb8c` — initial localization/readiness design
+- `b69a784` — v0.2.0 release gates, repository config, CHECK confidence, and
+  report separation
 
-- Codex `quick_validate.py` rejects the existing cross-harness
-  `user-invocable` and `version` skill frontmatter keys. The repository
-  tests require those keys today; resolve validator/metadata
-  compatibility deliberately rather than removing them silently.
-- `scripts/adr.py` accepts `--json` on every subcommand but always emits
-  JSON; deliberately left untouched by Plan 4 (design spec §17.1).
-- The Codex adapter's documented install path only exercises this repo's
-  root-level `.claude-plugin/marketplace.json` — the `.codex-plugin/`
-  manifest and its sibling `skills/` symlink (spec §17.2) are present and
-  correctly laid out but not exercised by Codex's own `plugin marketplace
-  add` in the verified flow. Revisit once Codex's Agent Plugins 1.0.0
-  support matures.
+Baseline verification before implementation: `212 passed` on 2026-08-30.
+
+## Touched files
+
+- `docs/superpowers/specs/2026-08-30-adr-toolkit-localization-and-readiness-design.md`
+- `handoff.md`
+- `improvements.md`
+- `project-roadmap.md`
+
+Local execution plans live under ignored `docs/superpowers/plans/`.
+
+## Next step
+
+Implement `.adr-toolkit.json`, locale resolution, eight catalogs, localized
+rendering, and semantic-slug validation with TDD. Then harden CHECK, correct the
+existing ADRs, request the lifecycle checkpoint for ADR-0003 supersession, and
+finish reports/documentation.
+
+## Open risks
+
+- Locale precedence must distinguish an omitted CLI flag from explicit English.
+- Translation catalogs need exact key parity and human-readable terminology.
+- ADR-0003's MVP decision is replaced by v0.2.0 and must be superseded through
+  the lifecycle command, not silently rewritten.
+- Known CHECK rename/path/subprocess defects can produce false confidence until
+  fixed and regression-tested.
+- GitHub protection is intentionally unavailable in the current private plan;
+  configure and API-verify it after the repository becomes public.
+- Version bump, release branch, push, and tag are not authorized by this task.
