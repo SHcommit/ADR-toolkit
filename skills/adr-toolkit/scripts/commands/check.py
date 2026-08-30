@@ -14,6 +14,16 @@ from scripts.rules import conflict
 
 RESOLUTIONS = ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
 
+# The stable, machine-readable confidence contract documented in README.md's
+# "CHECK confidence" section and references/conflict-rules.md — promotes the
+# ad-hoc `kind` values below into the four values agents are told to report.
+CONFIDENCE_BY_KIND = {
+    "related": "VERIFIED",
+    "verified_violation": "VIOLATED",
+    "review_required": "UNVERIFIABLE",
+    "no_applicable_constraint": "UNVERIFIABLE",
+}
+
 # Every ADR this toolkit writes uses `## Confirmation` (templates/madr-*.md and
 # commands/create.py); `## Verification` is the design spec's name for the same
 # section. Accept both, plus any trailing words in the heading.
@@ -116,6 +126,9 @@ def run(args) -> dict:
             "evidence": {"superseded_by": data.get("superseded_by")},
             "resolutions": RESOLUTIONS,
         })
+
+    for finding in findings:
+        finding["confidence"] = CONFIDENCE_BY_KIND[finding["kind"]]
 
     return {
         "ok": True,

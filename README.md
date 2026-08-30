@@ -109,14 +109,16 @@ fresh repository safely falls back to `0001-decision.md`.
 ## CHECK confidence
 
 CHECK does not certify the entire architecture. It evaluates only explicit,
-structurally provable rules in the selected diff:
+structurally provable rules in the selected diff. Every finding carries a
+`confidence` field with one of these four values directly — no need to
+re-derive it from `kind`:
 
-| Meaning | Existing JSON result |
-|---|---|
-| `VERIFIED` | `related`, only for applicable explicit rules that were evaluated |
-| `VIOLATED` | `verified_violation` |
-| `UNVERIFIABLE` | `review_required` or `no_applicable_constraint` |
-| `NOT_APPLICABLE` | No known ADR/rule applies to the selected change |
+| `confidence` | `kind` it comes from | Meaning |
+|---|---|---|
+| `VERIFIED` | `related` | Applicable explicit rules were evaluated and none fired. |
+| `VIOLATED` | `verified_violation` | Structural evidence confirms a violation. |
+| `UNVERIFIABLE` | `review_required` or `no_applicable_constraint` | No usable rule vocabulary could prove or disprove this. |
+| `NOT_APPLICABLE` | (no finding at all) | No known ADR/rule applies to the selected change — an empty `findings` list, not proof of compliance. |
 
 Warnings mean some evidence could not be evaluated and must be reported. A
 clean result never proves prose rationale, runtime behavior, or every

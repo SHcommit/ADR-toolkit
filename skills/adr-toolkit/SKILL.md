@@ -237,12 +237,13 @@ since CHECK is read-only and never fixes anything itself.
    mode that matches what the user asked to check). Read
    `references/conflict-rules.md` if you need to explain a finding or help
    the user write a `constraints:` block.
-3. **CLASSIFY** — each finding already carries its classification
-   (`related`, `review_required`, `verified_violation`,
-   `no_applicable_constraint`); do not re-judge it, report it as returned.
-   Interpret their confidence as `VERIFIED`, `VIOLATED`, or `UNVERIFIABLE`
-   using `references/conflict-rules.md`. No related finding is
-   `NOT_APPLICABLE`, not proof that the repository is compliant.
+3. **CLASSIFY** — each finding already carries both its `kind` (`related`,
+   `review_required`, `verified_violation`, `no_applicable_constraint`) and a
+   `confidence` field (`VERIFIED`, `VIOLATED`, or `UNVERIFIABLE`) computed by
+   the deterministic core — do not re-judge or recompute it, report it as
+   returned. See `references/conflict-rules.md` for what each value means. No
+   related finding at all is `NOT_APPLICABLE`, not proof that the repository
+   is compliant.
 4. **REPORT** — group findings by classification. For every Verified violation
    finding, present all five resolutions from
    `references/conflict-rules.md` (`fix_code`, `supersede_adr`,

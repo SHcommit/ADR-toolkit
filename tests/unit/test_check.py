@@ -86,6 +86,7 @@ def test_verified_violation_when_rule_fires(tmp_path):
     assert violation["adr_id"] == "ADR-0001"
     assert violation["rule_id"] == "no-provider-sdk-in-feature"
     assert violation["resolutions"] == RESOLUTIONS
+    assert violation["confidence"] == "VIOLATED"
 
 
 def test_related_when_rule_present_but_does_not_fire(tmp_path):
@@ -103,6 +104,7 @@ def test_related_when_rule_present_but_does_not_fire(tmp_path):
 
     finding = next(f for f in result["findings"] if f["adr_id"] == "ADR-0001")
     assert finding["kind"] == "related"
+    assert finding["confidence"] == "VERIFIED"
 
 
 def test_no_applicable_constraint_when_adr_has_no_constraints_block(tmp_path):
@@ -119,6 +121,7 @@ def test_no_applicable_constraint_when_adr_has_no_constraints_block(tmp_path):
 
     finding = next(f for f in result["findings"] if f["adr_id"] == "ADR-0002")
     assert finding["kind"] == "no_applicable_constraint"
+    assert finding["confidence"] == "UNVERIFIABLE"
 
 
 def test_adr_with_no_affected_path_overlap_produces_no_finding(tmp_path):
@@ -283,6 +286,7 @@ def test_review_required_when_verification_reference_is_removed(tmp_path):
     finding = next(f for f in result["findings"] if f["kind"] == "review_required")
     assert finding["adr_id"] == "ADR-0003"
     assert "src/events/replay.py" in finding["evidence"]["unrealized_paths"]
+    assert finding["confidence"] == "UNVERIFIABLE"
 
 
 def test_review_required_when_confirmed_path_is_renamed(tmp_path):
@@ -327,6 +331,7 @@ def test_superseded_reference_fires_on_affected_path_overlap(tmp_path):
     assert finding["kind"] == "verified_violation"
     assert finding["evidence"]["superseded_by"] == "ADR-0005"
     assert finding["resolutions"] == RESOLUTIONS
+    assert finding["confidence"] == "VIOLATED"
 
 
 # --- Regression tests for the final whole-branch review of Plan 3 (CHECK) ---
@@ -391,6 +396,7 @@ def test_review_required_fires_on_a_confirmation_section_written_by_create(tmp_p
     finding = next(f for f in result["findings"] if f["kind"] == "review_required")
     assert finding["adr_id"] == "ADR-0003"
     assert "src/events/replay.py" in finding["evidence"]["unrealized_paths"]
+    assert finding["confidence"] == "UNVERIFIABLE"
 
 
 def test_review_required_fires_when_a_confirmation_path_was_never_created(tmp_path):

@@ -78,15 +78,17 @@ enforce — that's a legitimate state, not an error.
 
 ## Evidence confidence
 
-The JSON finding names remain stable, while their governance meaning is:
+Every finding carries this mapping directly as a `confidence` field — reading
+it off `kind` yourself is only needed to explain *why* a confidence value
+applies, not to compute it:
 
-| Existing result | Confidence meaning |
-|---|---|
-| `related` | **VERIFIED** only for the applicable explicit structural rules in this diff. |
-| `verified_violation` | **VIOLATED** by direct structural evidence. |
-| `review_required` | **UNVERIFIABLE** without human review. |
-| `no_applicable_constraint` | **UNVERIFIABLE** for the related ADR because no usable rule proved the policy. |
-| No related ADR or finding | **NOT_APPLICABLE** to the known scoped rules, not a global pass. |
+| Existing `kind` | `confidence` field | Meaning |
+|---|---|---|
+| `related` | **VERIFIED** | Only for the applicable explicit structural rules in this diff. |
+| `verified_violation` | **VIOLATED** | By direct structural evidence. |
+| `review_required` | **UNVERIFIABLE** | Without human review. |
+| `no_applicable_constraint` | **UNVERIFIABLE** | For the related ADR, because no usable rule proved the policy. |
+| No related ADR or finding | **NOT_APPLICABLE** | To the known scoped rules — an empty `findings` list, not a global pass. |
 
 CHECK does not certify the entire architecture. A successful command means
 the requested evidence was collected and evaluated; it does not prove prose,

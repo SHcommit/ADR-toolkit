@@ -28,6 +28,11 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Promoted CHECK's confidence classification to a stable field: every
+  finding now carries `confidence` (`VERIFIED`/`VIOLATED`/`UNVERIFIABLE`)
+  computed directly from its `kind`, instead of leaving that mapping for the
+  agent to re-derive from prose docs each time. Updated README, SKILL.md,
+  `conflict-rules.md`, and quickstart's example output to match.
 - [x] Resolved `--json` semantics: adopted "always JSON to stdout" as the
   deliberate, tested contract (matching the code's own existing
   "JSON-only-stdout contract" comment and every real caller), rather than

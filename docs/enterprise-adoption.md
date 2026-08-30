@@ -169,11 +169,14 @@ Toolkit 자체에 계정 시스템을 서둘러 넣기보다 GitHub의 인증·�
    각 명령의 warning 의미는 그대로 유지했다.
 2. public 전환 시 PR template과 CONTRIBUTING/SECURITY 문서를 만들고 ruleset 적용을
    자동 검증한다. **저장소가 아직 private이라 시작 조건이 충족되지 않았다.**
-3. CHECK 결과를 `VERIFIED`, `VIOLATED`, `NOT_APPLICABLE`, `UNVERIFIABLE`의 안정된
-   machine-readable contract로 승격한다. **아직 시작 전.** 현재 CHECK는 이 네
-   값을 쓰지 않고 `kind: verified_violation / review_required / related /
-   no_applicable_constraint`를 쓴다; `VERIFIED`에 해당하는 "규칙을 평가했고
-   준수를 확인했다"는 값 자체가 아직 없다 — 새 API 설계가 필요하다.
+3. ~~CHECK 결과를 `VERIFIED`, `VIOLATED`, `NOT_APPLICABLE`, `UNVERIFIABLE`의
+   안정된 machine-readable contract로 승격한다.~~ **완료 (2026-08-30).** 모든
+   finding이 기존 `kind` 값과 별개로 `confidence` 필드를 직접 갖는다
+   (`related→VERIFIED`, `verified_violation→VIOLATED`,
+   `review_required`/`no_applicable_constraint→UNVERIFIABLE`; 관련 ADR/finding
+   자체가 없으면 `NOT_APPLICABLE`, 이는 빈 `findings` 배열로 표현되고 별도
+   finding을 만들지 않는다). README, SKILL.md, `conflict-rules.md`, quickstart
+   예제 출력을 모두 갱신했다.
 4. 예외에 owner, reason, scope, expiry를 요구하는 작은 schema부터 시작한다.
    **아직 시작 전.** 현재 `register_exception`은 CHECK finding의 해결 옵션
    문자열로만 존재하고, 실제 저장·검증하는 schema나 명령은 없다.

@@ -171,7 +171,8 @@ python skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decision
       "file": "src/db/connection.js",
       "evidence": {"line": "const mongodb = require(\"mongodb\");", "pattern": "mongodb"},
       "adr_id": "ADR-0002",
-      "resolutions": ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
+      "resolutions": ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"],
+      "confidence": "VIOLATED"
     }
   ],
   "warnings": []
@@ -197,7 +198,7 @@ python skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decision
   "ok": true,
   "operation": "check",
   "diff": {"mode": "uncommitted", "ref": null, "files_changed": 1},
-  "findings": [{"adr_id": "ADR-0002", "kind": "related"}],
+  "findings": [{"adr_id": "ADR-0002", "kind": "related", "confidence": "VERIFIED"}],
   "warnings": []
 }
 ```
