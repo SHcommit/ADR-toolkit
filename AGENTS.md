@@ -42,6 +42,27 @@ don't delete history.
 does not replace `git log` — only note what a human would want to skim
 without reading commit-by-commit history.
 
+## Git Flow Branch and Release Policy
+
+- Integration branch: `develop`.
+- Production branch: `master`.
+- Work branches: `feature/*`, `fix/*`, `docs/*` merge into `develop`.
+- Release branches: `release/*` merge into `master` and back into `develop`.
+- Emergency fixes: `hotfix/*` merge into `master` and back into `develop`.
+- Direct pushes to `develop` and `master` are prohibited — use a PR (or, for
+  a solo/small-team repo without enforced PR review, a fast-forward-free
+  merge from a short-lived branch).
+- Required CI checks must pass before every merge.
+- Release source: `master`, after a successful `release/*` merge.
+- Release tags: semantic version tags such as `v0.1.0`, created only from
+  `master`.
+- Release mode: direct-tag — push a `v*` tag and `.github/workflows/release.yml`
+  runs the full suite, verifies manifest versions against the tag, and
+  publishes a GitHub Release. No auto version bump; a human bumps
+  `skills/adr-toolkit/VERSION`, runs `scripts/sync_version.py` to propagate
+  it, commits, and pushes the tag.
+- Delete short-lived branches after merge.
+
 ## Harness entry files
 
 `CODEX.md`, `CLAUDE.md`, and `GEMINI.md` stay thin. They point back to this
