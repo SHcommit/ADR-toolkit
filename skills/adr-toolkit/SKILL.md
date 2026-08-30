@@ -25,6 +25,23 @@ PREFLIGHT
 → REPORT
 ```
 
+## Language
+
+Detect the language of the user's own request (English, French, Japanese,
+Korean, or Chinese) and compose every question and report you write in
+that language — English is the default when the language can't be
+determined. This applies only to what you write yourself; it does not
+change any file content the user themselves wrote in a different
+language, and it does not translate `SKILL.md`'s own instructions.
+
+When you run `index`, pass the same locale as a two-letter code so the
+generated `docs/decisions/README.md` headers match
+(`--locale en|fr|ja|ko|zh`, defaulting to `en` when omitted):
+
+```bash
+python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale fr --json
+```
+
 ## INIT (scaffolding only)
 
 Use INIT when a repository has no ADR directory yet. INIT does not mine
