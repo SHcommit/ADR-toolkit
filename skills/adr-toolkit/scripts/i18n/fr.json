@@ -1,0 +1,12 @@
+{
+  "decision_log_title": "Journal des décisions",
+  "by_status": "Par statut",
+  "by_tag": "Par étiquette",
+  "by_affected_path": "Par chemin concerné",
+  "chronological": "Chronologique (plus récent d'abord)",
+  "status.proposed": "Proposé",
+  "status.accepted": "Accepté",
+  "status.rejected": "Rejeté",
+  "status.deprecated": "Déprécié",
+  "status.superseded": "Remplacé"
+}

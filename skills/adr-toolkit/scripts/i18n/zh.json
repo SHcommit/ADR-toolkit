@@ -1,0 +1,12 @@
+{
+  "decision_log_title": "决策日志",
+  "by_status": "按状态",
+  "by_tag": "按标签",
+  "by_affected_path": "按受影响路径",
+  "chronological": "按时间顺序（最新优先）",
+  "status.proposed": "已提议",
+  "status.accepted": "已接受",
+  "status.rejected": "已拒绝",
+  "status.deprecated": "已弃用",
+  "status.superseded": "已取代"
+}

@@ -1,0 +1,12 @@
+{
+  "decision_log_title": "결정 기록",
+  "by_status": "상태별",
+  "by_tag": "태그별",
+  "by_affected_path": "영향 경로별",
+  "chronological": "시간순 (최신순)",
+  "status.proposed": "제안됨",
+  "status.accepted": "승인됨",
+  "status.rejected": "거부됨",
+  "status.deprecated": "폐기됨",
+  "status.superseded": "대체됨"
+}
