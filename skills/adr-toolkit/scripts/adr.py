@@ -21,6 +21,7 @@ from scripts.commands import (
     supersede,
     validate,
 )
+from scripts.core.locale import SUPPORTED_LOCALES
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_init = sub.add_parser("init")
     p_init.add_argument("--dir", default="docs/decisions")
+    p_init.add_argument("--root", default=".")
+    p_init.add_argument("--locale", choices=SUPPORTED_LOCALES)
     p_init.add_argument("--dry-run", dest="dry_run", action="store_true")
     p_init.add_argument("--json", action="store_true")
 

@@ -49,3 +49,13 @@ def test_index_locale_rejects_an_unrecognized_code_instead_of_silently_using_eng
 
 def test_index_locale_defaults_to_english_when_omitted():
     assert adr.build_parser().parse_args(["index"]).locale == "en"
+
+
+def test_init_locale_is_optional_and_constrained():
+    parser = adr.build_parser()
+
+    assert parser.parse_args(["init"]).locale is None
+    assert parser.parse_args(["init", "--locale", "pt-BR"]).locale == "pt-BR"
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["init", "--locale", "xx"])

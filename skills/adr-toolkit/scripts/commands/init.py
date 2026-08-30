@@ -1,45 +1,20 @@
-"""Scaffold an ADR directory for a repository that has none yet."""
-import shutil
+"""Scaffold a localized ADR directory for a repository that has none yet."""
+import json
 from datetime import date
 from pathlib import Path
 
-TEMPLATE_SOURCE = Path(__file__).resolve().parent.parent.parent / "templates" / "madr-minimal.md"
-
-INITIAL_ADR_BODY = """# Record architecture decisions
-
-## Context and Problem Statement
-
-We need a consistent way to capture and communicate significant
-architectural decisions so future contributors (human or agent) can find
-the reasoning behind them.
-
-## Considered Options
-
-* No formal record, rely on commit messages and memory
-* Wiki or external documentation tool
-* Architecture Decision Records stored alongside the code
-
-## Decision Outcome
-
-Chosen option: **Architecture Decision Records stored alongside the code**, because they version with the code, stay close to what they describe, and are readable by both humans and coding agents.
-
-## Consequences
-
-* Good: decisions and their rationale are discoverable in the repository itself.
-* Bad: requires discipline to keep records up to date as decisions evolve.
-
-## Confirmation
-
-* [ ] `{adr_dir}` exists with this file, a template, and an index.
-
-## Revisit Triggers
-
-* The team adopts a different documentation system project-wide.
-"""
+from scripts.core.config import (
+    CONFIG_FILENAME,
+    CONFIG_SCHEMA_VERSION,
+    ConfigError,
+    resolve_locale,
+)
+from scripts.core.rendering import render_initial_adr, render_template
 
 
 def run(args) -> dict:
     adr_dir = Path(args.dir)
+    root = Path(getattr(args, "root", "."))
     dry_run = getattr(args, "dry_run", False)
 
     if adr_dir.exists() and any(adr_dir.iterdir()):
@@ -49,26 +24,58 @@ def run(args) -> dict:
             "errors": [{"code": "ADR_DIRECTORY_NOT_EMPTY", "path": str(adr_dir)}],
         }
 
+    config_path = root / CONFIG_FILENAME
+    config_exists = config_path.is_file()
+    try:
+        locale = resolve_locale(
+            cli_locale=getattr(args, "locale", None),
+            draft_locale=None,
+            root=root,
+        )
+    except ConfigError as exc:
+        return {
+            "ok": False,
+            "operation": "init",
+            "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+        }
+
     would_create = [
         str(adr_dir),
         str(adr_dir / "adr-template.md"),
         str(adr_dir / "0001-record-architecture-decisions.md"),
     ]
+    if not config_exists:
+        would_create.insert(0, str(config_path))
 
     if dry_run:
         return {"ok": True, "operation": "init", "dry_run": True, "would_create": would_create}
 
-    adr_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(TEMPLATE_SOURCE, adr_dir / "adr-template.md")
-
     adr_dir_str = str(args.dir).rstrip("/") + "/"
+    title, body = render_initial_adr(locale, adr_dir_str)
+
+    adr_dir.mkdir(parents=True, exist_ok=True)
+    (adr_dir / "adr-template.md").write_text(
+        render_template(locale, full=False), encoding="utf-8"
+    )
+    if not config_exists:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(
+            json.dumps(
+                {"schema_version": CONFIG_SCHEMA_VERSION, "locale": locale},
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
     frontmatter_block = (
         "---\n"
         "id: ADR-0001\n"
-        "title: Record architecture decisions\n"
+        f"title: {title}\n"
         "status: accepted\n"
         f"date: {date.today().isoformat()}\n"
+        f"locale: {locale}\n"
         "decision_makers: []\n"
         "related: []\n"
         "affected_paths:\n"
@@ -79,7 +86,7 @@ def run(args) -> dict:
         "---\n\n"
     )
     (adr_dir / "0001-record-architecture-decisions.md").write_text(
-        frontmatter_block + INITIAL_ADR_BODY.format(adr_dir=adr_dir_str), encoding="utf-8"
+        frontmatter_block + body, encoding="utf-8"
     )
 
     return {"ok": True, "operation": "init", "dry_run": False, "created": would_create}
