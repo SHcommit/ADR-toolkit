@@ -144,6 +144,52 @@ exception onto its finding's `exception` field — the finding's `kind` and
 evidence, never a silent pass. Once `expiry` passes, CHECK stops applying it
 automatically.
 
+## Search
+
+Find an existing ADR by keyword (title **and** body), tags, status, or the
+file path it governs — without opening every file:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py search --keyword architecture --dir docs/decisions --json
+```
+
+```json
+{
+  "ok": true,
+  "operation": "search",
+  "query": {"keyword": "architecture", "tags": null, "status": null, "path": null, "limit": null},
+  "count": 1,
+  "total": 1,
+  "truncated": false,
+  "results": [
+    {
+      "id": "ADR-0001",
+      "filename": "0001-record-architecture-decisions.md",
+      "path": "docs/decisions/0001-record-architecture-decisions.md",
+      "title": "Record architecture decisions",
+      "status": "accepted",
+      "tags": ["process"],
+      "matched_in": ["title", "body"]
+    }
+  ],
+  "warnings": []
+}
+```
+
+**Filter semantics:** filters across different fields (`--keyword`, `--tags`,
+`--status`, `--path`) are combined with AND. Multiple values within
+`--tags` are combined with OR — `--tags postgres mysql` means "postgres or
+mysql". No filters at all browses every ADR. `--path` matches a real file
+against an ADR's governed scope (the same directory-boundary + glob logic
+CHECK uses), not an exact match against the ADR's literal `affected_paths`
+list. `--limit N` truncates the already-ranked (best-match-first) result
+list; `total` is always the untruncated count and `truncated` is
+`total > count`.
+
+`search` is a general lookup command ("has this been decided before?"), distinct
+from `related` (used during RECORD's DISCOVER stage to find precedent for a
+*new* draft, with a broader OR-across-fields match).
+
 ## Scope
 
 - MADR 4.x format, no new standard.

@@ -156,6 +156,14 @@ workflow does not.
    Omit `--paths`, `--tags`, or `--keyword` when that evidence is unknown;
    never invent a path, tag, or keyword. Use the results to find ADRs that
    already cover, conflict with, or may be replaced by the candidate.
+   `related`'s filters are OR'd together (any single overlap is enough) — it
+   deliberately casts a broad net before drafting. For a general lookup
+   unrelated to drafting (a user asks "has this been decided before?" or
+   "what ADRs govern `src/payment/`?"), use `search` instead — its filters
+   combine with AND for precise results, it supports `--status` and
+   `--path` (real-file-vs-governed-scope, not an exact list match), it
+   ranks results best-match-first, and an empty query browses every ADR.
+   See README's "Search" section for the full contract.
 3. **CLASSIFY** — apply the table above, then read
    `references/significance-rules.md`. Score only evidence-supported 0/1/2
    values; never guess or inflate a score to force a band. Write all seven
