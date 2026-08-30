@@ -4,6 +4,13 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added the self-contained `skills/adr-toolkit/` package: deterministic
+  scaffolding/discovery commands (`init`, `discover`, `preflight`,
+  `validate`, `index`), ADR frontmatter/ID/lifecycle core logic, MADR
+  templates, and a no-agent `create --interactive` terminal wizard. Usable
+  three ways: Claude Code (deep integration), a generic manifest-free
+  fallback for any other harness, or standalone from the terminal. CI
+  (matrix-tested pytest) built in from the first commit.
 - Added the RECORD workflow: deterministic significance scoring, related-ADR
   search, evidence-first interviewing guidance, MADR drafting rules, and an
   end-to-end RECORD fixture.
