@@ -3,11 +3,15 @@ id: ADR-0005
 title: Adopt Git Flow with direct-tag release automation
 status: accepted
 date: 2026-08-30
-decision_makers: []
+decision_makers:
+  - YangSeungHyun
+locale: en
 related: []
 affected_paths:
   - AGENTS.md
   - .github/workflows/
+  - skills/adr-toolkit/VERSION
+  - scripts/sync_version.py
 tags:
   - process
   - release

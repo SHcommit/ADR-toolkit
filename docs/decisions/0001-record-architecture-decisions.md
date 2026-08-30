@@ -3,7 +3,9 @@ id: ADR-0001
 title: Record architecture decisions
 status: accepted
 date: 2026-08-30
-decision_makers: []
+decision_makers:
+  - YangSeungHyun
+locale: en
 related: []
 affected_paths:
   - docs/decisions/
@@ -37,7 +39,9 @@ Chosen option: **Architecture Decision Records stored alongside the code**, beca
 
 ## Confirmation
 
-* [ ] `docs/decisions/` exists with this file, a template, and an index.
+`python3 skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
+validates the records, and `index` regenerates `docs/decisions/README.md` from
+the same directory.
 
 ## Revisit Triggers
 
