@@ -6,6 +6,8 @@ REQUIRED_KEYS = {
     "decision_log_title", "by_status", "by_tag", "by_affected_path",
     "chronological", "status.proposed", "status.accepted",
     "status.rejected", "status.deprecated", "status.superseded",
+    "relationships", "supersession_chains", "related", "superseded_by",
+    "related_to",
 }
 
 REQUIRED_GENERATION_KEYS = {
