@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.egg-info/
+
+# Adapter install-time symlinks. Every adapter README tells the user to
+# create these inside this working tree; committing a real symlink breaks
+# Windows checkouts without core.symlinks, which the CI matrix includes.
+adapters/codex/skills/adr-toolkit
+adapters/gemini-cli/skills/adr-toolkit
+adapters/antigravity/skills/adr-toolkit

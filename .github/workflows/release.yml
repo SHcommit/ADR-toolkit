@@ -9,6 +9,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # softprops/action-gh-release needs write access to create the release;
+    # the default GITHUB_TOKEN is read-only for repos created since Feb 2023.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,8 +22,12 @@ jobs:
         run: pip install pytest
       - name: Run tests
         run: python -m pytest tests/unit tests/integration -v
-      - name: Verify manifest versions match the tag
+      - name: Check manifest versions are in sync
         run: python scripts/sync_version.py --check
+      - name: Verify tag matches VERSION
+        run: |
+          test "v$(cat skills/adr-toolkit/VERSION)" = "$GITHUB_REF_NAME" \
+            || { echo "tag $GITHUB_REF_NAME != v$(cat skills/adr-toolkit/VERSION)"; exit 1; }
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

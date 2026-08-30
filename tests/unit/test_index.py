@@ -117,3 +117,59 @@ def test_index_unknown_status_falls_back_to_capitalized_label(tmp_path):
     assert result["ok"] is True
     readme = (tmp_path / "README.md").read_text(encoding="utf-8")
     assert "### Unknown" in readme
+
+
+def test_index_survives_a_malformed_locale_file(tmp_path, monkeypatch):
+    """Design spec 17.1: a bad locale file degrades, never crashes."""
+    import scripts.core.locale as locale_module
+    broken_dir = tmp_path / "i18n"
+    broken_dir.mkdir()
+    (broken_dir / "en.json").write_text(
+        '{"decision_log_title": "Decision Log", "by_status": "By status",'
+        ' "by_tag": "By tag", "by_affected_path": "By affected path",'
+        ' "chronological": "Chronological (newest first)"}',
+        encoding="utf-8",
+    )
+    (broken_dir / "fr.json").write_text("not json at all", encoding="utf-8")
+    monkeypatch.setattr(locale_module, "I18N_DIR", broken_dir)
+
+    adr_dir = tmp_path / "decisions"
+    adr_dir.mkdir()
+    _write_adr(
+        adr_dir, "0001-use-kafka.md",
+        id_="ADR-0001", title="Use Kafka", status="accepted", date="2026-08-01",
+        tags=["architecture"], affected_paths=["src/events/"],
+    )
+
+    result = index.run(SimpleNamespace(dir=str(adr_dir), locale="fr"))
+
+    assert result["ok"] is True
+    readme = (adr_dir / "README.md").read_text(encoding="utf-8")
+    assert "# Decision Log" in readme
+    assert "## By status" in readme
+
+
+def test_index_survives_a_completely_absent_i18n_directory(tmp_path, monkeypatch):
+    """A copy-based install that omitted scripts/i18n/ still produces English."""
+    import scripts.core.locale as locale_module
+    monkeypatch.setattr(locale_module, "I18N_DIR", tmp_path / "no-such-i18n")
+
+    adr_dir = tmp_path / "decisions"
+    adr_dir.mkdir()
+    _write_adr(
+        adr_dir, "0001-use-kafka.md",
+        id_="ADR-0001", title="Use Kafka", status="accepted", date="2026-08-01",
+        tags=["architecture"], affected_paths=["src/events/"],
+    )
+
+    result = index.run(SimpleNamespace(dir=str(adr_dir), locale="fr"))
+
+    assert result["ok"] is True
+    readme = (adr_dir / "README.md").read_text(encoding="utf-8")
+    assert "# Decision Log" in readme
+    assert "## By status" in readme
+    assert "## By tag" in readme
+    assert "## By affected path" in readme
+    assert "## Chronological (newest first)" in readme
+    assert "### Accepted" in readme
+    assert "ADR-0001" in readme

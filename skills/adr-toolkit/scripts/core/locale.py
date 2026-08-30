@@ -24,4 +24,10 @@ def _load_json(locale: str) -> dict:
     path = I18N_DIR / f"{locale}.json"
     if not path.is_file():
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    # A malformed or unreadable locale file degrades to "no overlay", exactly
+    # like a missing one. Localization is cosmetic; per design spec §17.1 it
+    # must never turn into a crash for an otherwise valid index run.
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}

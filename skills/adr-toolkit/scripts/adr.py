@@ -49,7 +49,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_index = sub.add_parser("index")
     p_index.add_argument("--dir", default="docs/decisions")
-    p_index.add_argument("--locale", default="en")
+    # Constrained so a typo from the agent's own language detection fails
+    # visibly instead of silently producing English output.
+    p_index.add_argument("--locale", default="en", choices=["en", "fr", "ja", "ko", "zh"])
     p_index.add_argument("--json", action="store_true")
 
     p_related = sub.add_parser("related")

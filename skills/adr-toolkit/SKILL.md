@@ -42,6 +42,9 @@ generated `docs/decisions/README.md` headers match
 python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale fr --json
 ```
 
+Every `index` command shown elsewhere in this file writes `--locale <code>`;
+substitute the detected language's code, or `en` when it can't be determined.
+
 ## INIT (scaffolding only)
 
 Use INIT when a repository has no ADR directory yet. INIT does not mine
@@ -56,7 +59,8 @@ time later) to recover past decisions.
 3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --dir docs/decisions` to
    scaffold the directory, template, and ADR-0001.
 4. **VALIDATE** — run `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
-   and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
+   and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale <code> --json`
+   (see Language for `<code>`).
 5. **REPORT** — tell the user INIT is done and that they can run DISCOVER
    next if they want to recover past decisions from the repository's
    history.
@@ -188,7 +192,8 @@ workflow does not.
 8. **VALIDATE** — run
    `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
    and
-   `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
+   `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale <code> --json`
+   (see Language for `<code>`).
 9. **REPORT** — report facts found, judgment and significance result,
    questions asked, files created or updated, validation result, and remaining
    uncertainty.
@@ -210,7 +215,7 @@ pair, and ask for confirmation. Only then run the same command without
 | Supersede an ADR with another | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --dry-run --json` | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --json` |
 
 After a successful mutation, run the same validate and index commands as
-RECORD. If a preview or mutation returns `INVALID_TRANSITION`, stop and
+RECORD, including `index`'s `--locale <code>`. If a preview or mutation returns `INVALID_TRANSITION`, stop and
 explain the rejected transition using `references/lifecycle.md`; do not retry
 with a different status or bypass the script.
 

@@ -22,10 +22,35 @@ MANIFEST_SPECS = [
 ]
 
 VERSION_LINE_RE = re.compile(r"^version:\s*\S+$", re.MULTILINE)
+VERSION_FORMAT_RE = re.compile(r"\d+\.\d+\.\d+(-[\w.]+)?")
+
+
+def read_version(version_file: Path) -> str:
+    """Read VERSION and reject anything that isn't a plausible semver string.
+
+    Without this, an empty or corrupted VERSION propagates silently into every
+    manifest and then --check passes forever, because everything agrees on the
+    same garbage.
+    """
+    version = version_file.read_text(encoding="utf-8").strip()
+    if not VERSION_FORMAT_RE.fullmatch(version):
+        raise SystemExit(f"invalid VERSION: {version!r}")
+    return version
+
+
+def replace_version_line(text: str, version: str) -> str:
+    """Rewrite SKILL.md's frontmatter `version:` line to `version`.
+
+    The replacement is a callable, not a template string, so re.sub never
+    interprets backslash escapes (\\g<0>, \\1, ...) that a corrupted version
+    might contain. read_version() should already have rejected such a value;
+    this keeps the substitution literal regardless of how it is reached.
+    """
+    return VERSION_LINE_RE.sub(lambda _: f"version: {version}", text, count=1)
 
 
 def sync(version_file: Path, manifest_specs: list, check_only: bool) -> list:
-    version = version_file.read_text(encoding="utf-8").strip()
+    version = read_version(version_file)
     changed = []
     for path, key_path in manifest_specs:
         if not path.is_file():
@@ -51,15 +76,33 @@ def sync(version_file: Path, manifest_specs: list, check_only: bool) -> list:
 def sync_skill_md(version_file: Path, skill_md_path: Path, check_only: bool) -> bool:
     if not skill_md_path.is_file():
         return False
-    version = version_file.read_text(encoding="utf-8").strip()
+    version = read_version(version_file)
     text = skill_md_path.read_text(encoding="utf-8")
     match = VERSION_LINE_RE.search(text)
     if match is None or match.group() == f"version: {version}":
         return False
     if not check_only:
-        new_text = VERSION_LINE_RE.sub(f"version: {version}", text, count=1)
+        new_text = replace_version_line(text, version)
         skill_md_path.write_text(new_text, encoding="utf-8")
     return True
+
+
+def require_known_paths() -> None:
+    """Fail loudly if a manifest this repo is supposed to track has vanished.
+
+    sync()/sync_skill_md() stay tolerant of missing paths so tests can pass
+    partial fixture sets, but the CLI runs against the hardcoded
+    MANIFEST_SPECS/SKILL_MD_PATH — a renamed or deleted manifest there must
+    not silently drop out of the drift check and leave CI green forever.
+    """
+    missing = [p for p, _ in MANIFEST_SPECS if not p.is_file()]
+    if not VERSION_FILE.is_file():
+        missing.append(VERSION_FILE)
+    if not SKILL_MD_PATH.is_file():
+        missing.append(SKILL_MD_PATH)
+    if missing:
+        names = ", ".join(str(p.relative_to(REPO_ROOT)) for p in missing)
+        raise SystemExit(f"missing tracked file(s): {names}")
 
 
 def main(argv=None) -> int:
@@ -67,6 +110,7 @@ def main(argv=None) -> int:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
 
+    require_known_paths()
     changed = sync(VERSION_FILE, MANIFEST_SPECS, check_only=args.check)
     if sync_skill_md(VERSION_FILE, SKILL_MD_PATH, check_only=args.check):
         changed.append(SKILL_MD_PATH)

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from scripts import adr
 
 
@@ -32,3 +34,18 @@ def test_main_safety_net_converts_unexpected_exception_to_json_error(tmp_path, m
     assert payload["operation"] == "preflight"
     assert payload["errors"][0]["code"] == "INTERNAL_ERROR"
     assert "simulated unexpected failure" in payload["errors"][0]["detail"]
+
+
+def test_index_locale_accepts_every_shipped_locale():
+    for code in ("en", "fr", "ja", "ko", "zh"):
+        args = adr.build_parser().parse_args(["index", "--locale", code])
+        assert args.locale == code
+
+
+def test_index_locale_rejects_an_unrecognized_code_instead_of_silently_using_english():
+    with pytest.raises(SystemExit):
+        adr.build_parser().parse_args(["index", "--locale", "zz"])
+
+
+def test_index_locale_defaults_to_english_when_omitted():
+    assert adr.build_parser().parse_args(["index"]).locale == "en"

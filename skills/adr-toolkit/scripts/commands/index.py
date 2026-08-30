@@ -7,6 +7,18 @@ from scripts.core.locale import load_locale
 
 SKIP_FILES = {"README.md", "adr-template.md"}
 
+# Last-resort English headers, used when even the English locale file is
+# unavailable — e.g. a copy-based install (permitted by
+# adapters/generic/README.md) that omitted scripts/i18n/. Localization is
+# cosmetic; a missing translation table must degrade, never crash (§17.1).
+FALLBACK_STRINGS = {
+    "decision_log_title": "Decision Log",
+    "by_status": "By status",
+    "by_tag": "By tag",
+    "by_affected_path": "By affected path",
+    "chronological": "Chronological (newest first)",
+}
+
 
 def run(args) -> dict:
     adr_dir = Path(args.dir)
@@ -47,10 +59,15 @@ def run(args) -> dict:
     }
 
 
-def _render(entries: list, strings: dict) -> str:
-    lines = [f"# {strings['decision_log_title']}", ""]
+def _s(strings: dict, key: str) -> str:
+    """Header lookup that survives a missing/partial English base."""
+    return strings.get(key, FALLBACK_STRINGS[key])
 
-    lines.append(f"## {strings['by_status']}")
+
+def _render(entries: list, strings: dict) -> str:
+    lines = [f"# {_s(strings, 'decision_log_title')}", ""]
+
+    lines.append(f"## {_s(strings, 'by_status')}")
     lines.append("")
     by_status: dict = {}
     for entry in entries:
@@ -62,7 +79,7 @@ def _render(entries: list, strings: dict) -> str:
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append(f"## {strings['by_tag']}")
+    lines.append(f"## {_s(strings, 'by_tag')}")
     lines.append("")
     by_tag: dict = {}
     for entry in entries:
@@ -74,7 +91,7 @@ def _render(entries: list, strings: dict) -> str:
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append(f"## {strings['by_affected_path']}")
+    lines.append(f"## {_s(strings, 'by_affected_path')}")
     lines.append("")
     by_path: dict = {}
     for entry in entries:
@@ -86,7 +103,7 @@ def _render(entries: list, strings: dict) -> str:
             lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
         lines.append("")
 
-    lines.append(f"## {strings['chronological']}")
+    lines.append(f"## {_s(strings, 'chronological')}")
     lines.append("")
     for entry in sorted(entries, key=lambda e: e["date"], reverse=True):
         lines.append(f"- {entry['date']} — [{entry['id']} — {entry['title']}]({entry['filename']})")
