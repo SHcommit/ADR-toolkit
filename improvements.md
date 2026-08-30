@@ -28,10 +28,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
   across manifests while only versions are synchronized.
   **Done when:** one canonical source and a check are implemented, or an ADR
   explicitly accepts independent descriptions.
-- [ ] **Avoid redundant version-drift CI work.** Run the repository-invariant
-  sync check once instead of on every OS/Python matrix leg.
-  **Done when:** test coverage remains cross-platform and one required job owns
-  the drift check.
 - [ ] **Resolve `--json` semantics.** Every subcommand parses `--json` but always
   emits JSON.
   **Done when:** either a human-readable mode exists with compatibility tests or
@@ -49,6 +45,9 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Moved the manifest version-drift check out of the 5-leg OS/Python test
+  matrix into its own single `version-drift` job, since the check is a
+  repository-content invariant, not a per-platform/per-interpreter one.
 - [x] Hardened `sync_version.py`: a tracked manifest that keeps its file but
   loses its `version` key now fails `--check` instead of reporting no drift;
   a manifest path outside the repo root raises the intended `SystemExit`
