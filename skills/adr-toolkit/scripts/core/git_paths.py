@@ -15,6 +15,7 @@ def list_existing_paths(root: Path) -> set:
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     if result.returncode != 0:
         raise GitPathsError(result.stderr.strip() or "git ls-files failed")

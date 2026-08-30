@@ -15,7 +15,7 @@ def run(args) -> dict:
 
     repo_check = subprocess.run(
         ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     if repo_check.returncode != 0:
         return {
@@ -43,7 +43,7 @@ def run(args) -> dict:
             "git", "-C", str(root), "-c", "core.quotePath=false", "diff",
             "--name-status", "-z", *diff_options, "--end-of-options", *range_args,
         ],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     if name_status.returncode != 0:
         code = "INVALID_REF" if mode == "since" else "GIT_DIFF_FAILED"
@@ -54,7 +54,7 @@ def run(args) -> dict:
             "git", "-C", str(root), "-c", "core.quotePath=false", "diff",
             "--unified=0", *diff_options, "--end-of-options", *range_args,
         ],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     if patch.returncode != 0:
         code = "INVALID_REF" if mode == "since" else "GIT_DIFF_FAILED"
@@ -89,7 +89,7 @@ def _untracked_files(root: Path) -> list:
             "git", "-C", str(root), "ls-files", "--others",
             "--exclude-standard", "-z",
         ],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8",
     )
     if listing.returncode != 0:
         raise _GitCommandError(
