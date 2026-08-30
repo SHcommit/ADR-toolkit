@@ -15,11 +15,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ### P1 — strongly recommended
 
-- [ ] **Resolve Codex metadata compatibility.** Codex `quick_validate.py`
-  rejects `user-invocable` and `version`, while the cross-harness contract and
-  repository tests require them.
-  **Done when:** a deliberate compatibility decision and verified adapter path
-  replace the standing ambiguity.
 - [ ] **Clean stale remote branches after reference checks.** Candidates are
   `origin/SHcommit/feat-plan-adr-toolkit` and
   `origin/feat/adr-toolkit-mvp-implement`.
@@ -28,6 +23,18 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Decided Codex metadata compatibility: no code change needed.
+  `quick_validate.py`'s rejection of `user-invocable`/`version` comes from
+  Codex CLI's own local `skill-creator` authoring tool
+  (`~/.codex/skills/.system/skill-creator/`), not from the actual plugin
+  install/discovery path (`codex plugin marketplace add` /
+  `codex plugin add`), which never reads that script and was independently
+  verified to work. `skill-creator` targets simple, Codex-only skills built
+  from scratch with a narrower schema (`name`/`description`/`license`/
+  `allowed-tools`/`metadata`); `adr-toolkit` is a deliberately cross-harness
+  skill following the Agent Plugins standard instead, so there is no real
+  compatibility gap to close — only an incidental collision if someone points
+  that unrelated tool at this repo's `SKILL.md` by hand.
 - [x] Added a small, deterministic schema for CHECK policy exceptions:
   `adr.py exception --input <file.json>` validates `owner`/`reason`/`scope`/
   `expiry`/`adr_id`/`rule_id` and writes `docs/decisions/exceptions/NNNN.json`
