@@ -164,15 +164,21 @@ Toolkit 자체에 계정 시스템을 서둘러 넣기보다 GitHub의 인증·�
 
 ### 다음 구현 후보
 
-1. ADR directory 로딩을 공통 iterator로 통합해 validate/index/related/CHECK의 warning
-   의미가 갈라지는 위험을 줄인다.
+1. ~~ADR directory 로딩을 공통 iterator로 통합해~~ **완료 (2026-08-30).**
+   `core.adr_directory.iter_adr_files`로 validate/index/related/CHECK를 통합했고
+   각 명령의 warning 의미는 그대로 유지했다.
 2. public 전환 시 PR template과 CONTRIBUTING/SECURITY 문서를 만들고 ruleset 적용을
-   자동 검증한다.
+   자동 검증한다. **저장소가 아직 private이라 시작 조건이 충족되지 않았다.**
 3. CHECK 결과를 `VERIFIED`, `VIOLATED`, `NOT_APPLICABLE`, `UNVERIFIABLE`의 안정된
-   machine-readable contract로 승격한다.
+   machine-readable contract로 승격한다. **아직 시작 전.** 현재 CHECK는 이 네
+   값을 쓰지 않고 `kind: verified_violation / review_required / related /
+   no_applicable_constraint`를 쓴다; `VERIFIED`에 해당하는 "규칙을 평가했고
+   준수를 확인했다"는 값 자체가 아직 없다 — 새 API 설계가 필요하다.
 4. 예외에 owner, reason, scope, expiry를 요구하는 작은 schema부터 시작한다.
+   **아직 시작 전.** 현재 `register_exception`은 CHECK finding의 해결 옵션
+   문자열로만 존재하고, 실제 저장·검증하는 schema나 명령은 없다.
 5. 두 개 이상의 저장소가 같은 운영 문제를 보일 때 reusable workflow와 조직
-   taxonomy를 설계한다.
+   taxonomy를 설계한다. **시작 조건(2개 이상 저장소) 미충족.**
 
 ### 지금 구현하지 않을 것
 
