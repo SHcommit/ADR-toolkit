@@ -59,10 +59,13 @@ a partial plan without asking first.
 
 ## Open decisions
 
-1. **License:** MIT remains proposed but needs explicit user approval before
-   a public release.
-2. **Final MVP scope:** confirm whether Plan 4 retains five languages and
-   four named harnesses or trims that scope.
+Both resolved 2026-08-30:
+
+1. **License:** MIT, confirmed. Plan 4 adds a `LICENSE` file and wires it
+   into release automation.
+2. **Final MVP scope:** confirmed — Plan 4 keeps the full original scope,
+   five languages (en/fr/ja/ko/zh) and four harnesses (Claude Code deep +
+   light adapters for Codex/Gemini CLI/Antigravity CLI), per spec §2/§8/§9.
 
 ## Standing risks
 
