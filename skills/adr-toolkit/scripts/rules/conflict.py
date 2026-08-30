@@ -41,19 +41,11 @@ def _as_list(value) -> list:
 def affected_paths_overlap(diff_files: list, affected_paths) -> bool:
     touched = _touched_paths(diff_files)
     return any(
-        _path_under(diff_path, ap) or globs.match(ap, diff_path)
+        globs.path_under(diff_path, ap) or globs.match(ap, diff_path)
         for diff_path in touched
         for ap in _as_list(affected_paths)
         if isinstance(ap, str)
     )
-
-
-def _path_under(diff_path: str, affected_path: str) -> bool:
-    # Prefix matching must respect directory boundaries: "src/db" governs
-    # "src/db/x.py" but not "src/db2/file.py".
-    if diff_path == affected_path:
-        return True
-    return diff_path.startswith(affected_path.rstrip("/") + "/")
 
 
 def _touched_paths(diff_files: list) -> set:
