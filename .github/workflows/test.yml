@@ -40,5 +40,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check manifest versions are in sync
+      - name: Check manifest versions and descriptions are in sync
         run: python scripts/sync_version.py --check

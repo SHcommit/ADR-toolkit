@@ -15,10 +15,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ### P1 — strongly recommended
 
-- [ ] **Decide manifest-description ownership.** Description text has drifted
-  across manifests while only versions are synchronized.
-  **Done when:** one canonical source and a check are implemented, or an ADR
-  explicitly accepts independent descriptions.
 - [ ] **Resolve `--json` semantics.** Every subcommand parses `--json` but always
   emits JSON.
   **Done when:** either a human-readable mode exists with compatibility tests or
@@ -36,6 +32,14 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Decided manifest-description ownership: `SKILL.md`'s frontmatter
+  `description:` is now the single canonical source, synced by
+  `sync_version.py` into `.claude-plugin/plugin.json`,
+  `adapters/codex/.codex-plugin/plugin.json`,
+  `adapters/gemini-cli/gemini-extension.json`, and
+  `adapters/antigravity/plugin.json`, with `--check` enforcing it in CI. Fixed
+  the one real drift this uncovered (`.claude-plugin/plugin.json` was missing
+  "and existing decisions").
 - [x] Corrected `adapters/codex/README.md`: re-verified against Codex CLI
   0.151.0 that the documented install flow works with zero
   `adapters/codex/skills/` symlink present (marketplace root resolves to the

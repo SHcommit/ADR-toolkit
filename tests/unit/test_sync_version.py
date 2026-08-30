@@ -252,3 +252,55 @@ def test_sync_preserves_non_ascii_content_in_manifest_writes(tmp_path):
     sync(version_file, [(manifest, ["version"])], check_only=False)
 
     assert "한국어 설명" in manifest.read_text(encoding="utf-8")
+
+
+# --- Manifest description ownership -----------------------------------------
+
+read_description = _sync_version.read_description
+sync_descriptions = _sync_version.sync_descriptions
+REAL_DESCRIPTION_MANIFEST_SPECS = _sync_version.DESCRIPTION_MANIFEST_SPECS
+
+
+def test_read_description_extracts_frontmatter_description(tmp_path):
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: x\ndescription: Do the thing.\nversion: 0.0.0\n---\n\nBody\n",
+        encoding="utf-8",
+    )
+
+    assert read_description(skill_md) == "Do the thing."
+
+
+def test_sync_descriptions_writes_matching_description_into_every_manifest(tmp_path):
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: x\ndescription: Canonical description.\n---\n", encoding="utf-8"
+    )
+    plugin = _write(tmp_path, "plugin.json", {"name": "x", "description": "stale"})
+
+    changed = sync_descriptions(skill_md, [(plugin, ["description"])], check_only=False)
+
+    assert json.loads(plugin.read_text())["description"] == "Canonical description."
+    assert changed == [plugin]
+
+
+def test_sync_descriptions_check_only_reports_drift_without_writing(tmp_path):
+    skill_md = tmp_path / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: x\ndescription: Canonical description.\n---\n", encoding="utf-8"
+    )
+    plugin = _write(tmp_path, "plugin.json", {"name": "x", "description": "stale"})
+
+    changed = sync_descriptions(skill_md, [(plugin, ["description"])], check_only=True)
+
+    assert changed == [plugin]
+    assert json.loads(plugin.read_text())["description"] == "stale"
+
+
+def test_real_manifests_have_a_description_matching_skill_md():
+    canonical = read_description(REAL_SKILL_MD_PATH)
+    for path, key_path in REAL_DESCRIPTION_MANIFEST_SPECS:
+        target = json.loads(path.read_text(encoding="utf-8"))
+        for key in key_path:
+            target = target[key]
+        assert target == canonical, f"{path} description has drifted from SKILL.md"
