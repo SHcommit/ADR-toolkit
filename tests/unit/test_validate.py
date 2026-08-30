@@ -154,3 +154,23 @@ def test_bidirectional_supersession_has_no_relationship_errors(tmp_path):
     result = validate.run(SimpleNamespace(dir=str(tmp_path)))
 
     assert result["ok"] is True
+
+
+def test_supersession_cycle_is_an_error(tmp_path):
+    (tmp_path / "0001-a.md").write_text(
+        "---\nid: ADR-0001\ntitle: A\nstatus: accepted\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsupersedes:\n  - ADR-0002\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "0002-b.md").write_text(
+        "---\nid: ADR-0002\ntitle: B\nstatus: accepted\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsupersedes:\n  - ADR-0001\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+
+    result = validate.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is False
+    assert any(e["code"] == "SUPERSESSION_CYCLE" for e in result["errors"])

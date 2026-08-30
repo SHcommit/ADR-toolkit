@@ -4,7 +4,7 @@ from pathlib import Path
 from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, load_repository_config
-from scripts.core.relationships import missing_targets, resolve, supersession_mismatches
+from scripts.core.relationships import find_cycles, missing_targets, resolve, supersession_mismatches
 from scripts.core.schema import validate_frontmatter
 from scripts.core.repository_paths import resolve_from_root
 
@@ -84,5 +84,8 @@ def run(args) -> dict:
             "adr_id": source,
             "expected_superseded_by_on": target,
         })
+
+    for cycle in find_cycles(edges):
+        errors.append({"code": "SUPERSESSION_CYCLE", "cycle": list(cycle)})
 
     return {"ok": not errors, "operation": "validate", "checked": checked, "errors": errors}
