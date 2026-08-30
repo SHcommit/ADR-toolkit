@@ -1,6 +1,6 @@
 # handoff.md
 
-## Current task (2026-08-30)
+## Current task (2026-08-31)
 
 ADR Toolkit `v0.2.0` minor-release implementation is complete. The
 `improvements.md` P1 backlog has been fully worked down — every item that
@@ -8,6 +8,11 @@ was actionable by an agent is done, and the two that weren't (Codex
 metadata compatibility, stale branch cleanup) were resolved with the
 owner's decision/approval. This session's own design decisions have been
 dogfooded as ADR-0007..0010.
+
+Now implementing an additional, owner-approved feature: ADR search and
+relationship navigation (see "Next step" below) — not part of v0.2.0's
+original scope, taken on after the owner asked to improve ADR
+navigability for real-world OSS adoption.
 
 The work runs in the linked worktree at `/Users/yangseunghyeon/orca/workspaces/ADR-toolkit/develop-2`
 (directory name unchanged; the branch itself was renamed). Its base is the
@@ -67,19 +72,37 @@ items 1, 3, and 4 as done.
 
 ## Next step
 
-`improvements.md` has exactly one open item left: the P0 release gate. Open
-the final PR (from `feature/v0.2.0-multilingual-and-check-confidence`
-against `develop`), get required CI green, get the owner's approval for the
-v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`), merge
-through a release branch, and verify the tag lands on the intended `master`
-commit. The branch has not been pushed to `origin` yet (no upstream
-configured) — the owner has said they'll handle the public-repository
-transition themselves later, and push/PR have not been authorized in this
-session.
+**In progress**: implementing the ADR search + relationship navigation design
+from `docs/superpowers/specs/2026-08-31-adr-search-and-relationships-design.md`
+(committed `300456a`, revised after external review verification `f8b6423`,
+owner-approved). This came from `project-roadmap.md`'s "ADR navigation and
+scale" item, promoted out of roadmap after research into comparable OSS ADR
+tools (`npryce/adr-tools`, `thomvaill/log4brains`) showed search + relationship
+visibility are proven table-stakes regardless of this repo's current 10-ADR
+size. Scope: `core/globs.py` gains `path_under()` (extracted from
+`rules/conflict.py`), new `core/query.py` + `core/relationships.py`, `related.py`
+fixed (body-search) with policy unchanged, new `search` command, `index.py`
+Relationships section (8-locale), `validate.py` relationship-integrity checks.
+9-step sequencing is in the spec's "Implementation sequencing" section — follow
+it in order, each step's own tests green before the next. Next action: invoke
+`writing-plans` to turn the spec into a task-level plan (per the brainstorming
+skill's architectural path, this is the required next step before writing any
+implementation code).
 
-`project-roadmap.md` was reviewed end to end: every item there is explicitly
-gated on usage evidence or a separate design decision that doesn't exist yet
-— nothing there is actionable now.
+Once that work lands: `improvements.md` still has exactly one open item, the
+P0 release gate. Open the final PR (from
+`feature/v0.2.0-multilingual-and-check-confidence` against `develop`), get
+required CI green, get the owner's approval for the v0.2.0 version bump
+(`skills/adr-toolkit/VERSION` is still `0.1.0`), merge through a release
+branch, and verify the tag lands on the intended `master` commit. The branch
+has not been pushed to `origin` yet (no upstream configured) — the owner has
+said they'll handle the public-repository transition themselves later, and
+push/PR have not been authorized in this session.
+
+`project-roadmap.md`'s remaining items (everything except "ADR navigation and
+scale," now superseded by the spec above) were reviewed end to end: each is
+explicitly gated on usage evidence or a separate design decision that doesn't
+exist yet — nothing else there is actionable now.
 
 An open, undecided idea from this session: measuring how much LLM-token
 input/output the deterministic core saves an agent versus doing the same
