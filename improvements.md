@@ -31,9 +31,10 @@ Concrete implementation backlog. Unscheduled product bets belong in
   `truncated`, deterministic best-match-first ordering), a Relationships
   section in the generated index (supersession chains + related lists with
   titles, localized across all 8 catalogs), and `validate.py` relationship-
-  integrity checks (`BROKEN_SUPERSESSION_LINK`, `SUPERSESSION_MISMATCH`).
-  Graph rendering, semantic search, and directory sharding remain
-  deliberately deferred in `project-roadmap.md`.
+  integrity checks (`BROKEN_SUPERSESSION_LINK`, `SUPERSESSION_MISMATCH`,
+  `SUPERSESSION_CYCLE`). `search --id` added for exact lookup. Graph
+  rendering, semantic search, and directory sharding remain deliberately
+  deferred in `project-roadmap.md`.
 - [x] Cleaned stale remote branches: `origin/SHcommit/feat-plan-adr-toolkit`
   and `origin/feat/adr-toolkit-mvp-implement` were both fully merged into
   `origin/develop` with no open PR referencing either (`gh pr list --state

@@ -176,15 +176,15 @@ python skills/adr-toolkit/scripts/adr.py search --keyword architecture --dir doc
 }
 ```
 
-**Filter semantics:** filters across different fields (`--keyword`, `--tags`,
-`--status`, `--path`) are combined with AND. Multiple values within
+**Filter semantics:** filters across different fields (`--id`, `--keyword`,
+`--tags`, `--status`, `--path`) are combined with AND. Multiple values within
 `--tags` are combined with OR — `--tags postgres mysql` means "postgres or
-mysql". No filters at all browses every ADR. `--path` matches a real file
-against an ADR's governed scope (the same directory-boundary + glob logic
-CHECK uses), not an exact match against the ADR's literal `affected_paths`
-list. `--limit N` truncates the already-ranked (best-match-first) result
-list; `total` is always the untruncated count and `truncated` is
-`total > count`.
+mysql". No filters at all browses every ADR. `--id` looks up one ADR by its
+exact id. `--path` matches a real file against an ADR's governed scope (the
+same directory-boundary + glob logic CHECK uses), not an exact match against
+the ADR's literal `affected_paths` list. `--limit N` truncates the
+already-ranked (best-match-first) result list; `total` is always the
+untruncated count and `truncated` is `total > count`.
 
 `search` is a general lookup command ("has this been decided before?"), distinct
 from `related` (used during RECORD's DISCOVER stage to find precedent for a

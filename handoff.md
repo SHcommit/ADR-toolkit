@@ -78,6 +78,17 @@ Implementation, 14 TDD tasks, in order:
 14. `68e2007` — regenerated `docs/decisions/README.md` with the new
     Relationships section.
 
+**Post-spec additions** (owner asked to add 2 of the external review's
+smaller deferred items after the 14-task plan landed; graph rendering,
+semantic search, and `adr serve` remain out of scope, per the review's own
+§22 and this project's evidence-before-building principle):
+
+15. `8efde92` — `core/relationships.find_cycles()` (DFS over `supersedes`
+    edges only — `related` is symmetric, no cycle concept applies) +
+    `validate.py`'s `SUPERSESSION_CYCLE` error.
+16. `b8d93e4` — `search --id` for exact ADR lookup, combined via the same
+    AND policy as every other filter (not a separate short-circuit path).
+
 **Note for whoever writes ADR test fixtures next**: this repo's
 `frontmatter.py` is a minimal custom parser, not real YAML — it only
 understands `key: []` or block-style `key:\n  - item`. A flow-style
@@ -86,13 +97,15 @@ Hit this exact bug while writing `test_search_command.py`'s fixtures.
 
 Latest local verification on 2026-08-31:
 
-- `python3 -m pytest -q` → `379 passed`, exit 0
+- `python3 -m pytest -q` → `386 passed`, exit 0
 - `python3 scripts/sync_version.py --check` → exit 0
-- `adr.py validate --dir docs/decisions` → `checked: 10`, no errors (the new
-  relationship-integrity checks don't flag ADR-0003/ADR-0006's real
-  supersession)
+- `adr.py validate --dir docs/decisions` → `checked: 10`, no errors (neither
+  the relationship-integrity checks nor the new cycle check flag ADR-0003/
+  ADR-0006's real supersession)
 - `adr.py index --dir docs/decisions` regenerated cleanly, Relationships
   section correct
+- `adr.py search --id ADR-0007 --dir docs/decisions --json` → real result
+  verified against this repository's actual ADR-0007
 - `git status --short` → clean
 
 The detailed v0.2.0 evidence and maturity assessment (predating the search
