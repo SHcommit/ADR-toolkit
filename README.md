@@ -190,6 +190,33 @@ untruncated count and `truncated` is `total > count`.
 from `related` (used during RECORD's DISCOVER stage to find precedent for a
 *new* draft, with a broader OR-across-fields match).
 
+### Why storage stays flat
+
+ADRs live as `NNNN-slug.md` in one flat `docs/decisions/` directory — no
+per-year, per-team, or per-status subfolders — no matter how many
+accumulate. Two comparable real-world tools were checked before deciding
+this: [`npryce/adr-tools`](https://github.com/npryce/adr-tools), the
+original Nygard-style CLI, ships no search at all and expects `grep`; the
+most-adopted actively maintained ADR tool,
+[`log4brains`](https://github.com/thomvaill/log4brains) (1.5k+ GitHub
+stars), also keeps ADRs as flat Markdown and instead layers a full-text
+search and a relationship graph on top — it does not shard the source
+files by count. A folder hierarchy also creates a real problem flat storage
+avoids: a decision that spans two teams or domains has no unambiguous
+folder to live in.
+
+The corollary is **retrieval, not storage, is where a growing ADR set gets
+harder to use** — so that's where the effort went: `search`'s
+title-and-body keyword/tag/status/path matching plus the generated index's
+"By status" / "By tag" / "By affected path" / "Relationships" views. Both
+already work identically for 10 ADRs or 500. Folder sharding, a rendered
+relationship graph, and a real search index are deliberately not built yet
+— they're tracked in [`project-roadmap.md`](project-roadmap.md), gated on
+this repository (or an adopting team's) ADR count actually reaching a scale
+where flat-directory substring search stops being fast enough. Building
+that ahead of evidence would add real maintenance cost for a problem no one
+has hit yet.
+
 ## Scope
 
 - MADR 4.x format, no new standard.
