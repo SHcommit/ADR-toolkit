@@ -30,7 +30,7 @@ def _write_adr(adr_dir, filename, id, title, status="accepted", affected_paths=N
 
 
 def _args(adr_dir, **overrides):
-    defaults = dict(dir=str(adr_dir), keyword=None, tags=None, status=None, path=None, limit=None)
+    defaults = dict(dir=str(adr_dir), keyword=None, tags=None, status=None, path=None, limit=None, id=None)
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
@@ -161,8 +161,29 @@ def test_search_echoes_the_query(tmp_path):
     result = search.run(_args(adr_dir, keyword="a", tags=["cli"], status="accepted"))
 
     assert result["query"] == {
-        "keyword": "a", "tags": ["cli"], "status": "accepted", "path": None, "limit": None,
+        "id": None, "keyword": "a", "tags": ["cli"], "status": "accepted", "path": None, "limit": None,
     }
+
+
+def test_search_id_filter_returns_exact_match_only(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="A")
+    _write_adr(adr_dir, "0002-b.md", id="ADR-0002", title="B")
+
+    result = search.run(_args(adr_dir, id="ADR-0002"))
+
+    assert result["count"] == 1
+    assert result["results"][0]["id"] == "ADR-0002"
+    assert result["results"][0]["matched_in"] == ["id"]
+
+
+def test_search_id_filter_no_match_returns_empty(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    _write_adr(adr_dir, "0001-a.md", id="ADR-0001", title="A")
+
+    result = search.run(_args(adr_dir, id="ADR-9999"))
+
+    assert result["count"] == 0
 
 
 def test_search_malformed_adr_degrades_to_warning(tmp_path):

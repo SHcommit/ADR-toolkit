@@ -13,6 +13,7 @@ from scripts.core.query import matches_tags_any, path_governed_by, rank_key
 
 def run(args) -> dict:
     adr_dir = Path(args.dir)
+    adr_id = getattr(args, "id", None)
     keyword = (getattr(args, "keyword", None) or "").lower()
     query_tags = set(getattr(args, "tags", None) or [])
     status = getattr(args, "status", None)
@@ -32,6 +33,11 @@ def run(args) -> dict:
             continue
 
         matched_in = []
+
+        if adr_id:
+            if data.get("id") != adr_id:
+                continue
+            matched_in.append("id")
 
         if keyword:
             title_hit = keyword in (data.get("title") or "").lower()
@@ -85,6 +91,7 @@ def run(args) -> dict:
         "ok": True,
         "operation": "search",
         "query": {
+            "id": adr_id,
             "keyword": getattr(args, "keyword", None),
             "tags": getattr(args, "tags", None),
             "status": status,

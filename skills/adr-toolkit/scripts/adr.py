@@ -139,6 +139,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_json_flag(p_exception)
 
     p_search = sub.add_parser("search")
+    p_search.add_argument("--id")
     p_search.add_argument("--keyword")
     p_search.add_argument("--tags", nargs="*")
     p_search.add_argument("--status", choices=sorted(STATUSES))
