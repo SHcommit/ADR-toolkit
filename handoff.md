@@ -27,10 +27,11 @@ Local execution plans live under ignored `docs/superpowers/plans/`.
 
 ## Next step
 
-Implement `.adr-toolkit.json`, locale resolution, eight catalogs, localized
-rendering, and semantic-slug validation with TDD. Then harden CHECK, correct the
-existing ADRs, request the lifecycle checkpoint for ADR-0003 supersession, and
-finish reports/documentation.
+Document repository locale defaults, overrides, semantic slugs, and CHECK
+confidence in README/quickstart/SKILL. Then write the Korean v0.2.0 readiness
+report and the separate enterprise-adoption report. ADR-0006 now supersedes
+ADR-0003 bidirectionally; validation, repository ADR quality checks, and
+idempotent index generation pass.
 
 ## Open risks
 

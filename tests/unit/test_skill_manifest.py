@@ -59,4 +59,15 @@ def test_record_points_at_the_conflict_rules_reference_for_constraints_blocks():
 def test_skill_md_documents_locale_detection():
     _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
     assert "--locale" in body
-    assert "fr" in body and "ja" in body and "ko" in body and "zh" in body
+    for locale in ["en", "ko", "ja", "zh", "fr", "es", "de", "pt-BR"]:
+        assert locale in body
+    assert "explicit user request" in body
+    assert "request language" in body
+    assert "repository default" in body
+
+
+def test_skill_md_requires_semantic_slug_confirmation():
+    _, body = fm.parse(SKILL_MD.read_text(encoding="utf-8"))
+    assert "semantic ASCII slug" in body
+    assert "--slug" in body
+    assert "show" in body and "CONFIRM" in body
