@@ -2,12 +2,10 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
 from scripts.core.repository_paths import resolve_from_root
-
-SKIP_FILES = {"README.md", "adr-template.md"}
 
 # Last-resort English headers, used when even the English locale file is
 # unavailable — e.g. a copy-based install (permitted by
@@ -41,10 +39,7 @@ def run(args) -> dict:
     entries = []
     warnings = []
 
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES:
-            continue
-        parsed = identifiers.parse_filename(entry.name)
+    for entry, parsed in iter_adr_files(adr_dir):
         if parsed is None:
             continue
         try:

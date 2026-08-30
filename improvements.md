@@ -15,10 +15,6 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ### P1 — strongly recommended
 
-- [ ] **Centralize ADR directory loading.** Replace duplicated
-  `SKIP_FILES`/filename/frontmatter loops in related/index/validate/check with a
-  focused shared iterator.
-  **Done when:** all four commands retain their warning semantics and tests pass.
 - [ ] **Correct Codex adapter claims.** Scope the README to the root
   `.claude-plugin/marketplace.json` flow actually exercised and explain why the
   adapter-local symlink remains relevant to native `.codex-plugin` discovery.
@@ -45,6 +41,10 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Centralized ADR directory loading: `related`, `index`, `validate`, and
+  `check` now share `core.adr_directory.iter_adr_files` instead of each
+  redefining `SKIP_FILES` and re-walking the directory; each command keeps its
+  own bad-filename/frontmatter handling (silent skip vs. reportable error).
 - [x] Moved the manifest version-drift check out of the 5-leg OS/Python test
   matrix into its own single `version-drift` job, since the check is a
   repository-content invariant, not a per-platform/per-interpreter one.

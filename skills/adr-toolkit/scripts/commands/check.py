@@ -5,14 +5,13 @@ from pathlib import Path
 
 from scripts.commands import diff as diff_command
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
 from scripts.core.constraints import ConstraintsError, extract_constraints
 from scripts.core.git_paths import GitPathsError, list_existing_paths
 from scripts.core.repository_paths import resolve_from_root
 from scripts.core.schema import validate_frontmatter
 from scripts.rules import conflict
 
-SKIP_FILES = {"README.md", "adr-template.md"}
 RESOLUTIONS = ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
 
 # Every ADR this toolkit writes uses `## Confirmation` (templates/madr-*.md and
@@ -129,8 +128,8 @@ def run(args) -> dict:
 
 def _load_adrs(adr_dir: Path) -> tuple:
     entries, warnings = [], []
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES or identifiers.parse_filename(entry.name) is None:
+    for entry, parsed in iter_adr_files(adr_dir):
+        if parsed is None:
             continue
         try:
             data, body = fm.parse(entry.read_text(encoding="utf-8"))

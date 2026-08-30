@@ -2,12 +2,10 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, load_repository_config
 from scripts.core.schema import validate_frontmatter
 from scripts.core.repository_paths import resolve_from_root
-
-SKIP_FILES = {"README.md", "adr-template.md"}
 
 
 def run(args) -> dict:
@@ -25,13 +23,12 @@ def run(args) -> dict:
             "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
         }
 
-    adr_files = sorted(p for p in adr_dir.glob("*.md") if p.name not in SKIP_FILES)
-
     parsed_entries = []
     seen_ids: dict = {}
+    checked = 0
 
-    for path in adr_files:
-        parsed_filename = identifiers.parse_filename(path.name)
+    for path, parsed_filename in iter_adr_files(adr_dir):
+        checked += 1
         if parsed_filename is None:
             errors.append({"code": "BAD_FILENAME", "file": path.name})
             continue
@@ -70,4 +67,4 @@ def run(args) -> dict:
             if related_id not in known_ids:
                 errors.append({"code": "BROKEN_RELATED_LINK", "file": filename, "related_id": related_id})
 
-    return {"ok": not errors, "operation": "validate", "checked": len(adr_files), "errors": errors}
+    return {"ok": not errors, "operation": "validate", "checked": checked, "errors": errors}

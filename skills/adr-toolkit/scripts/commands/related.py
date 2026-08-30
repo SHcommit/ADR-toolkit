@@ -2,9 +2,7 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
-
-SKIP_FILES = {"README.md", "adr-template.md"}
+from scripts.core.adr_directory import iter_adr_files
 
 
 def _as_list(value) -> list:
@@ -19,8 +17,8 @@ def run(args) -> dict:
 
     matches = []
     warnings = []
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES or identifiers.parse_filename(entry.name) is None:
+    for entry, parsed in iter_adr_files(adr_dir):
+        if parsed is None:
             continue
 
         try:
