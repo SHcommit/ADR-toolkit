@@ -29,11 +29,24 @@ current `origin/develop` history plus the approved design commits:
 Baseline verification before implementation: `212 passed` on 2026-08-30.
 
 **Branch renamed**: `develop-2` → `feature/v0.2.0-multilingual-and-check-confidence`.
-**Pushed to `origin` and PR opened**: owner approved push + PR (not yet the
-version bump/tag). PR #2 against `develop`:
-https://github.com/SHcommit/ADR-toolkit/pull/2 — CI (5-leg pytest matrix +
-`version-drift` job) triggered on open; check its status before assuming
-green.
+**Pushed to `origin`, PR #2 open against `develop`, CI green**:
+https://github.com/SHcommit/ADR-toolkit/pull/2 — all 6 checks (5-leg pytest
+matrix + `version-drift`) passing, `mergeable`. Owner approved push + PR
+opening; **not** the version bump/release branch/tag — those still need
+separate explicit approval.
+
+CI caught a real pre-existing Windows-only bug on the first run (both
+`windows-latest` legs failed, macOS/Ubuntu/version-drift passed):
+`test_uncommitted_mode_preserves_unicode_untracked_path_and_content` in
+`test_diff.py`. Root cause: none of `diff.py`'s or `git_paths.py`'s
+`subprocess.run(..., text=True)` calls passed `encoding="utf-8"`, so Python
+decoded git's UTF-8 output using the platform's default locale encoding —
+correct on macOS/Linux, not guaranteed on Windows. Fixed in `e58d8b1` by
+adding `encoding="utf-8"` explicitly to every git subprocess call in both
+files; re-run confirmed all 6 checks green. This was a latent bug from
+earlier CHECK-correctness work in this branch (commits `801fa4c`/`d691a33`,
+predating this session's search/relationships work) — it only surfaced now
+because this branch had never run CI before this PR.
 
 ## Touched since the last handoff
 
@@ -121,13 +134,22 @@ governance is kept separate in `docs/enterprise-adoption.md`.
 ## Next step
 
 `improvements.md` has exactly one open item left: the P0 release gate.
-**PR #2 is open** (https://github.com/SHcommit/ADR-toolkit/pull/2), CI
-running. Next: confirm all 6 checks (5-leg pytest matrix + version-drift)
-are green — `gh pr checks 2` — before treating this as mergeable. Still
-required after that, each needing separate owner approval not yet given:
-the v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`),
-merging through a release branch, and verifying the tag lands on the
-intended `master` commit.
+**PR #2 is open, CI green, `mergeable`**
+(https://github.com/SHcommit/ADR-toolkit/pull/2). Everything left needs
+separate, explicit owner approval not yet given, in order:
+
+1. The v0.2.0 version bump (`skills/adr-toolkit/VERSION` is still `0.1.0`;
+   run `scripts/sync_version.py` after bumping to propagate).
+2. Merging PR #2 (into `develop`) — normal merge or squash, per repo
+   convention; no merge has been authorized in this session.
+3. Cutting a `release/*` branch into `master` and back into `develop`, per
+   `AGENTS.md`'s Git Flow policy.
+4. Pushing a `v0.2.0` tag on `master` — `.github/workflows/release.yml`
+   then runs the full suite, verifies manifest versions against the tag,
+   and publishes the GitHub Release automatically.
+
+Do not perform 1-4 without asking first — each is a separate explicit
+approval point, not implied by "CI is green."
 
 `project-roadmap.md` was updated to mark "ADR navigation and scale"'s first
 bullet done, with the remaining three (graph *rendering* specifically,
