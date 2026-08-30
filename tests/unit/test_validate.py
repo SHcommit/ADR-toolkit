@@ -100,3 +100,57 @@ def test_relative_adr_directory_is_resolved_against_root(tmp_path, monkeypatch):
 
     assert result["ok"] is True
     assert result["checked"] == 1
+
+
+def test_broken_supersession_link_is_an_error(tmp_path):
+    (tmp_path / "0001-a.md").write_text(
+        "---\nid: ADR-0001\ntitle: A\nstatus: accepted\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsupersedes:\n  - ADR-9999\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+
+    result = validate.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is False
+    assert any(e["code"] == "BROKEN_SUPERSESSION_LINK" for e in result["errors"])
+
+
+def test_supersession_mismatch_is_an_error(tmp_path):
+    (tmp_path / "0001-old.md").write_text(
+        "---\nid: ADR-0001\ntitle: Old\nstatus: superseded\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "0002-new.md").write_text(
+        "---\nid: ADR-0002\ntitle: New\nstatus: accepted\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsupersedes:\n  - ADR-0001\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    # ADR-0001 has no superseded_by: ADR-0002 -- one-sided edit.
+
+    result = validate.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is False
+    assert any(e["code"] == "SUPERSESSION_MISMATCH" for e in result["errors"])
+
+
+def test_bidirectional_supersession_has_no_relationship_errors(tmp_path):
+    (tmp_path / "0001-old.md").write_text(
+        "---\nid: ADR-0001\ntitle: Old\nstatus: superseded\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsuperseded_by: ADR-0002\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "0002-new.md").write_text(
+        "---\nid: ADR-0002\ntitle: New\nstatus: accepted\ndate: 2026-08-31\n"
+        "decision_makers: []\nrelated: []\naffected_paths: []\ntags: []\n"
+        "retrospective: false\nsupersedes:\n  - ADR-0001\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+
+    result = validate.run(SimpleNamespace(dir=str(tmp_path)))
+
+    assert result["ok"] is True

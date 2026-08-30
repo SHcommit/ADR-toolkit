@@ -4,6 +4,7 @@ from pathlib import Path
 from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, load_repository_config
+from scripts.core.relationships import missing_targets, resolve, supersession_mismatches
 from scripts.core.schema import validate_frontmatter
 from scripts.core.repository_paths import resolve_from_root
 
@@ -66,5 +67,22 @@ def run(args) -> dict:
         for related_id in data.get("related", []):
             if related_id not in known_ids:
                 errors.append({"code": "BROKEN_RELATED_LINK", "file": filename, "related_id": related_id})
+
+    edges = resolve([data for _, data in parsed_entries])
+
+    for edge in missing_targets(edges, known_ids):
+        if edge.type in ("supersedes", "superseded_by"):
+            errors.append({
+                "code": "BROKEN_SUPERSESSION_LINK",
+                "adr_id": edge.source,
+                "target": edge.target,
+            })
+
+    for source, target in supersession_mismatches(edges):
+        errors.append({
+            "code": "SUPERSESSION_MISMATCH",
+            "adr_id": source,
+            "expected_superseded_by_on": target,
+        })
 
     return {"ok": not errors, "operation": "validate", "checked": checked, "errors": errors}
