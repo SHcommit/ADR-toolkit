@@ -7,23 +7,32 @@ functions here; the combination policy lives in each command, not here.
 from scripts.core import globs
 
 
+def _as_list(value) -> list:
+    # A malformed ADR can carry a non-list value for a field this project's
+    # schema declares as a list (e.g. "affected_paths: src/events/" instead
+    # of a YAML list) -- treating it as iterable would silently decompose a
+    # string into individual characters and produce nonsense single-char
+    # matches. Anything that isn't already a list is treated as empty.
+    return value if isinstance(value, list) else []
+
+
 def matches_keyword(keyword: str, title: str, body: str) -> bool:
     keyword = keyword.lower()
     return keyword in (title or "").lower() or keyword in (body or "").lower()
 
 
 def matches_tags_any(query_tags: set, entry_tags: list) -> set:
-    return query_tags & set(entry_tags or [])
+    return query_tags & set(_as_list(entry_tags))
 
 
 def matches_paths_exact(query_paths: set, affected_paths: list) -> set:
-    return query_paths & set(affected_paths or [])
+    return query_paths & set(_as_list(affected_paths))
 
 
 def path_governed_by(path: str, affected_paths: list) -> bool:
     return any(
         globs.path_under(path, ap) or globs.match(ap, path)
-        for ap in (affected_paths or [])
+        for ap in _as_list(affected_paths)
         if isinstance(ap, str)
     )
 

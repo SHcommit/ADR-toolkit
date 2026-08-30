@@ -51,6 +51,21 @@ def test_path_governed_by_ignores_non_string_affected_paths():
     assert path_governed_by("src/db/x.py", ["src/db/", 42, None]) is True
 
 
+def test_path_governed_by_does_not_iterate_a_non_list_affected_paths_by_character():
+    # A malformed ADR could carry "affected_paths: src/db/" (a plain string,
+    # not a YAML list). Iterating it would decompose into characters and
+    # produce nonsense single-character path_under/glob matches.
+    assert path_governed_by("s", "src/db/") is False
+
+
+def test_matches_tags_any_ignores_non_list_entry_tags():
+    assert matches_tags_any({"c"}, "check") == set()
+
+
+def test_matches_paths_exact_ignores_non_list_affected_paths():
+    assert matches_paths_exact({"s"}, "src/events/") == set()
+
+
 def _entry(id_="ADR-0001", title="Cache policy", body="body text"):
     return {"id": id_, "title": title, "body": body}
 
