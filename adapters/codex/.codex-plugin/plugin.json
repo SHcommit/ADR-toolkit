@@ -1,0 +1,5 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "adr-toolkit",
+  "description": "Initialize, record, and check Architecture Decision Records by inspecting the repository and existing decisions before asking questions."
+}
