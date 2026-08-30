@@ -15,6 +15,25 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Done
 
+- [x] Added ADR search and relationship navigation, promoted out of
+  `project-roadmap.md`'s "ADR navigation and scale" item after research into
+  comparable OSS ADR tools (`npryce/adr-tools` has no search;
+  `thomvaill/log4brains`, 1.5k stars, treats search + relationship
+  visibility as headline features) showed both are proven table-stakes
+  regardless of this repo's own ADR count. Design:
+  `docs/superpowers/specs/2026-08-31-adr-search-and-relationships-design.md`.
+  Delivered: `core/globs.path_under()` (extracted from `rules/conflict.py`),
+  new `core/query.py` (keyword/tag/path matching + deterministic ranking)
+  and `core/relationships.py` (canonical `Relationship` model), `related.py`
+  fixed to search body text too (policy unchanged — still an OR-across-
+  fields broad net), new `adr.py search` command (AND-across-fields,
+  OR-within-field, `--path` via governed-scope matching, `--limit`/`total`/
+  `truncated`, deterministic best-match-first ordering), a Relationships
+  section in the generated index (supersession chains + related lists with
+  titles, localized across all 8 catalogs), and `validate.py` relationship-
+  integrity checks (`BROKEN_SUPERSESSION_LINK`, `SUPERSESSION_MISMATCH`).
+  Graph rendering, semantic search, and directory sharding remain
+  deliberately deferred in `project-roadmap.md`.
 - [x] Cleaned stale remote branches: `origin/SHcommit/feat-plan-adr-toolkit`
   and `origin/feat/adr-toolkit-mvp-implement` were both fully merged into
   `origin/develop` with no open PR referencing either (`gh pr list --state
