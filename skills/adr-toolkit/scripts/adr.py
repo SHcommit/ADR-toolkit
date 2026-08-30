@@ -24,6 +24,13 @@ from scripts.commands import (
 from scripts.core.locale import SUPPORTED_LOCALES
 
 
+def _add_diff_mode_arguments(parser: argparse.ArgumentParser) -> None:
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--staged", action="store_true")
+    modes.add_argument("--uncommitted", action="store_true")
+    modes.add_argument("--since")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="adr.py")
     sub = parser.add_subparsers(dest="operation", required=True)
@@ -99,16 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_supersede.add_argument("--json", action="store_true")
 
     p_diff = sub.add_parser("diff")
-    p_diff.add_argument("--staged", action="store_true")
-    p_diff.add_argument("--uncommitted", action="store_true")
-    p_diff.add_argument("--since")
+    _add_diff_mode_arguments(p_diff)
     p_diff.add_argument("--root", default=".")
     p_diff.add_argument("--json", action="store_true")
 
     p_check = sub.add_parser("check")
-    p_check.add_argument("--staged", action="store_true")
-    p_check.add_argument("--uncommitted", action="store_true")
-    p_check.add_argument("--since")
+    _add_diff_mode_arguments(p_check)
     p_check.add_argument("--root", default=".")
     p_check.add_argument("--dir", default="docs/decisions")
     p_check.add_argument("--json", action="store_true")

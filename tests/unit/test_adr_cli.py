@@ -77,3 +77,11 @@ def test_create_locale_and_slug_are_optional_and_constrained():
     ])
     assert args.locale == "de"
     assert args.slug == "separate-payment-system"
+
+
+@pytest.mark.parametrize("operation", ["diff", "check"])
+def test_diff_modes_are_mutually_exclusive(operation):
+    with pytest.raises(SystemExit):
+        adr.build_parser().parse_args([
+            operation, "--staged", "--since", "main",
+        ])
