@@ -26,3 +26,23 @@ def path_governed_by(path: str, affected_paths: list) -> bool:
         for ap in (affected_paths or [])
         if isinstance(ap, str)
     )
+
+
+def rank_key(entry: dict, keyword: str) -> tuple:
+    """Lower tuples sort first -- tier 0 (best) through tier 4 (worst), then
+    id as a stable, deterministic tie-break."""
+    keyword_lower = (keyword or "").lower()
+    title_lower = (entry.get("title") or "").lower()
+    body_lower = (entry.get("body") or "").lower()
+
+    if keyword_lower and entry.get("id", "").lower() == keyword_lower:
+        tier = 0
+    elif keyword_lower and title_lower == keyword_lower:
+        tier = 1
+    elif keyword_lower and keyword_lower in title_lower:
+        tier = 2
+    elif keyword_lower and keyword_lower in body_lower:
+        tier = 4
+    else:
+        tier = 3  # tag-only or no-keyword matches land between title and body
+    return (tier, entry.get("id", ""))
