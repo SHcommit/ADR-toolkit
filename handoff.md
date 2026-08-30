@@ -122,14 +122,19 @@ next.** Implementing the ADR search + relationship navigation feature:
 9. `36d7048` — wired `search` into `adr.py`'s CLI (added `STATUSES` import
    from `scripts.core.lifecycle` for `--status` choices).
 
-Full suite at this point: `374 passed`.
+10. `2ed781e` — `index.py` Relationships section (supersession chains +
+    related lists, titles shown alongside IDs, entries with no
+    relationships omitted).
+11. `38e0d27` — localized the 5 new keys across all 8
+    `scripts/i18n/*.json` catalogs + `test_locale.py`'s `REQUIRED_KEYS`.
+12. `b6d9658` — `validate.py`: `BROKEN_SUPERSESSION_LINK` +
+    `SUPERSESSION_MISMATCH` (errors, matching `BROKEN_RELATED_LINK`'s
+    existing severity — `validate.py` has no warnings mechanism). Verified
+    against this repo's real 10 ADRs: `ok: true`, no errors.
+
+Full suite at this point: `379 passed`.
 
 **Tasks remaining (plan file has full code for each):**
-10. `index.py` — Relationships section (English/fallback strings first).
-11. Localize the 5 new keys across all 8 `scripts/i18n/*.json` catalogs +
-    `test_locale.py`'s `REQUIRED_KEYS`.
-12. `validate.py` — `BROKEN_SUPERSESSION_LINK` + `SUPERSESSION_MISMATCH`
-    (errors, not warnings — `validate.py` has no warnings mechanism).
 13. Docs: README (search usage + AND/OR semantics statement) + SKILL.md
     (`related` vs `search` framing) — run every shown command in a scratch
     repo first, don't hand-write example output.
