@@ -2,7 +2,7 @@
 name: adr-toolkit
 description: Initialize, record, and check Architecture Decision Records by inspecting the repository and existing decisions before asking questions.
 user-invocable: true
-version: 0.1.0
+version: 0.2.0
 ---
 
 # ADR Toolkit
@@ -27,23 +27,24 @@ PREFLIGHT
 
 ## Language
 
-Detect the language of the user's own request (English, French, Japanese,
-Korean, or Chinese) and compose every question and report you write in
-that language — English is the default when the language can't be
-determined. This applies only to what you write yourself; it does not
-change any file content the user themselves wrote in a different
-language, and it does not translate `SKILL.md`'s own instructions.
+Use one of the canonical locales `en`, `ko`, `ja`, `zh`, `fr`, `es`, `de`,
+or `pt-BR`; `zh` means Simplified Chinese. Compose agent-authored questions
+and reports using this precedence: explicit user request → request language →
+repository default in `.adr-toolkit.json` → `en`. Do not translate prose the
+user already supplied.
 
-When you run `index`, pass the same locale as a two-letter code so the
-generated `docs/decisions/README.md` headers match
-(`--locale en|fr|ja|ko|zh`, defaulting to `en` when omitted):
+The deterministic CLI resolves locale as explicit `--locale` → approved input
+draft `locale` → repository default → `en`. Normally omit repeated flags when
+the repository default matches the request; pass `--locale` only for an
+explicit per-operation override. For example:
 
 ```bash
 python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale fr --json
 ```
 
-Every `index` command shown elsewhere in this file writes `--locale <code>`;
-substitute the detected language's code, or `en` when it can't be determined.
+INIT and CREATE localize deterministic prompts and MADR structure. INDEX
+localizes its generated headings. IDs, status values, JSON keys, error codes,
+and filenames remain English/ASCII machine contracts.
 
 ## INIT (scaffolding only)
 
@@ -56,11 +57,10 @@ time later) to recover past decisions.
    already exists; do not scaffold a second one.
 2. **CONFIRM** — show the user the exact directory that will be created,
    before writing anything.
-3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --dir docs/decisions` to
-   scaffold the directory, template, and ADR-0001.
+3. **MUTATE** — run `python skills/adr-toolkit/scripts/adr.py init --locale <code> --dir docs/decisions --json`
+   to create `.adr-toolkit.json`, the directory, template, and ADR-0001.
 4. **VALIDATE** — run `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
-   and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale <code> --json`
-   (see Language for `<code>`).
+   and `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
 5. **REPORT** — tell the user INIT is done and that they can run DISCOVER
    next if they want to recover past decisions from the repository's
    history.
@@ -115,7 +115,7 @@ entirely, or re-run later to mine more of the history incrementally.
    (`title`, `status`, `body` — body includes the three-part structure
    above — plus any of `date`/`decision_makers`/`related`/
    `affected_paths`/`tags`/`retrospective`) and run
-   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions`.
+   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions --json`.
 8. **VALIDATE** — same as INIT step 4. If validate reports errors, fix the
    draft and re-run `create` — never hand-edit the generated file to patch
    a validation error.
@@ -156,6 +156,14 @@ workflow does not.
    Omit `--paths`, `--tags`, or `--keyword` when that evidence is unknown;
    never invent a path, tag, or keyword. Use the results to find ADRs that
    already cover, conflict with, or may be replaced by the candidate.
+   `related`'s filters are OR'd together (any single overlap is enough) — it
+   deliberately casts a broad net before drafting. For a general lookup
+   unrelated to drafting (a user asks "has this been decided before?" or
+   "what ADRs govern `src/payment/`?"), use `search` instead — its filters
+   combine with AND for precise results, it supports `--status` and
+   `--path` (real-file-vs-governed-scope, not an exact list match), it
+   ranks results best-match-first, and an empty query browses every ADR.
+   See README's "Search" section for the full contract.
 3. **CLASSIFY** — apply the table above, then read
    `references/significance-rules.md`. Score only evidence-supported 0/1/2
    values; never guess or inflate a score to force a band. Write all seven
@@ -181,19 +189,20 @@ workflow does not.
    can enforce it — see `references/conflict-rules.md` for the six rule kinds
    and the exact block syntax.
 6. **CONFIRM** — before any `create`, show the title, problem, considered
-   options, decision, primary driver, accepted downside, and affected paths.
+   options, decision, primary driver, accepted downside, affected paths, and
+   the proposed semantic ASCII slug. For a non-ASCII title, suggest a useful
+   slug but never translate or transliterate inside the deterministic core.
    Get explicit approval of the draft. If it may replace an Accepted ADR,
    separately confirm that supersession is intended.
 7. **MUTATE** — write the approved draft JSON and run
-   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --dir docs/decisions --json`.
+   `python skills/adr-toolkit/scripts/adr.py create --input <draft.json> --slug <approved-slug> --dir docs/decisions --json`.
    Only after explicit supersession intent and approval, follow the
    supersede preview and mutation sequence in Lifecycle operations; never
    hand-edit lifecycle fields or links.
 8. **VALIDATE** — run
    `python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json`
    and
-   `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale <code> --json`
-   (see Language for `<code>`).
+   `python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json`.
 9. **REPORT** — report facts found, judgment and significance result,
    questions asked, files created or updated, validation result, and remaining
    uncertainty.
@@ -215,7 +224,8 @@ pair, and ask for confirmation. Only then run the same command without
 | Supersede an ADR with another | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --dry-run --json` | `python skills/adr-toolkit/scripts/adr.py supersede <old-number> --by <new-number> --dir docs/decisions --json` |
 
 After a successful mutation, run the same validate and index commands as
-RECORD, including `index`'s `--locale <code>`. If a preview or mutation returns `INVALID_TRANSITION`, stop and
+RECORD, using the repository locale unless the user requested an explicit
+override. If a preview or mutation returns `INVALID_TRANSITION`, stop and
 explain the rejected transition using `references/lifecycle.md`; do not retry
 with a different status or bypass the script.
 
@@ -235,9 +245,13 @@ since CHECK is read-only and never fixes anything itself.
    mode that matches what the user asked to check). Read
    `references/conflict-rules.md` if you need to explain a finding or help
    the user write a `constraints:` block.
-3. **CLASSIFY** — each finding already carries its classification
-   (`related`, `review_required`, `verified_violation`,
-   `no_applicable_constraint`); do not re-judge it, report it as returned.
+3. **CLASSIFY** — each finding already carries both its `kind` (`related`,
+   `review_required`, `verified_violation`, `no_applicable_constraint`) and a
+   `confidence` field (`VERIFIED`, `VIOLATED`, or `UNVERIFIABLE`) computed by
+   the deterministic core — do not re-judge or recompute it, report it as
+   returned. See `references/conflict-rules.md` for what each value means. No
+   related finding at all is `NOT_APPLICABLE`, not proof that the repository
+   is compliant.
 4. **REPORT** — group findings by classification. For every Verified violation
    finding, present all five resolutions from
    `references/conflict-rules.md` (`fix_code`, `supersede_adr`,
@@ -247,10 +261,17 @@ since CHECK is read-only and never fixes anything itself.
    user picks `fix_code`, that's a normal code edit, not an ADR Toolkit
    operation. If they pick `supersede_adr` or `adjust_scope`, follow the
    RECORD or Lifecycle operations flow above — never hand-edit
-   `constraints:`, `affected_paths`, or `status`.
-6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`,
-   `BAD_CONSTRAINTS`) mean one ADR was skipped, not that CHECK failed —
-   report them, but don't block on them.
+   `constraints:`, `affected_paths`, or `status`. If they pick
+   `register_exception`, gather `adr_id`, `rule_id`, `owner`, `reason`, a
+   narrow `scope` (never the whole rule), and an `expiry`, then run
+   `python skills/adr-toolkit/scripts/adr.py exception --input <file.json> --dir docs/decisions --json`
+   — never hand-write a file under `docs/decisions/exceptions/`. A finding
+   already carrying an `exception` field has a matching, non-expired record;
+   report it, don't re-register it.
+6. Any `check` `warnings` entries (e.g. `BAD_FRONTMATTER`, `SCHEMA_ERROR`,
+   `BAD_CONSTRAINTS`, `BAD_EXCEPTION`) mean one ADR, constraint, or exception
+   was skipped, not that CHECK failed — report them and never describe a
+   warning-bearing result as clean.
 
 ## Prohibited
 
@@ -274,6 +295,20 @@ file writes, or schema validation in prose — it only decides what to ask and
 what to draft.
 
 CHECK's conflict detection is deliberately limited to structural evidence
-from `constraints:` blocks (see `references/conflict-rules.md`) — it never
-attempts semantic or AST-level analysis; see `project-roadmap.md` for what
-that fuller scope would look like.
+from `constraints:` blocks (see `references/conflict-rules.md`). It does not certify the entire architecture
+and never attempts semantic or AST-level
+analysis; see `project-roadmap.md` for what that fuller scope would look like.
+
+`graph` is a read-only navigation export:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py graph --dir docs/decisions --format both --json
+```
+
+It writes Mermaid (`relationships.mmd`) and SVG (`relationships.svg`) graph
+artifacts from the same relationship model used by `index`. SVG is generated
+directly by Python so the image stays sharp without requiring Mermaid CLI,
+Node, or browser rendering.
+When `--format both` and `--output` are used together, `--output` is a file
+prefix; for example `--output build/adr-relationships` writes
+`build/adr-relationships.mmd` and `build/adr-relationships.svg`.

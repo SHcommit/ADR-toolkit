@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 ADR_FILENAME_RE = re.compile(r"^(\d{4})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
+SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def parse_filename(filename: str) -> Optional[tuple]:
@@ -29,6 +30,18 @@ def format_filename(adr_id: int, slug: str) -> str:
 def slugify(title: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
     return re.sub(r"-+", "-", slug)
+
+
+def validate_slug(slug: str) -> str:
+    if not SLUG_RE.fullmatch(slug):
+        raise ValueError("slug must match [a-z0-9]+(?:-[a-z0-9]+)*")
+    return slug
+
+
+def slug_for_title(title: str, explicit_slug: Optional[str] = None) -> str:
+    if explicit_slug is not None:
+        return validate_slug(explicit_slug)
+    return slugify(title) or "decision"
 
 
 def find_by_number(adr_dir: Path, number: int) -> Optional[Path]:

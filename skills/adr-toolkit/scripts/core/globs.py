@@ -11,6 +11,14 @@ def match(pattern: str, path: str) -> bool:
     return re.match(_translate(pattern), path) is not None
 
 
+def path_under(path: str, prefix: str) -> bool:
+    """Directory-boundary prefix match: "src/db" governs "src/db/x.py" but
+    not "src/db2/file.py"."""
+    if path == prefix:
+        return True
+    return path.startswith(prefix.rstrip("/") + "/")
+
+
 def _translate(pattern: str) -> str:
     parts = []
     i, n = 0, len(pattern)

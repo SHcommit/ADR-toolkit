@@ -1,16 +1,31 @@
 """Match a git diff against Accepted ADRs' constraints: rules and
 Superseded ADRs' affected_paths, per §7/§16 of the design spec."""
+import json
 import re
+from datetime import date
 from pathlib import Path
 
 from scripts.commands import diff as diff_command
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
 from scripts.core.constraints import ConstraintsError, extract_constraints
+from scripts.core.exceptions import applies_to, is_expired, validate_exception
+from scripts.core.git_paths import GitPathsError, list_existing_paths
+from scripts.core.repository_paths import resolve_from_root
+from scripts.core.schema import validate_frontmatter
 from scripts.rules import conflict
 
-SKIP_FILES = {"README.md", "adr-template.md"}
 RESOLUTIONS = ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
+
+# The stable, machine-readable confidence contract documented in README.md's
+# "CHECK confidence" section and references/conflict-rules.md — promotes the
+# ad-hoc `kind` values below into the four values agents are told to report.
+CONFIDENCE_BY_KIND = {
+    "related": "VERIFIED",
+    "verified_violation": "VIOLATED",
+    "review_required": "UNVERIFIABLE",
+    "no_applicable_constraint": "UNVERIFIABLE",
+}
 
 # Every ADR this toolkit writes uses `## Confirmation` (templates/madr-*.md and
 # commands/create.py); `## Verification` is the design spec's name for the same
@@ -29,13 +44,18 @@ def run(args) -> dict:
     diff_files = diff_result["files"]
 
     root = Path(getattr(args, "root", ".")).resolve()
-    existing_paths = _existing_paths(root)
+    try:
+        existing_paths = list_existing_paths(root)
+    except GitPathsError as exc:
+        return {
+            "ok": False,
+            "operation": "check",
+            "errors": [{"code": "GIT_LS_FILES_FAILED", "detail": str(exc)}],
+        }
 
     # `--dir` is relative to `--root`, so `check --root /repo --dir docs/decisions`
     # means the same directory no matter what the process CWD happens to be.
-    adr_dir = Path(args.dir)
-    if not adr_dir.is_absolute():
-        adr_dir = root / adr_dir
+    adr_dir = resolve_from_root(root, args.dir)
     if not adr_dir.is_dir():
         # Silently proceeding here would emit a confident "no conflicts" for
         # what is really a configuration error.
@@ -46,6 +66,8 @@ def run(args) -> dict:
         }
 
     entries, warnings = _load_adrs(adr_dir)
+    active_exceptions, exception_warnings = _load_exceptions(adr_dir)
+    warnings += exception_warnings
 
     findings = []
     for entry in entries:
@@ -110,6 +132,26 @@ def run(args) -> dict:
             "resolutions": RESOLUTIONS,
         })
 
+    for finding in findings:
+        finding["confidence"] = CONFIDENCE_BY_KIND[finding["kind"]]
+        if finding["kind"] == "verified_violation":
+            match = _matching_exception(
+                active_exceptions,
+                adr_id=finding.get("adr_id"),
+                rule_id=finding.get("rule_id"),
+                file_path=finding.get("file"),
+            )
+            # Annotate only — an exception never hides or downgrades a
+            # violation. Confidence stays VIOLATED; a human/agent still sees
+            # and reports it, now with the approved exception attached.
+            if match is not None:
+                finding["exception"] = {
+                    "id": match["id"],
+                    "owner": match["owner"],
+                    "reason": match["reason"],
+                    "expiry": match["expiry"],
+                }
+
     return {
         "ok": True,
         "operation": "check",
@@ -119,15 +161,58 @@ def run(args) -> dict:
     }
 
 
+def _load_exceptions(adr_dir: Path) -> tuple:
+    """Load active (non-expired, schema-valid) exceptions from adr_dir/exceptions.
+
+    A malformed exception file degrades to a warning, same as a malformed ADR
+    — it must never silently vanish, and it must never abort the whole run.
+    """
+    exceptions_dir = adr_dir / "exceptions"
+    active, warnings = [], []
+    if not exceptions_dir.is_dir():
+        return active, warnings
+    for path in sorted(exceptions_dir.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
+            warnings.append({"code": "BAD_EXCEPTION", "file": path.name, "detail": str(exc)})
+            continue
+        schema_errors = validate_exception(data) if isinstance(data, dict) else ["not a JSON object"]
+        if schema_errors:
+            warnings.extend({
+                "code": "BAD_EXCEPTION", "file": path.name, "detail": detail,
+            } for detail in schema_errors)
+            continue
+        if is_expired(data["expiry"], today=date.today()):
+            continue
+        active.append(data)
+    return active, warnings
+
+
+def _matching_exception(exceptions: list, *, adr_id: str, rule_id: str, file_path):
+    for exception in exceptions:
+        if applies_to(exception, adr_id=adr_id, rule_id=rule_id, file_path=file_path):
+            return exception
+    return None
+
+
 def _load_adrs(adr_dir: Path) -> tuple:
     entries, warnings = [], []
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES or identifiers.parse_filename(entry.name) is None:
+    for entry, parsed in iter_adr_files(adr_dir):
+        if parsed is None:
             continue
         try:
             data, body = fm.parse(entry.read_text(encoding="utf-8"))
         except (fm.FrontmatterError, OSError, UnicodeDecodeError) as exc:
             warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
+            continue
+        schema_errors = validate_frontmatter(data)
+        if schema_errors:
+            warnings.extend({
+                "code": "SCHEMA_ERROR",
+                "file": entry.name,
+                "detail": detail,
+            } for detail in schema_errors)
             continue
         entries.append({"data": data, "body": body})
     return entries, warnings
@@ -160,15 +245,3 @@ def _missing_realization(body: str, diff_files: list, existing_paths: set):
         ),
         "evidence": {"unrealized_paths": missing},
     }
-
-
-def _existing_paths(root: Path) -> set:
-    paths = set()
-    for entry in root.rglob("*"):
-        if not entry.is_file():
-            continue
-        relative = entry.relative_to(root)
-        if ".git" in relative.parts:
-            continue
-        paths.add(relative.as_posix())
-    return paths

@@ -86,6 +86,107 @@ def test_verified_violation_when_rule_fires(tmp_path):
     assert violation["adr_id"] == "ADR-0001"
     assert violation["rule_id"] == "no-provider-sdk-in-feature"
     assert violation["resolutions"] == RESOLUTIONS
+    assert violation["confidence"] == "VIOLATED"
+    assert "exception" not in violation
+
+
+def _write_exception(adr_dir, **overrides):
+    import json as _json
+    exceptions_dir = adr_dir / "exceptions"
+    exceptions_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "id": "EXC-0001",
+        "adr_id": "ADR-0001",
+        "rule_id": "no-provider-sdk-in-feature",
+        "owner": "YangSeungHyun",
+        "reason": "Vendor migration is in progress.",
+        "scope": ["src/features/**"],
+        "expiry": "2999-12-31",
+        "created": "2026-08-30",
+    }
+    data.update(overrides)
+    (exceptions_dir / "0001.json").write_text(_json.dumps(data), encoding="utf-8")
+    return data
+
+
+def test_verified_violation_is_annotated_with_a_matching_active_exception(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir)
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    # An active exception annotates the finding; it never hides or downgrades it.
+    assert violation["confidence"] == "VIOLATED"
+    assert violation["exception"]["id"] == "EXC-0001"
+    assert violation["exception"]["owner"] == "YangSeungHyun"
+    assert violation["exception"]["expiry"] == "2999-12-31"
+
+
+def test_expired_exception_is_not_applied(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir, expiry="2020-01-01")
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
+
+
+def test_exception_outside_scope_is_not_applied(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _write_exception(adr_dir, scope=["src/features/legacy/**"])
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
+
+
+def test_malformed_exception_file_degrades_to_warning(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    (adr_dir / "0001-use-a-provider-port.md").write_text(ACCEPTED_ADR_WITH_RULE, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    exceptions_dir = adr_dir / "exceptions"
+    exceptions_dir.mkdir(parents=True)
+    (exceptions_dir / "0001.json").write_text("{not valid json", encoding="utf-8")
+
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "x.py").write_text("import openai\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    assert result["ok"] is True
+    assert any(w["code"] == "BAD_EXCEPTION" for w in result["warnings"])
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert "exception" not in violation
 
 
 def test_related_when_rule_present_but_does_not_fire(tmp_path):
@@ -103,6 +204,7 @@ def test_related_when_rule_present_but_does_not_fire(tmp_path):
 
     finding = next(f for f in result["findings"] if f["adr_id"] == "ADR-0001")
     assert finding["kind"] == "related"
+    assert finding["confidence"] == "VERIFIED"
 
 
 def test_no_applicable_constraint_when_adr_has_no_constraints_block(tmp_path):
@@ -119,6 +221,7 @@ def test_no_applicable_constraint_when_adr_has_no_constraints_block(tmp_path):
 
     finding = next(f for f in result["findings"] if f["adr_id"] == "ADR-0002")
     assert finding["kind"] == "no_applicable_constraint"
+    assert finding["confidence"] == "UNVERIFIABLE"
 
 
 def test_adr_with_no_affected_path_overlap_produces_no_finding(tmp_path):
@@ -171,6 +274,59 @@ def test_unreadable_adr_file_degrades_to_warning_and_keeps_other_findings(tmp_pa
     violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
     assert violation["adr_id"] == "ADR-0001"
     assert any(w["code"] == "BAD_FRONTMATTER" and w["file"] == "0010-invalid-utf8.md" for w in result["warnings"])
+
+
+def test_schema_invalid_adr_is_visible_as_a_warning_instead_of_silent_skip(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    invalid = ACCEPTED_ADR_WITH_RULE.replace(
+        "affected_paths:\n  - src/features/", "affected_paths: src/features/"
+    )
+    (adr_dir / "0001-use-a-provider-port.md").write_text(invalid, encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    (tmp_path / "src" / "features" / "결제.py").write_text(
+        "import openai\n", encoding="utf-8"
+    )
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    assert result["ok"] is True
+    assert result["findings"] == []
+    warning = next(w for w in result["warnings"] if w["code"] == "SCHEMA_ERROR")
+    assert warning["file"] == "0001-use-a-provider-port.md"
+    assert "affected_paths" in warning["detail"]
+
+
+def test_deleted_tracked_file_does_not_satisfy_file_must_exist(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    adr = ACCEPTED_ADR_WITH_RULE.replace(
+        "  - id: no-provider-sdk-in-feature\n"
+        "    kind: forbidden_import\n"
+        "    paths: [\"src/features/**\"]\n"
+        "    pattern: [\"openai\"]\n",
+        "  - id: registry-must-exist\n"
+        "    kind: file_must_exist\n"
+        "    paths: [\"src/features/registry.py\"]\n"
+        "    pattern: []\n",
+    )
+    (adr_dir / "0001-use-a-provider-port.md").write_text(adr, encoding="utf-8")
+    (tmp_path / "src" / "features").mkdir(parents=True)
+    registry = tmp_path / "src" / "features" / "registry.py"
+    registry.write_text("REGISTRY = {}\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    registry.unlink()
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f.get("rule_id") == "registry-must-exist")
+    assert violation["kind"] == "verified_violation"
+    assert violation["evidence"] == {"missing_paths": ["src/features/registry.py"]}
 
 
 ACCEPTED_ADR_WITH_VERIFICATION = """---
@@ -230,6 +386,31 @@ def test_review_required_when_verification_reference_is_removed(tmp_path):
     finding = next(f for f in result["findings"] if f["kind"] == "review_required")
     assert finding["adr_id"] == "ADR-0003"
     assert "src/events/replay.py" in finding["evidence"]["unrealized_paths"]
+    assert finding["confidence"] == "UNVERIFIABLE"
+
+
+def test_review_required_when_confirmed_path_is_renamed(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs/decisions"
+    adr_dir.mkdir(parents=True)
+    adr = ACCEPTED_ADR_WITH_VERIFICATION.replace(
+        "src/events/replay.py", "src/old.py"
+    ).replace("src/events/", "src/old.py")
+    (adr_dir / "0003-add-event-replay.md").write_text(adr, encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/old.py").write_text("def replay(): pass\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+    _git(["mv", "src/old.py", "src/new.py"], tmp_path)
+
+    args = _args(tmp_path, adr_dir)
+    args.staged = True
+    args.uncommitted = False
+    result = check.run(args)
+
+    finding = next(f for f in result["findings"] if f["kind"] == "review_required")
+    assert finding["adr_id"] == "ADR-0003"
+    assert finding["evidence"]["unrealized_paths"] == ["src/old.py"]
 
 
 def test_superseded_reference_fires_on_affected_path_overlap(tmp_path):
@@ -250,6 +431,7 @@ def test_superseded_reference_fires_on_affected_path_overlap(tmp_path):
     assert finding["kind"] == "verified_violation"
     assert finding["evidence"]["superseded_by"] == "ADR-0005"
     assert finding["resolutions"] == RESOLUTIONS
+    assert finding["confidence"] == "VIOLATED"
 
 
 # --- Regression tests for the final whole-branch review of Plan 3 (CHECK) ---
@@ -314,6 +496,7 @@ def test_review_required_fires_on_a_confirmation_section_written_by_create(tmp_p
     finding = next(f for f in result["findings"] if f["kind"] == "review_required")
     assert finding["adr_id"] == "ADR-0003"
     assert "src/events/replay.py" in finding["evidence"]["unrealized_paths"]
+    assert finding["confidence"] == "UNVERIFIABLE"
 
 
 def test_review_required_fires_when_a_confirmation_path_was_never_created(tmp_path):
@@ -341,6 +524,57 @@ def test_review_required_fires_when_a_confirmation_path_was_never_created(tmp_pa
     finding = next(f for f in result["findings"] if f["kind"] == "review_required")
     assert finding["adr_id"] == "ADR-0003"
     assert finding["evidence"]["unrealized_paths"] == ["tests/test_replay.py"]
+
+
+def test_ignored_artifact_does_not_satisfy_file_must_exist(tmp_path):
+    _init_repo(tmp_path)
+    adr_dir = tmp_path / "docs/decisions"
+    adr_dir.mkdir(parents=True)
+    adr = """---
+id: ADR-0011
+title: Require generated policy manifest
+status: accepted
+date: 2026-08-03
+decision_makers: []
+related: []
+affected_paths:
+  - src/
+tags: []
+retrospective: false
+---
+
+# Require generated policy manifest
+
+## Implementation Constraints
+
+```yaml
+constraints:
+  - id: generated-policy-must-be-versioned
+    kind: file_must_exist
+    paths: ["build/generated-policy.json"]
+    pattern: []
+    severity: major
+    message: "The generated policy manifest must be versioned."
+```
+"""
+    (adr_dir / "0011-require-generated-policy-manifest.md").write_text(
+        adr, encoding="utf-8"
+    )
+    (tmp_path / ".gitignore").write_text("build/\n", encoding="utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("value = 1\n", encoding="utf-8")
+    _git(["add", "-A"], tmp_path)
+    _git(["commit", "-q", "-m", "init"], tmp_path)
+
+    (tmp_path / "build").mkdir()
+    (tmp_path / "build/generated-policy.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / "src/app.py").write_text("value = 2\n", encoding="utf-8")
+
+    result = check.run(_args(tmp_path, adr_dir))
+
+    violation = next(f for f in result["findings"] if f["kind"] == "verified_violation")
+    assert violation["rule_id"] == "generated-policy-must-be-versioned"
+    assert violation["evidence"]["missing_paths"] == ["build/generated-policy.json"]
 
 
 STRING_AFFECTED_PATHS_ADR = """---

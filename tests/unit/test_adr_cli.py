@@ -47,5 +47,55 @@ def test_index_locale_rejects_an_unrecognized_code_instead_of_silently_using_eng
         adr.build_parser().parse_args(["index", "--locale", "zz"])
 
 
-def test_index_locale_defaults_to_english_when_omitted():
-    assert adr.build_parser().parse_args(["index"]).locale == "en"
+def test_index_locale_is_unset_when_omitted_so_repository_default_can_win():
+    args = adr.build_parser().parse_args(["index"])
+    assert args.locale is None
+    assert args.root == "."
+
+
+def test_graph_command_accepts_format_and_output_options():
+    args = adr.build_parser().parse_args([
+        "graph",
+        "--dir", "docs/decisions",
+        "--format", "svg",
+        "--output", "docs/decisions/relationships.svg",
+    ])
+
+    assert args.operation == "graph"
+    assert args.format == "svg"
+    assert args.output == "docs/decisions/relationships.svg"
+    assert adr.HANDLERS["graph"].__module__ == "scripts.commands.graph"
+
+
+def test_init_locale_is_optional_and_constrained():
+    parser = adr.build_parser()
+
+    assert parser.parse_args(["init"]).locale is None
+    assert parser.parse_args(["init", "--locale", "pt-BR"]).locale == "pt-BR"
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["init", "--locale", "xx"])
+
+
+def test_create_locale_and_slug_are_optional_and_constrained():
+    parser = adr.build_parser()
+
+    args = parser.parse_args(["create", "--input", "draft.json"])
+    assert args.locale is None
+    assert args.slug is None
+    assert args.root == "."
+
+    args = parser.parse_args([
+        "create", "--input", "draft.json", "--locale", "de",
+        "--slug", "separate-payment-system",
+    ])
+    assert args.locale == "de"
+    assert args.slug == "separate-payment-system"
+
+
+@pytest.mark.parametrize("operation", ["diff", "check"])
+def test_diff_modes_are_mutually_exclusive(operation):
+    with pytest.raises(SystemExit):
+        adr.build_parser().parse_args([
+            operation, "--staged", "--since", "main",
+        ])

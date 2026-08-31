@@ -36,6 +36,31 @@ def test_unknown_subcommand_exits_nonzero(tmp_path):
     assert result.returncode != 0
 
 
+def test_preflight_output_is_json_even_without_the_json_flag(tmp_path):
+    """The CLI has one output contract — JSON to stdout — regardless of --json.
+
+    --json is accepted for documentation clarity and backward compatibility,
+    but every command has always printed JSON whether or not it's passed.
+    """
+    result = _run(["preflight"], cwd=tmp_path)
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["operation"] == "preflight"
+    assert payload["ok"] is True
+
+
+def test_search_via_cli(tmp_path):
+    init_result = _run(["init", "--dir", "docs/decisions", "--json"], cwd=tmp_path)
+    assert init_result.returncode == 0
+
+    result = _run(["search", "--keyword", "architecture", "--dir", "docs/decisions", "--json"], cwd=tmp_path)
+
+    payload = json.loads(result.stdout)
+    assert result.returncode == 0
+    assert payload["ok"] is True
+    assert payload["count"] >= 1
+
+
 def test_significance_via_cli(tmp_path):
     scores_path = tmp_path / "scores.json"
     scores_path.write_text(

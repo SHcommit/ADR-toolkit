@@ -12,15 +12,39 @@ from scripts.commands import (
     create,
     diff,
     discover,
+    exception,
+    graph,
     index,
     init,
     preflight,
     related,
+    search,
     significance,
     status,
     supersede,
     validate,
 )
+from scripts.core.lifecycle import STATUSES
+from scripts.core.locale import SUPPORTED_LOCALES
+
+
+def _add_json_flag(parser: argparse.ArgumentParser) -> None:
+    # Every command always prints JSON to stdout (see main()) — there is no
+    # human-readable mode. This flag exists only for documentation clarity
+    # and backward compatibility with commands that already pass it;
+    # omitting it changes nothing.
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="No effect: output is always JSON. Kept for backward compatibility.",
+    )
+
+
+def _add_diff_mode_arguments(parser: argparse.ArgumentParser) -> None:
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--staged", action="store_true")
+    modes.add_argument("--uncommitted", action="store_true")
+    modes.add_argument("--since")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,59 +52,66 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="operation", required=True)
 
     p_preflight = sub.add_parser("preflight")
-    p_preflight.add_argument("--json", action="store_true")
+    _add_json_flag(p_preflight)
     p_preflight.add_argument("--root", default=".")
 
     p_discover = sub.add_parser("discover")
-    p_discover.add_argument("--json", action="store_true")
+    _add_json_flag(p_discover)
     p_discover.add_argument("--root", default=".")
 
     p_init = sub.add_parser("init")
     p_init.add_argument("--dir", default="docs/decisions")
+    p_init.add_argument("--root", default=".")
+    p_init.add_argument("--locale", choices=SUPPORTED_LOCALES)
     p_init.add_argument("--dry-run", dest="dry_run", action="store_true")
-    p_init.add_argument("--json", action="store_true")
+    _add_json_flag(p_init)
 
     p_create = sub.add_parser("create")
     p_create.add_argument("--input")
     p_create.add_argument("--interactive", action="store_true")
     p_create.add_argument("--dir", default="docs/decisions")
+    p_create.add_argument("--root", default=".")
+    p_create.add_argument("--locale", choices=SUPPORTED_LOCALES)
+    p_create.add_argument("--slug")
     p_create.add_argument("--dry-run", dest="dry_run", action="store_true")
-    p_create.add_argument("--json", action="store_true")
+    _add_json_flag(p_create)
 
     p_index = sub.add_parser("index")
     p_index.add_argument("--dir", default="docs/decisions")
+    p_index.add_argument("--root", default=".")
     # Constrained so a typo from the agent's own language detection fails
     # visibly instead of silently producing English output.
-    p_index.add_argument("--locale", default="en", choices=["en", "fr", "ja", "ko", "zh"])
-    p_index.add_argument("--json", action="store_true")
+    p_index.add_argument("--locale", choices=SUPPORTED_LOCALES)
+    _add_json_flag(p_index)
 
     p_related = sub.add_parser("related")
     p_related.add_argument("--paths", nargs="*")
     p_related.add_argument("--tags", nargs="*")
     p_related.add_argument("--keyword")
     p_related.add_argument("--dir", default="docs/decisions")
-    p_related.add_argument("--json", action="store_true")
+    _add_json_flag(p_related)
 
     p_significance = sub.add_parser("significance")
     p_significance.add_argument("--input", required=True)
-    p_significance.add_argument("--json", action="store_true")
+    _add_json_flag(p_significance)
 
     p_validate = sub.add_parser("validate")
     p_validate.add_argument("--dir", default="docs/decisions")
-    p_validate.add_argument("--json", action="store_true")
+    p_validate.add_argument("--root", default=".")
+    _add_json_flag(p_validate)
 
     p_status = sub.add_parser("status")
     p_status.add_argument("adr_number", type=int)
     p_status.add_argument("--to", required=True)
     p_status.add_argument("--dir", default="docs/decisions")
     p_status.add_argument("--dry-run", dest="dry_run", action="store_true")
-    p_status.add_argument("--json", action="store_true")
+    _add_json_flag(p_status)
 
     p_deprecate = sub.add_parser("deprecate")
     p_deprecate.add_argument("adr_number", type=int)
     p_deprecate.add_argument("--dir", default="docs/decisions")
     p_deprecate.add_argument("--dry-run", dest="dry_run", action="store_true")
-    p_deprecate.add_argument("--json", action="store_true")
+    _add_json_flag(p_deprecate)
     p_deprecate.set_defaults(to="deprecated")
 
     p_supersede = sub.add_parser("supersede")
@@ -88,22 +119,42 @@ def build_parser() -> argparse.ArgumentParser:
     p_supersede.add_argument("--by", type=int, required=True)
     p_supersede.add_argument("--dir", default="docs/decisions")
     p_supersede.add_argument("--dry-run", dest="dry_run", action="store_true")
-    p_supersede.add_argument("--json", action="store_true")
+    _add_json_flag(p_supersede)
 
     p_diff = sub.add_parser("diff")
-    p_diff.add_argument("--staged", action="store_true")
-    p_diff.add_argument("--uncommitted", action="store_true")
-    p_diff.add_argument("--since")
+    _add_diff_mode_arguments(p_diff)
     p_diff.add_argument("--root", default=".")
-    p_diff.add_argument("--json", action="store_true")
+    _add_json_flag(p_diff)
 
     p_check = sub.add_parser("check")
-    p_check.add_argument("--staged", action="store_true")
-    p_check.add_argument("--uncommitted", action="store_true")
-    p_check.add_argument("--since")
+    _add_diff_mode_arguments(p_check)
     p_check.add_argument("--root", default=".")
     p_check.add_argument("--dir", default="docs/decisions")
-    p_check.add_argument("--json", action="store_true")
+    _add_json_flag(p_check)
+
+    p_exception = sub.add_parser("exception")
+    p_exception.add_argument("--input", required=True)
+    p_exception.add_argument("--dir", default="docs/decisions")
+    p_exception.add_argument("--root", default=".")
+    p_exception.add_argument("--dry-run", dest="dry_run", action="store_true")
+    _add_json_flag(p_exception)
+
+    p_graph = sub.add_parser("graph")
+    p_graph.add_argument("--dir", default="docs/decisions")
+    p_graph.add_argument("--root", default=".")
+    p_graph.add_argument("--format", choices=("mermaid", "svg", "both"), default="both")
+    p_graph.add_argument("--output")
+    _add_json_flag(p_graph)
+
+    p_search = sub.add_parser("search")
+    p_search.add_argument("--id")
+    p_search.add_argument("--keyword")
+    p_search.add_argument("--tags", nargs="*")
+    p_search.add_argument("--status", choices=sorted(STATUSES))
+    p_search.add_argument("--path")
+    p_search.add_argument("--limit", type=int)
+    p_search.add_argument("--dir", default="docs/decisions")
+    _add_json_flag(p_search)
 
     return parser
 
@@ -122,6 +173,9 @@ HANDLERS = {
     "supersede": supersede.run,
     "diff": diff.run,
     "check": check.run,
+    "exception": exception.run,
+    "graph": graph.run,
+    "search": search.run,
 }
 
 

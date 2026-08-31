@@ -2,10 +2,11 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
+from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
-
-SKIP_FILES = {"README.md", "adr-template.md"}
+from scripts.core.relationships import render_mermaid, resolve
+from scripts.core.repository_paths import resolve_from_root
 
 # Last-resort English headers, used when even the English locale file is
 # unavailable — e.g. a copy-based install (permitted by
@@ -17,20 +18,34 @@ FALLBACK_STRINGS = {
     "by_tag": "By tag",
     "by_affected_path": "By affected path",
     "chronological": "Chronological (newest first)",
+    "relationships": "Relationships",
+    "supersession_chains": "Supersession chains",
+    "related": "Related",
+    "superseded_by": "superseded by",
+    "related_to": "related to",
 }
 
 
 def run(args) -> dict:
-    adr_dir = Path(args.dir)
-    locale = getattr(args, "locale", None) or "en"
+    root = Path(getattr(args, "root", "."))
+    adr_dir = resolve_from_root(root, args.dir)
+    try:
+        locale = resolve_locale(
+            cli_locale=getattr(args, "locale", None),
+            draft_locale=None,
+            root=root,
+        )
+    except ConfigError as exc:
+        return {
+            "ok": False,
+            "operation": "index",
+            "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+        }
     strings = load_locale(locale)
     entries = []
     warnings = []
 
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES:
-            continue
-        parsed = identifiers.parse_filename(entry.name)
+    for entry, parsed in iter_adr_files(adr_dir):
         if parsed is None:
             continue
         try:
@@ -46,6 +61,9 @@ def run(args) -> dict:
             "date": data.get("date", ""),
             "tags": data.get("tags", []),
             "affected_paths": data.get("affected_paths", []),
+            "related": data.get("related", []),
+            "supersedes": data.get("supersedes", []),
+            "superseded_by": data.get("superseded_by"),
         })
 
     (adr_dir / "README.md").write_text(_render(entries, strings), encoding="utf-8")
@@ -107,5 +125,42 @@ def _render(entries: list, strings: dict) -> str:
     lines.append("")
     for entry in sorted(entries, key=lambda e: e["date"], reverse=True):
         lines.append(f"- {entry['date']} — [{entry['id']} — {entry['title']}]({entry['filename']})")
+
+    by_id = {entry["id"]: entry for entry in entries}
+    edges = resolve(entries)
+
+    lines.append("")
+    lines.append(f"## {_s(strings, 'relationships')}")
+    lines.append("")
+
+    lines.append(f"### {_s(strings, 'supersession_chains')}")
+    lines.append("")
+    for edge in sorted(e for e in edges if e.type == "supersedes"):
+        source = by_id.get(edge.source)
+        target = by_id.get(edge.target)
+        if source and target:
+            lines.append(
+                f"- {target['id']} \"{target['title']}\" → {_s(strings, 'superseded_by')} → "
+                f"{source['id']} \"{source['title']}\""
+            )
+    lines.append("")
+
+    lines.append(f"### {_s(strings, 'related')}")
+    lines.append("")
+    for edge in sorted(e for e in edges if e.type == "related"):
+        source = by_id.get(edge.source)
+        target = by_id.get(edge.target)
+        if source and target:
+            lines.append(
+                f"- {source['id']} \"{source['title']}\" {_s(strings, 'related_to')}: "
+                f"{target['id']} \"{target['title']}\""
+            )
+
+    visual_edges = [edge for edge in edges if edge.type in {"related", "supersedes"}]
+    if visual_edges:
+        lines.append("")
+        lines.append("```mermaid")
+        lines.extend(render_mermaid(entries).rstrip().splitlines())
+        lines.append("```")
 
     return "\n".join(lines) + "\n"

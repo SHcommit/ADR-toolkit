@@ -13,6 +13,7 @@
     "affected_paths": { "type": "array", "items": { "type": "string" } },
     "tags": { "type": "array", "items": { "type": "string" } },
     "retrospective": { "type": "boolean" },
+    "locale": { "type": "string", "enum": ["en", "ko", "ja", "zh", "fr", "es", "de", "pt-BR"] },
     "supersedes": { "type": "array", "items": { "type": "string" } },
     "superseded_by": { "type": "string" }
   }

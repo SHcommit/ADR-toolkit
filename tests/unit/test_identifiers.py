@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from scripts.core import identifiers
 
 
@@ -28,6 +30,22 @@ def test_format_filename_zero_pads_to_four_digits():
 
 def test_slugify_lowercases_and_hyphenates():
     assert identifiers.slugify("Use Kafka for Domain Events!") == "use-kafka-for-domain-events"
+
+
+def test_non_ascii_title_uses_deterministic_fallback():
+    assert identifiers.slug_for_title("결제 시스템 분리", None) == "decision"
+
+
+def test_agent_semantic_slug_wins_for_non_ascii_title():
+    assert identifiers.slug_for_title(
+        "결제 시스템 분리", "separate-payment-system"
+    ) == "separate-payment-system"
+
+
+@pytest.mark.parametrize("slug", ["Bad Slug", "한글", "../escape", "two--hyphens"])
+def test_invalid_explicit_slug_is_rejected(slug):
+    with pytest.raises(ValueError):
+        identifiers.validate_slug(slug)
 
 
 def test_find_by_number_locates_matching_file(tmp_path):
