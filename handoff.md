@@ -2,9 +2,7 @@
 
 ## Current task (2026-08-31)
 
-Examples redesign, Korean documentation, automated verification pipeline, and release of `v0.2.1`.
-
-Implemented this session:
+**v0.2.1 is released.** All changes (examples redesign, Korean guide, verification pipeline, and `v0.2.1` bump) have been committed, merged via Git Flow, tagged, and pushed to `origin`.
 
 - Redesigned `examples/` directory into 4 structured, realistic use cases with standardized `Scenario`, `Input`, `What Happens`, and `Output` sections:
   - `examples/basic-usage.md`: Core INIT → RECORD → INDEX workflow.
