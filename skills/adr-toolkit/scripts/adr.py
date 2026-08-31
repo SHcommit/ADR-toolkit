@@ -13,6 +13,7 @@ from scripts.commands import (
     diff,
     discover,
     exception,
+    graph,
     index,
     init,
     preflight,
@@ -138,6 +139,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_exception.add_argument("--dry-run", dest="dry_run", action="store_true")
     _add_json_flag(p_exception)
 
+    p_graph = sub.add_parser("graph")
+    p_graph.add_argument("--dir", default="docs/decisions")
+    p_graph.add_argument("--root", default=".")
+    p_graph.add_argument("--format", choices=("mermaid", "svg", "both"), default="both")
+    p_graph.add_argument("--output")
+    _add_json_flag(p_graph)
+
     p_search = sub.add_parser("search")
     p_search.add_argument("--id")
     p_search.add_argument("--keyword")
@@ -166,6 +174,7 @@ HANDLERS = {
     "diff": diff.run,
     "check": check.run,
     "exception": exception.run,
+    "graph": graph.run,
     "search": search.run,
 }
 

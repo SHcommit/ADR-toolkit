@@ -95,8 +95,8 @@ $ codex plugin add adr-toolkit@adr-toolkit-marketplace --json
   "pluginId": "adr-toolkit@adr-toolkit-marketplace",
   "name": "adr-toolkit",
   "marketplaceName": "adr-toolkit-marketplace",
-  "version": "0.1.0",
-  "installedPath": "<CODEX_HOME>/plugins/cache/adr-toolkit-marketplace/adr-toolkit/0.1.0",
+  "version": "0.2.0",
+  "installedPath": "<CODEX_HOME>/plugins/cache/adr-toolkit-marketplace/adr-toolkit/0.2.0",
   "authPolicy": "ON_INSTALL"
 }
 
@@ -105,7 +105,7 @@ Marketplace `adr-toolkit-marketplace`
 <repo-root>/.claude-plugin/marketplace.json
 
 PLUGIN                               STATUS              VERSION  PATH
-adr-toolkit@adr-toolkit-marketplace  installed, enabled  0.1.0    <repo-root>
+adr-toolkit@adr-toolkit-marketplace  installed, enabled  0.2.0    <repo-root>
 ```
 
 The installed snapshot under `<CODEX_HOME>/plugins/cache/` carries the
@@ -129,9 +129,8 @@ Two details worth knowing:
   documented marketplace model, not a defect; the repo root is the correct
   thing to register, and it works.
 - **The version Codex reports comes from the plugin manifest it reads.**
-  Installing from this repo's root reports `0.1.0`, taken from
-  `.claude-plugin/plugin.json`. Installing a marketplace root whose plugin
-  manifest is only this adapter's `.codex-plugin/plugin.json` reports
-  `1.0.0` instead, because that manifest carries no `version` field and
-  Codex substitutes a default. Adding an explicit `version` to
-  `.codex-plugin/plugin.json` is tracked as a follow-up.
+  Installing from this repo's root reports the version in
+  `.claude-plugin/plugin.json`, which is kept in sync with
+  `skills/adr-toolkit/VERSION` by `scripts/sync_version.py --check`. The
+  adapter-local `.codex-plugin/plugin.json` intentionally has no `version`
+  field because the verified install path does not read it.

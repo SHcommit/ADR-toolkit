@@ -22,13 +22,6 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 
 ## ADR navigation and scale
 
-- ~~Add a general search command and relationship visibility.~~ **Done
-  (2026-08-31).** `adr.py search` (keyword now matches body, not just
-  title; tag/status/governed-path filters; deterministic ranking) and a
-  Relationships section in the generated index. See `improvements.md`'s
-  Done entry and `docs/superpowers/specs/2026-08-31-adr-search-and-relationships-design.md`.
-- Render `related`/`supersedes` relationships as a rendered graph image (DOT/
-  Mermaid), not just the text-based index lists search/index now provide.
 - Test whether 500+ decisions require sharding, alternate indexes, or a
   real search index (this repo has 10 ADRs; substring/tag/path matching is
   untested at that scale).

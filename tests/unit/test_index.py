@@ -229,6 +229,8 @@ def test_index_relationships_section_shows_supersession_with_titles(tmp_path):
     assert "## Relationships" in readme
     assert "ADR-0003" in readme and "Old decision" in readme
     assert "ADR-0006" in readme and "New decision" in readme
+    assert "```mermaid" in readme
+    assert "ADR_0006 -->|supersedes| ADR_0003" in readme
 
 
 def test_index_relationships_section_omits_adr_with_no_relationships(tmp_path):
@@ -245,3 +247,4 @@ def test_index_relationships_section_omits_adr_with_no_relationships(tmp_path):
 
     readme = (adr_dir / "README.md").read_text(encoding="utf-8")
     assert "Lonely decision" not in readme.split("## Relationships")[1]
+    assert "```mermaid" not in readme

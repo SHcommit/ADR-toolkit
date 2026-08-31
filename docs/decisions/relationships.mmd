@@ -1,0 +1,13 @@
+flowchart LR
+  ADR_0001["ADR-0001<br/>Record architecture decisions"]
+  ADR_0002["ADR-0002<br/>Limit CHECK's conflict detection to structural evidence only"]
+  ADR_0003["ADR-0003<br/>Localize only index.py's generated strings, not agent-composed text"]
+  ADR_0004["ADR-0004<br/>Adapter packaging: manifest-only directories, install-time symlinks, verified formats"]
+  ADR_0005["ADR-0005<br/>Adopt Git Flow with direct-tag release automation"]
+  ADR_0006["ADR-0006<br/>Localize deterministic ADR generation through repository configuration"]
+  ADR_0007["ADR-0007<br/>Promote CHECK's kind-to-confidence mapping to a stable output field"]
+  ADR_0008["ADR-0008<br/>Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"]
+  ADR_0009["ADR-0009<br/>--json is a documented no-op; CLI output is always JSON"]
+  ADR_0010["ADR-0010<br/>Codex skill-creator's quick_validate.py incompatibility is not this project's problem"]
+  ADR_0006 -.->|related| ADR_0003
+  ADR_0006 -->|supersedes| ADR_0003

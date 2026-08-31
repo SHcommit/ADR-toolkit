@@ -4,6 +4,13 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added ADR relationship graph navigation: `adr.py index` now embeds a Mermaid
+  graph in the generated decision log when relationships exist, and
+  `adr.py graph` exports standalone `relationships.mmd` plus a crisp SVG
+  navigation artifact without requiring Node, Mermaid CLI, or browser
+  rendering.
+- Added public repository readiness docs: `CONTRIBUTING.md`, `SECURITY.md`,
+  and a pull request template covering ADR impact and local verification.
 - Added `adr.py search`: finds an existing ADR by keyword (title **and**
   body — `related`'s keyword match was title-only before), tags, status,
   `--id`, or the real file path it governs, with deterministic best-match

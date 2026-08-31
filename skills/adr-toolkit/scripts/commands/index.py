@@ -5,7 +5,7 @@ from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
-from scripts.core.relationships import resolve
+from scripts.core.relationships import render_mermaid, resolve
 from scripts.core.repository_paths import resolve_from_root
 
 # Last-resort English headers, used when even the English locale file is
@@ -155,5 +155,12 @@ def _render(entries: list, strings: dict) -> str:
                 f"- {source['id']} \"{source['title']}\" {_s(strings, 'related_to')}: "
                 f"{target['id']} \"{target['title']}\""
             )
+
+    visual_edges = [edge for edge in edges if edge.type in {"related", "supersedes"}]
+    if visual_edges:
+        lines.append("")
+        lines.append("```mermaid")
+        lines.extend(render_mermaid(entries).rstrip().splitlines())
+        lines.append("```")
 
     return "\n".join(lines) + "\n"
