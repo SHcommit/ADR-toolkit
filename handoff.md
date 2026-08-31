@@ -14,8 +14,12 @@ Work runs in the linked worktree at
 
 ## Next step
 
-**PR #2 open against `develop`, CI green (6/6), `mergeable`**:
-https://github.com/SHcommit/ADR-toolkit/pull/2
+**PR #2 merged into `develop`** (merge commit `3a3a482`, 2026-08-31,
+regular merge not squash): https://github.com/SHcommit/ADR-toolkit/pull/2
+— `origin/develop` now has all of this work. The local worktree is still
+on `feature/v0.2.0-multilingual-and-check-confidence`, which can be
+deleted (locally and on `origin`) once step 3 below no longer needs it —
+not done automatically per `finishing-a-development-branch`'s rules.
 
 Release gate steps, each needing separate explicit owner approval — do not
 perform any of the remaining ones without asking first, "CI is green" does
@@ -23,9 +27,9 @@ not imply approval for the next step:
 
 1. ✅ **Done** — v0.2.0 version bump (`skills/adr-toolkit/VERSION` →
    `0.2.0`, propagated via `scripts/sync_version.py`); CI re-ran green.
-2. Merge PR #2 into `develop` (normal merge or squash — ask which).
-3. Cut a `release/*` branch into `master` and back into `develop`, per
-   `AGENTS.md`'s Git Flow policy.
+2. ✅ **Done** — merged PR #2 into `develop`.
+3. Cut a `release/*` branch **from `develop`** into `master` and back into
+   `develop`, per `AGENTS.md`'s Git Flow policy.
 4. Push a `v0.2.0` tag on `master` —
    `.github/workflows/release.yml` then runs the full suite, verifies
    manifest versions against the tag, and publishes the GitHub Release.
