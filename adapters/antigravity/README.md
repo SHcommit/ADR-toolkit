@@ -2,7 +2,8 @@
 
 Antigravity plugins are a `plugin.json` marker file plus optional sibling
 directories (`skills/`, `agents/`, `rules/`), per
-`antigravity.google/docs/cli/plugins/`. This manifest needs only `name`.
+`antigravity.google/docs/cli/plugins/`. This manifest includes `name`,
+`version`, `description`, and `$schema`.
 **Manually verified against Antigravity's `agy` CLI 1.1.13** (`agy
 --version`): validate, install, and discovery all work — see "Verification
 status" below.

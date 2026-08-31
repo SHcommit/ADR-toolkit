@@ -20,6 +20,7 @@ SKILL_MD_PATH = REPO_ROOT / "skills" / "adr-toolkit" / "SKILL.md"
 MANIFEST_SPECS = [
     (REPO_ROOT / ".claude-plugin" / "plugin.json", ["version"]),
     (REPO_ROOT / "adapters" / "gemini-cli" / "gemini-extension.json", ["version"]),
+    (REPO_ROOT / "adapters" / "antigravity" / "plugin.json", ["version"]),
 ]
 
 # SKILL.md's frontmatter `description:` is the single canonical source; every
