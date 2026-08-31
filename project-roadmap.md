@@ -23,7 +23,7 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 ## ADR navigation and scale
 
 - Test whether 500+ decisions require sharding, alternate indexes, or a
-  real search index (this repo has 10 ADRs; substring/tag/path matching is
+  real search index (this repo has 11 ADRs; substring/tag/path matching is
   untested at that scale).
 - Improve related-decision discovery beyond path/tag/keyword/body-substring
   only after real misses demonstrate the need for semantic retrieval.
