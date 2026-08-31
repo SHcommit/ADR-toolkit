@@ -25,9 +25,7 @@ successor (human or agent) in under a minute.
 Every file write goes through a deterministic script and is shown to a
 human before it happens. Judgment (what's significant, what to ask, how to
 draft) is the agent's job; file writes, ID assignment, and validation
-never are. See [`examples/quickstart.md`](examples/quickstart.md) for a
-full INIT → RECORD → CHECK walkthrough with real command output, or
-[`docs/decisions/`](docs/decisions/) for this toolkit's own dogfooded ADRs.
+never are. See [`examples/`](examples/) for real-world usage examples ([Basic usage](examples/basic-usage.md), [Constraint enforcement](examples/check-constraints.md), [Dependency graphs](examples/graph-visualization.md), [Multilingual ADRs](examples/multilingual-adr.md), and [Quickstart](examples/quickstart.md)), or [`docs/decisions/`](docs/decisions/) for this toolkit's own dogfooded ADRs.
 
 ## Install
 

@@ -2,27 +2,21 @@
 
 ## Current task (2026-08-31)
 
-Public-readiness, ADR navigation graph, and harness-parity work is on branch
-`feature/project-roadmap-implements` in:
-
-`/Users/yangseunghyeon/orca/workspaces/ADR-toolkit/develop`
-
-Latest commits (newest first):
-
-- `2f2f604 ci: add harness-parity job for Codex and Gemini CLI end-to-end install`
-- `e28eb5d docs: record Antigravity CLI adapter verification against agy 1.1.13`
-- `b1bcb93 docs: add code of conduct and GitHub issue templates`
-- `b8db211 docs: correct stale ADR count in project-roadmap.md`
-- `35c81aa docs: record ADR-0011 for relationship graph and public readiness work`
-- `8f0343e feat: add ADR relationship graph exports`
-
-Working tree is clean; every item below is already committed.
+Examples redesign, Korean documentation, automated verification pipeline, and version bump to `v0.2.1` on branch `feature/exemples-building`.
 
 Implemented this session:
 
-- `adr.py graph --format mermaid|svg|both` exports deterministic Mermaid and
-  Python-rendered SVG artifacts; `adr.py index` embeds the Mermaid graph in
-  the generated decision log. ADR-0011 records this decision.
+- Redesigned `examples/` directory into 4 structured, realistic use cases with standardized `Scenario`, `Input`, `What Happens`, and `Output` sections:
+  - `examples/basic-usage.md`: Core INIT → RECORD → INDEX workflow.
+  - `examples/check-constraints.md`: Mechanical constraint enforcement (`forbidden_import`), `check --uncommitted`, resolution options, and exception registration.
+  - `examples/graph-visualization.md`: Decision evolution via `supersede` and exporting Mermaid / SVG relationship graphs.
+  - `examples/multilingual-adr.md`: Localized Korean (`--locale ko`) repository default with approved ASCII filename slug (`--slug`).
+- Added complete Korean documentation suite under [`examples/ko/`](file:///Users/yangseunghyeon/orca/workspaces/ADR-toolkit/seasnake/examples/ko/README.md) (`basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`, `README.md`).
+- Built automated example verification and update script `scripts/verify_examples.py`:
+  - `--check`: Runs isolated execution of all example workflows to ensure CLI logic compatibility and prevent doc drift.
+  - `--update`: Re-executes CLI commands to update example output snippets automatically when `adr.py` CLI outputs or schemas change.
+- Added pytest integration test `tests/integration/test_examples.py` (`test_examples_execution_and_schema_parity`).
+- Updated `examples/README.md` index table and linked `examples/` from root `README.md`.
 - Public repository hygiene: `CONTRIBUTING.md`, `SECURITY.md`,
   `.github/PULL_REQUEST_TEMPLATE.md`, `CODE_OF_CONDUCT.md`, and
   `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`.

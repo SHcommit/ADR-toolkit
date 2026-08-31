@@ -2,7 +2,16 @@
 
 Lightweight human-readable summary of meaningful repository changes.
 
-## Unreleased
+## v0.2.1 (2026-08-31)
+
+- Redesigned and expanded `examples/` into representative, structured usage guides
+  (`basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, and
+  `multilingual-adr.md`) with standardized Scenario, Input, What Happens, and Output sections.
+- Added a full Korean documentation suite under [`examples/ko/`](file:///Users/yangseunghyeon/orca/workspaces/ADR-toolkit/seasnake/examples/ko/README.md)
+  (including `basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, and `multilingual-adr.md`).
+- Created `scripts/verify_examples.py` and `tests/integration/test_examples.py` to
+  automatically verify that all documented example commands execute cleanly and to auto-update
+  example output snippets when core `adr.py` logic or schemas change.
 
 - Added ADR relationship graph navigation: `adr.py index` now embeds a Mermaid
   graph in the generated decision log when relationships exist, and
