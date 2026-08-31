@@ -2,109 +2,92 @@
 
 ## Current task (2026-08-31)
 
-Public-readiness, ADR navigation graph, and harness-parity work is on branch
-`feature/project-roadmap-implements` in:
+**v0.2.0 is released.** The full Git Flow release gate that
+`improvements.md` had listed as P0 is done:
 
-`/Users/yangseunghyeon/orca/workspaces/ADR-toolkit/develop`
+1. PR #3 (`feature/project-roadmap-implements` -> `develop`) merged at
+   `36af56c`.
+2. `release/v0.2.0` cut from `develop`, PR #4 (`release/v0.2.0` -> `master`)
+   merged at `4b5dded`.
+3. `v0.2.0` tag pushed on `master`; `.github/workflows/release.yml` ran
+   clean (tests, sync-check, tag/VERSION match) and published
+   https://github.com/SHcommit/ADR-toolkit/releases/tag/v0.2.0.
+4. `feature/project-roadmap-implements` and `release/v0.2.0` deleted
+   locally and on origin (both fully merged first, verified with
+   `git merge-base --is-ancestor`).
 
-Latest commits (newest first):
+This doc-only cleanup (`changelog.md`, `improvements.md`, this file) is on
+branch `docs/post-release-wrapup`, based on current `origin/develop`
+(`36af56c`) -- not yet pushed or PR'd.
 
-- `2f2f604 ci: add harness-parity job for Codex and Gemini CLI end-to-end install`
-- `e28eb5d docs: record Antigravity CLI adapter verification against agy 1.1.13`
-- `b1bcb93 docs: add code of conduct and GitHub issue templates`
-- `b8db211 docs: correct stale ADR count in project-roadmap.md`
-- `35c81aa docs: record ADR-0011 for relationship graph and public readiness work`
-- `8f0343e feat: add ADR relationship graph exports`
+Session summary (everything shipped in v0.2.0 beyond what was already on
+`develop` before this session):
 
-Working tree is clean; every item below is already committed.
-
-Implemented this session:
-
-- `adr.py graph --format mermaid|svg|both` exports deterministic Mermaid and
-  Python-rendered SVG artifacts; `adr.py index` embeds the Mermaid graph in
-  the generated decision log. ADR-0011 records this decision.
+- ADR relationship graph: `adr.py graph --format mermaid|svg|both`,
+  Mermaid embed in `adr.py index`. Recorded as ADR-0011.
 - Public repository hygiene: `CONTRIBUTING.md`, `SECURITY.md`,
-  `.github/PULL_REQUEST_TEMPLATE.md`, `CODE_OF_CONDUCT.md`, and
+  `.github/PULL_REQUEST_TEMPLATE.md`, `CODE_OF_CONDUCT.md`,
   `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`.
-- Harness parity, manually re-verified end-to-end against the real CLIs
-  installed on this machine (not just manifest-schema checks):
-  - Codex CLI 0.151.0 -- `codex plugin marketplace add/add/list`, then
-    `preflight`/`init`/`validate` from the installed snapshot, all
-    `"ok": true`.
-  - Gemini CLI 0.46.0 -- `gemini extensions validate/install/list`, then the
-    same three commands from the installed snapshot, all `"ok": true`.
-  - Antigravity CLI (`agy` 1.1.13) -- previously undocumented as available;
-    `agy plugin validate/install/list` plus the same three commands all
-    `"ok": true`. `adapters/antigravity/README.md` updated from "unverified"
-    to a recorded transcript, matching the Codex/Gemini READMEs' format.
-  - New `harness-parity` CI job (`.github/workflows/test.yml`) automates the
-    Codex and Gemini checks above on every push/PR, pinned to the exact
-    verified versions. Every step was dry-run locally against those same
-    CLI versions before landing. Antigravity stays manual-only: `agy` has no
-    npm/package-registry distribution, so a CI runner can't install it.
-  - `project-roadmap.md`'s "Harness parity" section narrowed to what's
-    actually still open: extending `harness-parity` past
-    preflight/init/validate to check/search/graph/create, and automating
-    Antigravity once it has an installable distribution.
-- `project-roadmap.md` audited end-to-end against the codebase; confirmed no
-  other section describes already-shipped work.
+- Harness parity re-verified end-to-end against the real CLIs (Codex
+  0.151.0, Gemini 0.46.0, Antigravity's `agy` 1.1.13 -- previously
+  undocumented as available). New `harness-parity` CI job automates the
+  Codex/Gemini checks; confirmed green on GitHub's real `ubuntu-latest`
+  runner (not just locally) before it was trusted. Antigravity stays
+  manual-only (`agy` has no package-registry distribution).
+- `project-roadmap.md` audited against the codebase and narrowed to what's
+  actually still open, including a recorded decision *not* to build a
+  SessionStart-style hook right now even though Codex/Gemini both gained
+  hook extension points this session -- no usage evidence supports it, and
+  it cuts against the project's own minimal-interruption principle.
 
 ## Next step
 
-Open or update a PR for `feature/project-roadmap-implements` into `develop`
-so the new `harness-parity` CI job actually runs on GitHub's runners at
-least once before being trusted (everything above was dry-run locally with
-the same pinned CLI versions, but never through the real Actions runner).
+1. Push `docs/post-release-wrapup`, open a PR into `develop`, merge once
+   CI is green (small doc-only diff: `changelog.md` unreleased-section
+   entries for this session's work, `improvements.md`'s Open section
+   cleared).
+2. This worktree currently sits on `docs/post-release-wrapup`; `develop`
+   itself is checked out in another worktree
+   (`/Users/yangseunghyeon/Development/ADR-toolkit`), so `git checkout
+   develop` here will fail -- branch from `origin/develop` instead, the
+   way this branch was created.
+3. `project-roadmap.md` has no unblocked items left: every remaining
+   section (Conflict detection depth, ADR navigation and scale,
+   Internationalization, Public and enterprise governance, Ecosystem
+   integration, Lifecycle research) is gated on usage evidence that
+   doesn't exist yet, or -- for Public and enterprise governance
+   specifically -- on the repository actually going public, which the
+   owner has deferred deliberately ("조만간 할거야", not now). Don't start
+   any of them without a fresh signal (real user report, real scale, real
+   non-English contributor) or explicit owner direction.
 
-The broader `v0.2.0` release gate still needs separate explicit owner approval
-for each step:
-
-1. Merge the PR into `develop`.
-2. Cut a `release/*` branch into `master` and back into `develop`, per
-   `AGENTS.md`'s Git Flow policy.
-3. Push a `v0.2.0` tag on `master`; `.github/workflows/release.yml` then runs
-   the full suite, verifies manifest versions against the tag, and publishes
-   the GitHub Release.
-
-Do not perform merge, release branch, push, or tag operations without explicit
-owner approval. The repository owner has said the switch to public is coming
-"soon" but deliberately not yet -- don't start the "Public and enterprise
-governance" roadmap items (they're gated on the repo actually being public).
+Do not perform merge, release branch, push, or tag operations without
+explicit owner approval -- that approval was given and executed this
+session for v0.2.0 specifically; it does not carry forward to future
+releases.
 
 ## Latest local verification
 
-After `2f2f604` (current HEAD):
+At `v0.2.0` tag / `master` HEAD (`4b5dded`):
 
 - `python3 -m pytest -q` -> `395 passed`
 - `python3 scripts/sync_version.py --check` -> exit 0
-- `adr.py validate --dir docs/decisions --json` -> 11 ADRs, no errors
-- `adr.py index --dir docs/decisions --json` -> 11 ADRs, no warnings
-- `adr.py graph --dir docs/decisions --format both --json` -> 6 rendered graph
-  edges, no warnings
-- `harness-parity` job's Codex and Gemini steps dry-run locally against
-  Codex CLI 0.151.0 and Gemini CLI 0.46.0 -- both passed, matching what the
-  workflow file runs.
-
-Run the full verification suite again before any further commit, and after
-the PR's first real CI run, confirm `harness-parity` actually went green on
-GitHub's runners (not just locally) before relying on it as a gate.
+- GitHub Actions `release` workflow (run 33367157711): tests, sync-check,
+  tag/VERSION match, and `Create GitHub Release` all green, ~22s total.
+- Both `harness-parity` CI runs on PR #3 and PR #4 passed on GitHub's real
+  `ubuntu-latest` runner, matching local dry-run output exactly.
 
 ## Open risks
 
-- `harness-parity`'s Codex/Gemini steps have only ever run locally on this
-  macOS dev machine, never on GitHub's `ubuntu-latest` runners. Watch the
-  first real CI run for environment differences (npm registry access,
-  network egress rules, `jq` availability -- present by default on
-  `ubuntu-latest` but unconfirmed here).
 - `adr.py check --uncommitted` reports a `VIOLATED` finding for superseded
-  ADR-0003 when changes touch `index.py`; this branch intentionally follows
-  ADR-0006, which supersedes ADR-0003. Note that in PR review rather than
-  treating it as a code defect.
-- CHECK deliberately cannot prove prose, business rationale, or organizational
-  claims; those remain human-review evidence.
+  ADR-0003 when changes touch `index.py`; this is expected (ADR-0006
+  supersedes ADR-0003) and was already noted in PR review, not a code
+  defect.
+- CHECK deliberately cannot prove prose, business rationale, or
+  organizational claims; those remain human-review evidence.
 - Search/relationship matching is deterministic substring/exact/prefix
-  matching, untested at real scale. Revisit roadmap scale items if an adopting
-  repository reaches hundreds of ADRs.
+  matching, untested at real scale (11 ADRs today). Revisit roadmap scale
+  items only if an adopting repository actually reaches hundreds of ADRs.
 - GitHub branch/tag protection is intentionally unavailable on the current
   private plan; configure and API-verify after the repository goes public
   (owner has deferred this deliberately, not blocked on it).
