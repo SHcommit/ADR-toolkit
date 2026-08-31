@@ -190,6 +190,26 @@ untruncated count and `truncated` is `total > count`.
 from `related` (used during RECORD's DISCOVER stage to find precedent for a
 *new* draft, with a broader OR-across-fields match).
 
+## Relationship graph
+
+`index` embeds a Mermaid relationship graph in `docs/decisions/README.md`
+whenever ADRs have `related` or `supersedes` links, so GitHub can render the
+navigation view directly.
+
+For a standalone graph artifact, export Mermaid and SVG files:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py graph --dir docs/decisions --format both --json
+```
+
+This writes `docs/decisions/relationships.mmd` and
+`docs/decisions/relationships.svg`. SVG is the default image artifact because it
+stays sharp when zoomed and does not require Mermaid CLI, Node, or a browser.
+With `--format both`, `--output build/adr-relationships` is treated as a file
+prefix and writes `build/adr-relationships.mmd` plus
+`build/adr-relationships.svg`; relative output paths are resolved from
+`--root`, matching the other repository-scoped commands.
+
 ### Why storage stays flat
 
 ADRs live as `NNNN-slug.md` in one flat `docs/decisions/` directory — no

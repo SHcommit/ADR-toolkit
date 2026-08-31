@@ -298,3 +298,17 @@ CHECK's conflict detection is deliberately limited to structural evidence
 from `constraints:` blocks (see `references/conflict-rules.md`). It does not certify the entire architecture
 and never attempts semantic or AST-level
 analysis; see `project-roadmap.md` for what that fuller scope would look like.
+
+`graph` is a read-only navigation export:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py graph --dir docs/decisions --format both --json
+```
+
+It writes Mermaid (`relationships.mmd`) and SVG (`relationships.svg`) graph
+artifacts from the same relationship model used by `index`. SVG is generated
+directly by Python so the image stays sharp without requiring Mermaid CLI,
+Node, or browser rendering.
+When `--format both` and `--output` are used together, `--output` is a file
+prefix; for example `--output build/adr-relationships` writes
+`build/adr-relationships.mmd` and `build/adr-relationships.svg`.

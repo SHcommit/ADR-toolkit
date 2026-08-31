@@ -53,6 +53,20 @@ def test_index_locale_is_unset_when_omitted_so_repository_default_can_win():
     assert args.root == "."
 
 
+def test_graph_command_accepts_format_and_output_options():
+    args = adr.build_parser().parse_args([
+        "graph",
+        "--dir", "docs/decisions",
+        "--format", "svg",
+        "--output", "docs/decisions/relationships.svg",
+    ])
+
+    assert args.operation == "graph"
+    assert args.format == "svg"
+    assert args.output == "docs/decisions/relationships.svg"
+    assert adr.HANDLERS["graph"].__module__ == "scripts.commands.graph"
+
+
 def test_init_locale_is_optional_and_constrained():
     parser = adr.build_parser()
 

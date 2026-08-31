@@ -42,3 +42,56 @@ jobs:
           python-version: "3.12"
       - name: Check manifest versions and descriptions are in sync
         run: python scripts/sync_version.py --check
+
+  harness-parity:
+    # Installs the real Codex CLI and Gemini CLI and drives their own plugin
+    # commands against this repo, the same way a contributor would. Manifest
+    # JSON shape is already covered by tests/unit/test_*_adapter.py; this job
+    # instead proves discovery -> install -> list -> the installed skill
+    # package's script layer still runs, so an upstream CLI change or a
+    # manifest edit that breaks real installation fails CI instead of
+    # surfacing later as a user-reported install failure. Antigravity CLI
+    # (agy) has no public package registry distribution, so it stays a
+    # manually verified adapter only -- see adapters/antigravity/README.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Codex CLI
+        run: npm install -g @openai/codex@0.151.0
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli@0.46.0
+      - name: Verify Codex CLI adapter end to end
+        run: |
+          set -euo pipefail
+          export CODEX_HOME="$(mktemp -d)"
+          REPO_ROOT="$(pwd)"
+          codex plugin marketplace add "$REPO_ROOT"
+          INSTALLED_PATH="$(codex plugin add adr-toolkit@adr-toolkit-marketplace --json | jq -r '.installedPath')"
+          codex plugin list
+          SCRATCH="$(mktemp -d)"
+          cd "$SCRATCH" && git init -q
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" preflight --json | jq -e '.ok == true'
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" init --dir docs/decisions --json | jq -e '.ok == true'
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" validate --dir docs/decisions --json | jq -e '.ok == true'
+      - name: Verify Gemini CLI adapter end to end
+        run: |
+          set -euo pipefail
+          REPO_ROOT="$(pwd)"
+          mkdir -p adapters/gemini-cli/skills
+          ln -s "$REPO_ROOT/skills/adr-toolkit" adapters/gemini-cli/skills/adr-toolkit
+          export HOME="$(mktemp -d)"
+          gemini extensions validate "$REPO_ROOT/adapters/gemini-cli"
+          printf 'y\ny\n' | gemini extensions install "$REPO_ROOT/adapters/gemini-cli" --consent
+          gemini extensions list
+          INSTALLED_PATH="$HOME/.gemini/extensions/adr-toolkit"
+          SCRATCH="$(mktemp -d)"
+          cd "$SCRATCH" && git init -q
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" preflight --json | jq -e '.ok == true'
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" init --dir docs/decisions --json | jq -e '.ok == true'
+          python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" validate --dir docs/decisions --json | jq -e '.ok == true'

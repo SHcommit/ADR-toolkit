@@ -2,15 +2,17 @@ from scripts.core.relationships import (
     Relationship,
     find_cycles,
     missing_targets,
+    render_mermaid,
+    render_svg,
     resolve,
     supersession_mismatches,
 )
 
 ENTRIES = [
-    {"id": "ADR-0003", "related": [], "supersedes": [], "superseded_by": "ADR-0006"},
-    {"id": "ADR-0006", "related": [], "supersedes": ["ADR-0003"], "superseded_by": None},
-    {"id": "ADR-0007", "related": ["ADR-0002"], "supersedes": [], "superseded_by": None},
-    {"id": "ADR-0002", "related": [], "supersedes": [], "superseded_by": None},
+    {"id": "ADR-0003", "title": "Old decision", "related": [], "supersedes": [], "superseded_by": "ADR-0006"},
+    {"id": "ADR-0006", "title": "New decision", "related": [], "supersedes": ["ADR-0003"], "superseded_by": None},
+    {"id": "ADR-0007", "title": "Confidence field", "related": ["ADR-0002"], "supersedes": [], "superseded_by": None},
+    {"id": "ADR-0002", "title": "Structural checks", "related": [], "supersedes": [], "superseded_by": None},
 ]
 
 
@@ -103,3 +105,39 @@ def test_find_cycles_ignores_related_edges():
         {"id": "ADR-0002", "related": ["ADR-0001"]},
     ]
     assert find_cycles(resolve(mutually_related)) == []
+
+
+def test_render_mermaid_includes_supersession_and_related_edges_with_labels():
+    mermaid = render_mermaid(ENTRIES)
+
+    assert mermaid.startswith("flowchart LR\n")
+    assert "ADR_0006[\"ADR-0006<br/>New decision\"]" in mermaid
+    assert "ADR_0006 -->|supersedes| ADR_0003" in mermaid
+    assert "ADR_0007 -.->|related| ADR_0002" in mermaid
+    assert "ADR_0003 -->|superseded by| ADR_0006" not in mermaid
+
+
+def test_render_mermaid_reports_no_relationships_when_graph_has_no_edges():
+    mermaid = render_mermaid([{"id": "ADR-0001", "title": "Lonely decision"}])
+
+    assert "ADR_0001[\"ADR-0001<br/>Lonely decision\"]" in mermaid
+    assert "No relationships recorded" in mermaid
+
+
+def test_render_mermaid_escapes_title_text_for_label_safety():
+    mermaid = render_mermaid([
+        {"id": "ADR-0001", "title": "Use <A&B> \"ports\" [core]\nnow"},
+    ])
+
+    assert "Use &lt;A&amp;B&gt; 'ports' (core) now" in mermaid
+    assert "\nnow" not in mermaid
+
+
+def test_render_svg_returns_crisp_vector_navigation_artifact():
+    svg = render_svg(ENTRIES)
+
+    assert svg.startswith("<svg ")
+    assert "<title>ADR relationship graph</title>" in svg
+    assert "ADR-0006" in svg and "New decision" in svg
+    assert "ADR-0006 supersedes ADR-0003" in svg
+    assert "ADR-0007 related ADR-0002" in svg

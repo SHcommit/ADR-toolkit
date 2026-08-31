@@ -12,6 +12,7 @@
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### Superseded
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -48,6 +49,7 @@
 
 ### documentation
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### exceptions
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
@@ -57,6 +59,10 @@
 
 ### governance
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### graph
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### harness-support
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
@@ -67,6 +73,9 @@
 
 ### mvp-scope
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
+
+### navigation
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### output-contract
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
@@ -83,6 +92,7 @@
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ## By affected path
 
@@ -96,6 +106,9 @@
 ### `.claude-plugin/plugin.json`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
 
+### `.github/PULL_REQUEST_TEMPLATE.md`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `.github/workflows/`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
 
@@ -105,10 +118,17 @@
 ### `AGENTS.md`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
 
+### `CONTRIBUTING.md`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `README.md`
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `SECURITY.md`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### `adapters/`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
@@ -116,8 +136,20 @@
 ### `docs/decisions/`
 - [ADR-0001 — Record architecture decisions](0001-record-architecture-decisions.md)
 
+### `docs/decisions/README.md`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `docs/decisions/relationships.mmd`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `docs/decisions/relationships.svg`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `examples/quickstart.md`
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
+
+### `project-roadmap.md`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### `scripts/sync_version.py`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
@@ -129,6 +161,7 @@
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### `skills/adr-toolkit/VERSION`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
@@ -148,6 +181,7 @@
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### `skills/adr-toolkit/scripts/commands/check.py`
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
@@ -164,9 +198,13 @@
 ### `skills/adr-toolkit/scripts/commands/exception.py`
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 
+### `skills/adr-toolkit/scripts/commands/graph.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `skills/adr-toolkit/scripts/commands/index.py`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
 ### `skills/adr-toolkit/scripts/commands/init.py`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -192,6 +230,9 @@
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
 
+### `skills/adr-toolkit/scripts/core/relationships.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `skills/adr-toolkit/scripts/core/rendering.py`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
@@ -209,11 +250,24 @@
 ### `tests/integration/test_cli.py`
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 
+### `tests/unit/test_adr_cli.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ### `tests/unit/test_check.py`
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 
+### `tests/unit/test_graph_command.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `tests/unit/test_index.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `tests/unit/test_relationships.py`
+- [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
 ## Chronological (newest first)
 
+- 2026-08-31 — [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 - 2026-08-30 — [ADR-0001 — Record architecture decisions](0001-record-architecture-decisions.md)
 - 2026-08-30 — [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
 - 2026-08-30 — [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -234,3 +288,28 @@
 ### Related
 
 - ADR-0006 "Localize deterministic ADR generation through repository configuration" related to: ADR-0003 "Localize only index.py's generated strings, not agent-composed text"
+- ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0001 "Record architecture decisions"
+- ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0006 "Localize deterministic ADR generation through repository configuration"
+- ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0008 "Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"
+- ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0009 "--json is a documented no-op; CLI output is always JSON"
+
+```mermaid
+flowchart LR
+  ADR_0001["ADR-0001<br/>Record architecture decisions"]
+  ADR_0002["ADR-0002<br/>Limit CHECK's conflict detection to structural evidence only"]
+  ADR_0003["ADR-0003<br/>Localize only index.py's generated strings, not agent-composed text"]
+  ADR_0004["ADR-0004<br/>Adapter packaging: manifest-only directories, install-time symlinks, verified formats"]
+  ADR_0005["ADR-0005<br/>Adopt Git Flow with direct-tag release automation"]
+  ADR_0006["ADR-0006<br/>Localize deterministic ADR generation through repository configuration"]
+  ADR_0007["ADR-0007<br/>Promote CHECK's kind-to-confidence mapping to a stable output field"]
+  ADR_0008["ADR-0008<br/>Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"]
+  ADR_0009["ADR-0009<br/>--json is a documented no-op; CLI output is always JSON"]
+  ADR_0010["ADR-0010<br/>Codex skill-creator's quick_validate.py incompatibility is not this project's problem"]
+  ADR_0011["ADR-0011<br/>Expose ADR relationships as Mermaid and SVG navigation artifacts"]
+  ADR_0006 -.->|related| ADR_0003
+  ADR_0006 -->|supersedes| ADR_0003
+  ADR_0011 -.->|related| ADR_0001
+  ADR_0011 -.->|related| ADR_0006
+  ADR_0011 -.->|related| ADR_0008
+  ADR_0011 -.->|related| ADR_0009
+```
