@@ -9,5 +9,10 @@ flowchart LR
   ADR_0008["ADR-0008<br/>Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"]
   ADR_0009["ADR-0009<br/>--json is a documented no-op; CLI output is always JSON"]
   ADR_0010["ADR-0010<br/>Codex skill-creator's quick_validate.py incompatibility is not this project's problem"]
+  ADR_0011["ADR-0011<br/>Expose ADR relationships as Mermaid and SVG navigation artifacts"]
   ADR_0006 -.->|related| ADR_0003
   ADR_0006 -->|supersedes| ADR_0003
+  ADR_0011 -.->|related| ADR_0001
+  ADR_0011 -.->|related| ADR_0006
+  ADR_0011 -.->|related| ADR_0008
+  ADR_0011 -.->|related| ADR_0009
