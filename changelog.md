@@ -4,6 +4,20 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added a `harness-parity` CI job that installs the real Codex CLI and
+  Gemini CLI and drives their own plugin/extension commands (marketplace
+  add, install, list) against this repo, then runs `preflight`/`init`/
+  `validate` from the installed snapshot on every push and pull request —
+  catching a broken adapter before a user hits it, not after.
+- Verified the Antigravity CLI adapter end to end against the `agy` CLI
+  (validate/install/list plus the script layer); `adapters/antigravity/README.md`
+  corrected from "unverified" to a recorded transcript, matching the
+  Codex/Gemini adapters' documented depth.
+- Added `CODE_OF_CONDUCT.md` and GitHub issue templates (bug report,
+  feature request) as public-repository readiness ahead of the eventual
+  switch to public.
+- Recorded ADR-0011 for the relationship graph and public-readiness
+  decisions.
 - Added ADR relationship graph navigation: `adr.py index` now embeds a Mermaid
   graph in the generated decision log when relationships exist, and
   `adr.py graph` exports standalone `relationships.mmd` plus a crisp SVG
