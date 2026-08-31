@@ -15,8 +15,18 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 
 ## Harness parity
 
-- Full cross-harness fixture/golden matrix for Codex, Gemini CLI, and
-  Antigravity CLI at the depth currently available for Claude Code.
+- ~~Automate the Codex CLI and Gemini CLI adapters' install-and-run
+  verification.~~ **Done (2026-08-31).** `.github/workflows/test.yml`'s
+  `harness-parity` job installs the real Codex CLI and Gemini CLI and runs
+  `preflight`/`init`/`validate` from each one's installed snapshot on every
+  push and pull request.
+- Extend `harness-parity` coverage beyond `preflight`/`init`/`validate` to
+  `check`, `search`, `graph`, and `create` once a real regression in one of
+  those commands under a specific harness demonstrates the gap matters.
+- Automate the Antigravity CLI (`agy`) adapter the same way once it has a
+  package-registry distribution a CI runner can install non-interactively;
+  today it has none, so `adapters/antigravity/README.md`'s manual
+  verification is the only signal.
 - Harness-specific hook support beyond Claude Code SessionStart when equivalent
   stable extension points exist.
 
