@@ -47,8 +47,175 @@ of these adapters at it:
 directly in a terminal — no agent required:
 
 ```bash
-python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisions
+python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisions --json
 ```
+
+## Language and repository config
+
+ADR Toolkit localizes deterministic, code-owned text in eight canonical
+locales: `en`, `ko`, `ja`, `zh`, `fr`, `es`, `de`, and `pt-BR`. `zh` means
+Simplified Chinese. User-authored prose is preserved as written, while JSON
+keys, status values, error codes, IDs, and filenames remain machine-stable.
+
+Choose the repository default during INIT:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py init --locale ko --dir docs/decisions --json
+```
+
+This creates `.adr-toolkit.json` at the repository root:
+
+```json
+{
+  "schema_version": 1,
+  "locale": "ko"
+}
+```
+
+Commands then use the repository default without repeating `--locale`:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisions --json
+python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json
+```
+
+An explicit flag overrides the repository default for one operation. Input
+draft locale overrides the repository only when the CLI flag is absent:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py create --locale ja --interactive --dir docs/decisions --json
+python skills/adr-toolkit/scripts/adr.py index --locale fr --dir docs/decisions --json
+```
+
+The effective CLI order is explicit flag → approved input draft → repository
+default → `en`. Unsupported locales and malformed config fail visibly.
+
+### Unicode titles and portable filenames
+
+Titles and bodies remain Unicode. Filenames remain ASCII for filesystem, URL,
+and Git portability. For the title `결제 시스템 분리`, an agent can propose a
+meaningful slug and show it for human approval:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py create --input draft.json \
+  --slug separate-payment-system --dir docs/decisions --json
+```
+
+The deterministic core validates the slug and creates a filename such as
+`0002-separate-payment-system.md`. It never translates or transliterates the
+title itself. Without an approved slug or an ASCII fragment in the title, a
+fresh repository safely falls back to `0001-decision.md`.
+
+## CHECK confidence
+
+CHECK does not certify the entire architecture. It evaluates only explicit,
+structurally provable rules in the selected diff. Every finding carries a
+`confidence` field with one of these four values directly — no need to
+re-derive it from `kind`:
+
+| `confidence` | `kind` it comes from | Meaning |
+|---|---|---|
+| `VERIFIED` | `related` | Applicable explicit rules were evaluated and none fired. |
+| `VIOLATED` | `verified_violation` | Structural evidence confirms a violation. |
+| `UNVERIFIABLE` | `review_required` or `no_applicable_constraint` | No usable rule vocabulary could prove or disprove this. |
+| `NOT_APPLICABLE` | (no finding at all) | No known ADR/rule applies to the selected change — an empty `findings` list, not proof of compliance. |
+
+Warnings mean some evidence could not be evaluated and must be reported. A
+clean result never proves prose rationale, runtime behavior, or every
+architecture invariant.
+
+### Exceptions
+
+`register_exception` — one of a Verified violation's five resolutions — is a
+real, deterministic record, not just a label:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py exception --input exception.json \
+  --dir docs/decisions --json
+```
+
+`exception.json` requires `adr_id`, `rule_id`, `owner`, `reason`, a `scope`
+(path patterns the exception is narrowed to), and an `expiry`
+(`YYYY-MM-DD`). The command assigns the next `EXC-NNNN` id and writes
+`docs/decisions/exceptions/NNNN.json`. CHECK annotates a matching, non-expired
+exception onto its finding's `exception` field — the finding's `kind` and
+`confidence` stay exactly what the structural evidence says
+(`verified_violation`/`VIOLATED`); an exception is visible, reviewable
+evidence, never a silent pass. Once `expiry` passes, CHECK stops applying it
+automatically.
+
+## Search
+
+Find an existing ADR by keyword (title **and** body), tags, status, or the
+file path it governs — without opening every file:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py search --keyword architecture --dir docs/decisions --json
+```
+
+```json
+{
+  "ok": true,
+  "operation": "search",
+  "query": {"keyword": "architecture", "tags": null, "status": null, "path": null, "limit": null},
+  "count": 1,
+  "total": 1,
+  "truncated": false,
+  "results": [
+    {
+      "id": "ADR-0001",
+      "filename": "0001-record-architecture-decisions.md",
+      "path": "docs/decisions/0001-record-architecture-decisions.md",
+      "title": "Record architecture decisions",
+      "status": "accepted",
+      "tags": ["process"],
+      "matched_in": ["title", "body"]
+    }
+  ],
+  "warnings": []
+}
+```
+
+**Filter semantics:** filters across different fields (`--id`, `--keyword`,
+`--tags`, `--status`, `--path`) are combined with AND. Multiple values within
+`--tags` are combined with OR — `--tags postgres mysql` means "postgres or
+mysql". No filters at all browses every ADR. `--id` looks up one ADR by its
+exact id. `--path` matches a real file against an ADR's governed scope (the
+same directory-boundary + glob logic CHECK uses), not an exact match against
+the ADR's literal `affected_paths` list. `--limit N` truncates the
+already-ranked (best-match-first) result list; `total` is always the
+untruncated count and `truncated` is `total > count`.
+
+`search` is a general lookup command ("has this been decided before?"), distinct
+from `related` (used during RECORD's DISCOVER stage to find precedent for a
+*new* draft, with a broader OR-across-fields match).
+
+### Why storage stays flat
+
+ADRs live as `NNNN-slug.md` in one flat `docs/decisions/` directory — no
+per-year, per-team, or per-status subfolders — no matter how many
+accumulate. Two comparable real-world tools were checked before deciding
+this: [`npryce/adr-tools`](https://github.com/npryce/adr-tools), the
+original Nygard-style CLI, ships no search at all and expects `grep`; the
+most-adopted actively maintained ADR tool,
+[`log4brains`](https://github.com/thomvaill/log4brains) (1.5k+ GitHub
+stars), also keeps ADRs as flat Markdown and instead layers a full-text
+search and a relationship graph on top — it does not shard the source
+files by count. A folder hierarchy also creates a real problem flat storage
+avoids: a decision that spans two teams or domains has no unambiguous
+folder to live in.
+
+The corollary is **retrieval, not storage, is where a growing ADR set gets
+harder to use** — so that's where the effort went: `search`'s
+title-and-body keyword/tag/status/path matching plus the generated index's
+"By status" / "By tag" / "By affected path" / "Relationships" views. Both
+already work identically for 10 ADRs or 500. Folder sharding, a rendered
+relationship graph, and a real search index are deliberately not built yet
+— they're tracked in [`project-roadmap.md`](project-roadmap.md), gated on
+this repository (or an adopting team's) ADR count actually reaching a scale
+where flat-directory substring search stops being fast enough. Building
+that ahead of evidence would add real maintenance cost for a problem no one
+has hit yet.
 
 ## Scope
 
@@ -56,10 +223,10 @@ python skills/adr-toolkit/scripts/adr.py create --interactive --dir docs/decisio
 - CHECK's MVP conflict detection is structural evidence only
   (`constraints:` blocks) — no semantic/AST analysis. See
   [ADR-0002](docs/decisions/0002-limit-check-s-conflict-detection-to-structural-evidence-only.md).
-- Runtime text ships in English, French, Japanese, Korean, and Chinese —
-  scoped to `index`'s generated output only, since agent-composed prose
-  needs no lookup table. See
-  [ADR-0003](docs/decisions/0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md).
+- Deterministic INIT, CREATE, and INDEX structure ships in eight locales;
+  agent-composed and user-authored prose is never machine-translated by the
+  core. See
+  [ADR-0006](docs/decisions/0006-localized-adr-generation.md).
 - Everything explicitly deferred out of MVP is tracked in
   [`project-roadmap.md`](project-roadmap.md), not silently dropped.
 

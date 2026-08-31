@@ -4,6 +4,60 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added `adr.py search`: finds an existing ADR by keyword (title **and**
+  body — `related`'s keyword match was title-only before), tags, status,
+  `--id`, or the real file path it governs, with deterministic best-match
+  ordering and `--limit`/`total`/`truncated` for bounding results. Added a
+  Relationships section (supersession chains + related lists, titles
+  alongside IDs) to the generated `docs/decisions/README.md`, localized
+  across all 8 catalogs, and `validate` checks for broken supersession
+  links, one-sided supersession edits, and supersession cycles.
+- Added CHECK policy exceptions: `adr.py exception` validates and records a
+  schema-checked, owned, scoped, time-boxed exception; CHECK annotates a
+  matching finding with it but never suppresses or downgrades the finding —
+  an exception is visible evidence, not a silent pass.
+- Promoted CHECK's violation classification to a stable `confidence` field
+  (`VERIFIED`/`VIOLATED`/`UNVERIFIABLE`) on every finding, instead of an
+  agent re-deriving it from documentation each run.
+- Fixed a Windows-only bug where CHECK's git evidence gathering
+  (`diff.py`/`git_paths.py`) decoded subprocess output using the platform's
+  default locale encoding instead of UTF-8, garbling Unicode paths/content
+  on Windows CI while working correctly on macOS/Linux.
+- Hardened `scripts/sync_version.py` against three silent-drift bugs
+  (a tracked manifest losing its version key, a manifest path outside the
+  repo root crashing instead of failing cleanly, non-ASCII manifest content
+  being escaped on write) and extended it to keep manifest `description`
+  fields in sync with `SKILL.md`'s frontmatter, the same way `version`
+  already was.
+- Formalized `--json` as a documented no-op: every command has always
+  printed JSON regardless of the flag; `--help` now says so explicitly
+  instead of implying a choice that doesn't exist.
+- Corrected repository ADR provenance and lifecycle: existing ADRs now name
+  an approved decision maker and locale, and ADR-0006 (repository-default
+  locale generation) supersedes ADR-0003 (index-only localization)
+  bidirectionally. This session's own design decisions were recorded as
+  ADR-0007..0010 (CHECK confidence field, exception mechanism, `--json`
+  contract, and a closed-as-not-applicable Codex tooling question).
+- Bumped to v0.2.0.
+- Added repository-configured deterministic ADR localization for eight locales
+  (`en`, `ko`, `ja`, `zh`, `fr`, `es`, `de`, `pt-BR`) across INIT, CREATE,
+  templates, prompts, and INDEX, with strict config/schema validation and
+  explicit override precedence.
+- Added portable multilingual ADR creation: Unicode titles and bodies are
+  preserved, an approved semantic ASCII slug can be supplied, and non-ASCII
+  titles safely fall back to an ID-qualified `decision` filename.
+- Hardened CHECK against false-clean results by failing closed on incomplete git
+  evidence, retaining both sides of renames and Unicode paths, detecting
+  working-tree deletions, exposing invalid ADRs, following Git ignore/path
+  semantics, and rejecting conflicting diff modes.
+- Made relative ADR directories resolve consistently from `--root` for every
+  repository-scoped generation and validation command.
+- Improved the repository's own ADR evidence and lifecycle history, including
+  the accepted ADR-0006 decision that supersedes the MVP index-only
+  localization decision ADR-0003.
+- Expanded README, quickstart, and skill guidance with real multilingual
+  workflows and CHECK confidence boundaries, and added separate Korean v0.2.0
+  readiness and enterprise-adoption reports.
 - Added the self-contained `skills/adr-toolkit/` package: deterministic
   scaffolding/discovery commands (`init`, `discover`, `preflight`,
   `validate`, `index`), ADR frontmatter/ID/lifecycle core logic, MADR

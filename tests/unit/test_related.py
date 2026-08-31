@@ -80,3 +80,28 @@ def test_non_list_affected_paths_does_not_match_by_character(tmp_path):
 
     assert result["count"] == 0
     assert result["matches"] == []
+
+
+def test_keyword_matches_when_present_only_in_body(tmp_path):
+    (tmp_path / "0001-cache-policy.md").write_text(
+        "---\n"
+        "id: ADR-0001\n"
+        "title: Cache policy\n"
+        "status: accepted\n"
+        "date: 2026-08-31\n"
+        "decision_makers: []\n"
+        "related: []\n"
+        "affected_paths: []\n"
+        "tags: []\n"
+        "retrospective: false\n"
+        "---\n\n"
+        "# Cache policy\n\nWe chose Redis for the shared cache layer.\n",
+        encoding="utf-8",
+    )
+
+    result = related.run(SimpleNamespace(
+        dir=str(tmp_path), paths=None, tags=None, keyword="redis",
+    ))
+
+    assert result["count"] == 1
+    assert result["matches"][0]["id"] == "ADR-0001"

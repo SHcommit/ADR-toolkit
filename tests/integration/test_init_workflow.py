@@ -29,6 +29,10 @@ def test_full_init_flow_on_js_fixture(tmp_path):
 
     init_result = _run(["init", "--dir", "docs/decisions", "--json"], cwd=repo)
     assert init_result["ok"] is True
+    assert json.loads((repo / ".adr-toolkit.json").read_text(encoding="utf-8")) == {
+        "schema_version": 1,
+        "locale": "en",
+    }
 
     validate_result = _run(["validate", "--dir", "docs/decisions", "--json"], cwd=repo)
     assert validate_result["ok"] is True

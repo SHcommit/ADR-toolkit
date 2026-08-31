@@ -49,6 +49,7 @@ python skills/adr-toolkit/scripts/adr.py init --dir docs/decisions --json
   "operation": "init",
   "dry_run": false,
   "created": [
+    ".adr-toolkit.json",
     "docs/decisions",
     "docs/decisions/adr-template.md",
     "docs/decisions/0001-record-architecture-decisions.md"
@@ -120,7 +121,7 @@ Then validate and regenerate the index:
 
 ```bash
 python skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json
-python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --locale en --json
+python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json
 ```
 
 Both report `"ok": true`, and `docs/decisions/README.md` now reads:
@@ -170,7 +171,8 @@ python skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decision
       "file": "src/db/connection.js",
       "evidence": {"line": "const mongodb = require(\"mongodb\");", "pattern": "mongodb"},
       "adr_id": "ADR-0002",
-      "resolutions": ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"]
+      "resolutions": ["fix_code", "supersede_adr", "adjust_scope", "register_exception", "false_positive"],
+      "confidence": "VIOLATED"
     }
   ],
   "warnings": []
@@ -196,13 +198,71 @@ python skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decision
   "ok": true,
   "operation": "check",
   "diff": {"mode": "uncommitted", "ref": null, "files_changed": 1},
-  "findings": [{"adr_id": "ADR-0002", "kind": "related"}],
+  "findings": [{"adr_id": "ADR-0002", "kind": "related", "confidence": "VERIFIED"}],
   "warnings": []
 }
 ```
 
 The violation is gone — `related` means the diff still touches a path this
-ADR governs, but the rule that fired before no longer does.
+ADR governs, but the explicit structural rule that fired before no longer
+does. It is `VERIFIED` only for that rule and selected diff, not proof of the
+entire architecture.
+
+## Multilingual variation — Korean repository, portable filename
+
+In a fresh repository, choose Korean once during INIT:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py init --locale ko --dir docs/decisions --json
+```
+
+Real output:
+
+```json
+{
+  "ok": true,
+  "operation": "init",
+  "dry_run": false,
+  "created": [
+    ".adr-toolkit.json",
+    "docs/decisions",
+    "docs/decisions/adr-template.md",
+    "docs/decisions/0001-record-architecture-decisions.md"
+  ]
+}
+```
+
+The config now supplies `ko` to CREATE and INDEX. Given a reviewed draft whose
+title is `결제 시스템 분리`, let the agent propose `separate-payment-system`
+and approve that semantic ASCII slug before mutation:
+
+```bash
+python skills/adr-toolkit/scripts/adr.py create --input draft.json \
+  --slug separate-payment-system --dir docs/decisions --json
+```
+
+Real output:
+
+```json
+{
+  "ok": true,
+  "operation": "create",
+  "dry_run": false,
+  "created": "docs/decisions/0002-separate-payment-system.md",
+  "id": "ADR-0002"
+}
+```
+
+The title/body remain Korean and the ADR records `locale: ko`; the core never
+translates the title to obtain the filename. Omitting an approved slug for a
+title with no ASCII characters safely uses `decision` instead.
+
+```bash
+python skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json
+```
+
+The real command reports `"count": 2`, and the generated index begins with
+`# 결정 기록` because it reads the repository default.
 
 ## Next steps
 
@@ -211,6 +271,7 @@ ADR governs, but the rule that fired before no longer does.
   `SKILL.md`'s CHECK section.
 - `references/conflict-rules.md` documents all six `constraints:` rule
   kinds (`forbidden_import` was the only one used here) and the four-way
-  finding classification in full.
+  finding classification plus VERIFIED / VIOLATED / UNVERIFIABLE /
+  NOT_APPLICABLE confidence meaning in full.
 - No AI harness at all? `create --interactive` runs the same interview in
   a plain terminal — see the root [README](../README.md).

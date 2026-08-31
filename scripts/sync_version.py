@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Sync skills/adr-toolkit/VERSION into every manifest that duplicates it.
+"""Sync skills/adr-toolkit/VERSION and SKILL.md's description into every
+manifest that duplicates them.
 
 Repo tooling — not part of the distributable skills/adr-toolkit/ package.
 """
@@ -21,8 +22,19 @@ MANIFEST_SPECS = [
     (REPO_ROOT / "adapters" / "gemini-cli" / "gemini-extension.json", ["version"]),
 ]
 
+# SKILL.md's frontmatter `description:` is the single canonical source; every
+# manifest below duplicates it for its own harness's format and is synced
+# from it the same way MANIFEST_SPECS entries are synced from VERSION.
+DESCRIPTION_MANIFEST_SPECS = [
+    (REPO_ROOT / ".claude-plugin" / "plugin.json", ["description"]),
+    (REPO_ROOT / "adapters" / "codex" / ".codex-plugin" / "plugin.json", ["description"]),
+    (REPO_ROOT / "adapters" / "gemini-cli" / "gemini-extension.json", ["description"]),
+    (REPO_ROOT / "adapters" / "antigravity" / "plugin.json", ["description"]),
+]
+
 VERSION_LINE_RE = re.compile(r"^version:\s*\S+$", re.MULTILINE)
 VERSION_FORMAT_RE = re.compile(r"\d+\.\d+\.\d+(-[\w.]+)?")
+DESCRIPTION_LINE_RE = re.compile(r"^description:[ \t]*(.+)$", re.MULTILINE)
 
 
 def read_version(version_file: Path) -> str:
@@ -49,8 +61,24 @@ def replace_version_line(text: str, version: str) -> str:
     return VERSION_LINE_RE.sub(lambda _: f"version: {version}", text, count=1)
 
 
+def read_description(skill_md_path: Path) -> str:
+    """Read the canonical `description:` value from SKILL.md's frontmatter."""
+    text = skill_md_path.read_text(encoding="utf-8")
+    match = DESCRIPTION_LINE_RE.search(text)
+    if match is None:
+        raise SystemExit(f"no description: line found in {skill_md_path}")
+    return match.group(1).strip()
+
+
 def sync(version_file: Path, manifest_specs: list, check_only: bool) -> list:
-    version = read_version(version_file)
+    return _sync_value(read_version(version_file), manifest_specs, check_only)
+
+
+def sync_descriptions(skill_md_path: Path, manifest_specs: list, check_only: bool) -> list:
+    return _sync_value(read_description(skill_md_path), manifest_specs, check_only)
+
+
+def _sync_value(value: str, manifest_specs: list, check_only: bool) -> list:
     changed = []
     for path, key_path in manifest_specs:
         if not path.is_file():
@@ -64,12 +92,14 @@ def sync(version_file: Path, manifest_specs: list, check_only: bool) -> list:
             target = target[key]
         if target is None or key_path[-1] not in target:
             continue
-        if target[key_path[-1]] == version:
+        if target[key_path[-1]] == value:
             continue
         changed.append(path)
         if not check_only:
-            target[key_path[-1]] = version
-            path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            target[key_path[-1]] = value
+            path.write_text(
+                json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
     return changed
 
 
@@ -95,14 +125,35 @@ def require_known_paths() -> None:
     MANIFEST_SPECS/SKILL_MD_PATH — a renamed or deleted manifest there must
     not silently drop out of the drift check and leave CI green forever.
     """
-    missing = [p for p, _ in MANIFEST_SPECS if not p.is_file()]
+    all_specs = MANIFEST_SPECS + DESCRIPTION_MANIFEST_SPECS
+    tracked_paths = {p for p, _ in all_specs}
+    missing = [p for p in tracked_paths if not p.is_file()]
     if not VERSION_FILE.is_file():
         missing.append(VERSION_FILE)
     if not SKILL_MD_PATH.is_file():
         missing.append(SKILL_MD_PATH)
     if missing:
-        names = ", ".join(str(p.relative_to(REPO_ROOT)) for p in missing)
+        names = ", ".join(_display_path(p) for p in sorted(missing, key=str))
         raise SystemExit(f"missing tracked file(s): {names}")
+
+    keyless = []
+    for path, key_path in all_specs:
+        target = json.loads(path.read_text(encoding="utf-8"))
+        for key in key_path:
+            if not isinstance(target, dict) or key not in target:
+                keyless.append((path, key_path[-1]))
+                break
+            target = target[key]
+    if keyless:
+        names = ", ".join(f"{_display_path(p)} ({key})" for p, key in keyless)
+        raise SystemExit(f"tracked manifest(s) lost a tracked key: {names}")
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
 
 
 def main(argv=None) -> int:
@@ -112,6 +163,7 @@ def main(argv=None) -> int:
 
     require_known_paths()
     changed = sync(VERSION_FILE, MANIFEST_SPECS, check_only=args.check)
+    changed += sync_descriptions(SKILL_MD_PATH, DESCRIPTION_MANIFEST_SPECS, check_only=args.check)
     if sync_skill_md(VERSION_FILE, SKILL_MD_PATH, check_only=args.check):
         changed.append(SKILL_MD_PATH)
 

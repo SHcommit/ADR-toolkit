@@ -7,6 +7,7 @@ from datetime import date as date_cls
 import re
 
 from scripts.core.lifecycle import STATUSES
+from scripts.core.locale import SUPPORTED_LOCALES
 
 REQUIRED_FIELDS = {
     "id": str,
@@ -21,6 +22,7 @@ REQUIRED_FIELDS = {
 }
 
 OPTIONAL_FIELDS = {
+    "locale": str,
     "supersedes": list,
     "superseded_by": str,
 }
@@ -53,6 +55,11 @@ def validate_frontmatter(data: dict) -> list:
 
     if "status" in data and data["status"] not in STATUSES:
         errors.append(f"status {data['status']!r} is not one of {sorted(STATUSES)}")
+
+    if "locale" in data and data["locale"] not in SUPPORTED_LOCALES:
+        errors.append(
+            f"locale {data['locale']!r} is not one of {list(SUPPORTED_LOCALES)}"
+        )
 
     if isinstance(data.get("date"), str):
         if not DATE_RE.match(data["date"]):

@@ -2,23 +2,34 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
+from scripts.core.adr_directory import iter_adr_files
+from scripts.core.config import ConfigError, load_repository_config
+from scripts.core.relationships import find_cycles, missing_targets, resolve, supersession_mismatches
 from scripts.core.schema import validate_frontmatter
-
-SKIP_FILES = {"README.md", "adr-template.md"}
+from scripts.core.repository_paths import resolve_from_root
 
 
 def run(args) -> dict:
-    adr_dir = Path(args.dir)
+    root = Path(getattr(args, "root", "."))
+    adr_dir = resolve_from_root(root, args.dir)
     errors = []
 
-    adr_files = sorted(p for p in adr_dir.glob("*.md") if p.name not in SKIP_FILES)
+    try:
+        load_repository_config(root)
+    except ConfigError as exc:
+        return {
+            "ok": False,
+            "operation": "validate",
+            "checked": 0,
+            "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
+        }
 
     parsed_entries = []
     seen_ids: dict = {}
+    checked = 0
 
-    for path in adr_files:
-        parsed_filename = identifiers.parse_filename(path.name)
+    for path, parsed_filename in iter_adr_files(adr_dir):
+        checked += 1
         if parsed_filename is None:
             errors.append({"code": "BAD_FILENAME", "file": path.name})
             continue
@@ -57,4 +68,24 @@ def run(args) -> dict:
             if related_id not in known_ids:
                 errors.append({"code": "BROKEN_RELATED_LINK", "file": filename, "related_id": related_id})
 
-    return {"ok": not errors, "operation": "validate", "checked": len(adr_files), "errors": errors}
+    edges = resolve([data for _, data in parsed_entries])
+
+    for edge in missing_targets(edges, known_ids):
+        if edge.type in ("supersedes", "superseded_by"):
+            errors.append({
+                "code": "BROKEN_SUPERSESSION_LINK",
+                "adr_id": edge.source,
+                "target": edge.target,
+            })
+
+    for source, target in supersession_mismatches(edges):
+        errors.append({
+            "code": "SUPERSESSION_MISMATCH",
+            "adr_id": source,
+            "expected_superseded_by_on": target,
+        })
+
+    for cycle in find_cycles(edges):
+        errors.append({"code": "SUPERSESSION_CYCLE", "cycle": list(cycle)})
+
+    return {"ok": not errors, "operation": "validate", "checked": checked, "errors": errors}

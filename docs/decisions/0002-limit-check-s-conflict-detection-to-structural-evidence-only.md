@@ -3,16 +3,21 @@ id: ADR-0002
 title: Limit CHECK's conflict detection to structural evidence only
 status: accepted
 date: 2026-08-30
-decision_makers: []
+decision_makers:
+  - YangSeungHyun
+locale: en
 related: []
 affected_paths:
   - skills/adr-toolkit/scripts/commands/check.py
+  - skills/adr-toolkit/scripts/commands/diff.py
+  - skills/adr-toolkit/scripts/core/constraints.py
   - skills/adr-toolkit/scripts/rules/conflict.py
+  - skills/adr-toolkit/references/conflict-rules.md
 tags:
   - check
   - mvp-scope
   - architecture
-retrospective: false
+retrospective: true
 ---
 
 # Limit CHECK's conflict detection to structural evidence only
@@ -38,6 +43,26 @@ Chosen option: **structural-evidence-only detection**, because false positives a
 ## Confirmation
 
 `skills/adr-toolkit/scripts/rules/conflict.py` implements exactly four structural matching mechanisms and nothing else; no test in `tests/unit/test_conflict.py` attempts semantic or AST-based matching.
+
+## Confirmed Evidence
+
+The repository implements a fixed six-kind constraint vocabulary in
+`core/constraints.py`, evaluates it through structural path and line matching
+in `rules/conflict.py`, and collects Git diff evidence in `commands/diff.py`.
+The unit and integration suites exercise those deterministic boundaries. This
+ADR was written retrospectively from that implemented MVP state.
+
+## Inferred Rationale
+
+The trust argument in this record is a reconstruction from the implemented
+scope and design material: limiting CHECK to rules it can prove appears to have
+been preferred over heuristic semantic coverage because false confidence would
+be more damaging than an explicit `UNVERIFIABLE` result.
+
+## Unknown
+
+The exact contemporaneous discussion, relative weighting of the alternatives,
+and any rejected semantic-analysis prototypes were not preserved.
 
 ## Revisit Triggers
 

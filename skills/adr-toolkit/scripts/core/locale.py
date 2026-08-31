@@ -1,14 +1,9 @@
-"""Load i18n locale files for index.py's generated strings.
-
-Every other user-facing string in this toolkit (RECORD/DISCOVER/CHECK's
-interview questions and reports) is composed by the agent, not a fixed
-Python string, so it needs no translation table — only index.py's
-generated README.md content is a translation target (design spec §17.1).
-"""
+"""Load deterministic strings for ADR scaffolds, prompts, and indexes."""
 import json
 from pathlib import Path
 
 I18N_DIR = Path(__file__).resolve().parent.parent / "i18n"
+SUPPORTED_LOCALES = ("en", "ko", "ja", "zh", "fr", "es", "de", "pt-BR")
 DEFAULT_LOCALE = "en"
 
 

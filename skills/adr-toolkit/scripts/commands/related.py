@@ -2,13 +2,8 @@
 from pathlib import Path
 
 from scripts.core import frontmatter as fm
-from scripts.core import identifiers
-
-SKIP_FILES = {"README.md", "adr-template.md"}
-
-
-def _as_list(value) -> list:
-    return value if isinstance(value, list) else []
+from scripts.core.adr_directory import iter_adr_files
+from scripts.core.query import matches_keyword, matches_paths_exact, matches_tags_any
 
 
 def run(args) -> dict:
@@ -19,28 +14,28 @@ def run(args) -> dict:
 
     matches = []
     warnings = []
-    for entry in sorted(adr_dir.glob("*.md")):
-        if entry.name in SKIP_FILES or identifiers.parse_filename(entry.name) is None:
+    for entry, parsed in iter_adr_files(adr_dir):
+        if parsed is None:
             continue
 
         try:
-            data, _ = fm.parse(entry.read_text(encoding="utf-8"))
+            data, body = fm.parse(entry.read_text(encoding="utf-8"))
         except fm.FrontmatterError as exc:
             warnings.append({"code": "BAD_FRONTMATTER", "file": entry.name, "detail": str(exc)})
             continue
 
         reasons = []
 
-        path_overlap = query_paths & set(_as_list(data.get("affected_paths")))
+        path_overlap = matches_paths_exact(query_paths, data.get("affected_paths"))
         if path_overlap:
             reasons.append(f"affected_paths overlap: {sorted(path_overlap)}")
 
-        tag_overlap = query_tags & set(_as_list(data.get("tags")))
+        tag_overlap = matches_tags_any(query_tags, data.get("tags"))
         if tag_overlap:
             reasons.append(f"tag overlap: {sorted(tag_overlap)}")
 
-        if keyword and keyword in data.get("title", "").lower():
-            reasons.append("title keyword match")
+        if keyword and matches_keyword(keyword, data.get("title", ""), body):
+            reasons.append("title/body keyword match")
 
         if reasons:
             matches.append({
