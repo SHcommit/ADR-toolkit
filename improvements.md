@@ -5,13 +5,7 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Open
 
-### P0 — v0.2.0 release blocking
-
-- [ ] **Complete the remote v0.2.0 release gate.** Open the final PR, require all
-  CI jobs to pass, obtain approval for the v0.2.0 version bump, merge through a
-  release branch, and verify the tag points at the intended `master` commit.
-  **Done when:** the readiness report's conditional GO becomes GO. Creating the
-  release branch, pushing, version bumping, and tagging require owner approval.
+Nothing open right now.
 
 ## Done
 
