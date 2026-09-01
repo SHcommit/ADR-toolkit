@@ -7,7 +7,7 @@ or caller that reads a field that was renamed or removed. Command
 which TypedDict can't model without a larger refactor; that is tracked
 separately and not attempted here.
 """
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class CommandError(TypedDict, total=False):
@@ -51,3 +51,95 @@ class CheckResult(BaseResult, total=False):
     findings: List[CheckFinding]
     warnings: List[Dict[str, Any]]
     errors: List[CommandError]
+
+
+class PreflightResult(BaseResult):
+    python_version: str
+    git_available: bool
+    existing_adr_directory: Optional[str]
+    warnings: List[Dict[str, Any]]
+    errors: List[Dict[str, Any]]
+
+
+class DiscoverResult(BaseResult):
+    root: str
+    dependencies: List[Dict[str, Any]]
+    warnings: List[Dict[str, Any]]
+
+
+class InitResult(BaseResult, total=False):
+    dry_run: bool
+    created: List[str]
+    would_create: List[str]
+    errors: List[Dict[str, Any]]
+
+
+class IndexResult(BaseResult, total=False):
+    count: int
+    path: str
+    warnings: List[Dict[str, Any]]
+    errors: List[Dict[str, Any]]
+
+
+class RelatedResult(BaseResult):
+    count: int
+    matches: List[Dict[str, Any]]
+    warnings: List[Dict[str, Any]]
+
+
+class SignificanceResult(BaseResult, total=False):
+    total: int
+    classification: str
+    errors: List[Dict[str, Any]]
+
+
+class ValidateResult(BaseResult):
+    checked: int
+    errors: List[Dict[str, Any]]
+
+
+class StatusResult(BaseResult, total=False):
+    dry_run: bool
+    would_update: str
+    updated: str
+    to: str
+    errors: List[Dict[str, Any]]
+
+
+class SupersedeResult(BaseResult, total=False):
+    dry_run: bool
+    would_update: List[str]
+    old: str
+    new: str
+    errors: List[Dict[str, Any]]
+
+
+class DiffResult(BaseResult, total=False):
+    mode: str
+    ref: Optional[str]
+    files: List[Dict[str, Any]]
+    errors: List[Dict[str, Any]]
+
+
+class ExceptionResult(BaseResult, total=False):
+    dry_run: bool
+    created: str
+    would_create: str
+    id: str
+    errors: List[Dict[str, Any]]
+
+
+class GraphResult(BaseResult, total=False):
+    count: int
+    outputs: List[str]
+    warnings: List[Dict[str, Any]]
+    errors: List[Dict[str, Any]]
+
+
+class SearchResult(BaseResult):
+    query: Dict[str, Any]
+    count: int
+    total: int
+    truncated: bool
+    results: List[Dict[str, Any]]
+    warnings: List[Dict[str, Any]]
