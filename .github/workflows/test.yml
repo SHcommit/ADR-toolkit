@@ -33,6 +33,23 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/unit tests/integration -v --cov=skills/adr-toolkit/scripts --cov-branch --cov-report=term-missing --cov-fail-under=85
 
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install mypy
+        run: pip install mypy
+      - name: Type-check the fully-typed core modules
+        run: >-
+          mypy
+          skills/adr-toolkit/scripts/core/atomic_io.py
+          skills/adr-toolkit/scripts/core/telemetry.py
+          skills/adr-toolkit/scripts/core/contracts.py
+          --strict
+
   version-drift:
     runs-on: ubuntu-latest
     steps:

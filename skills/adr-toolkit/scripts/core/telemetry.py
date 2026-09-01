@@ -25,12 +25,12 @@ class _JsonLogFormatter(logging.Formatter):
             "correlation_id": getattr(record, "correlation_id", None),
             "message": record.getMessage(),
         }
-        if record.exc_info:
+        if record.exc_info and record.exc_info[0] is not None:
             payload["exception_type"] = record.exc_info[0].__name__
         return json.dumps(payload, ensure_ascii=False)
 
 
-def get_logger(operation: str, *, correlation_id: Optional[str] = None) -> logging.LoggerAdapter:
+def get_logger(operation: str, *, correlation_id: Optional[str] = None) -> "logging.LoggerAdapter[logging.Logger]":
     """Return a per-call logger bound to `operation`. The handler is
     rebuilt on every call (rather than cached on the module-level logger)
     so it always binds to the *current* sys.stderr -- this is what makes

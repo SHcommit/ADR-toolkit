@@ -13,6 +13,7 @@ import sys
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 if sys.platform == "win32":
     import msvcrt
@@ -51,7 +52,7 @@ def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> N
 
 
 @contextmanager
-def adr_directory_lock(directory: Path):
+def adr_directory_lock(directory: Path) -> Iterator[None]:
     """Serialize ID allocation + writes for one ADR/exceptions directory
     across processes. The lock file lives inside `directory` itself so a
     fresh clone or a brand-new `docs/decisions/` needs no extra setup."""
