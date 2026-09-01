@@ -7,7 +7,7 @@ or caller that reads a field that was renamed or removed. Command
 which TypedDict can't model without a larger refactor; that is tracked
 separately and not attempted here.
 """
-from typing import List, TypedDict
+from typing import Any, Dict, List, TypedDict
 
 
 class CommandError(TypedDict, total=False):
@@ -30,4 +30,24 @@ class CreateResult(BaseResult, total=False):
     created: str
     would_create: str
     id: str
+    errors: List[CommandError]
+
+
+class CheckFinding(TypedDict, total=False):
+    adr_id: str
+    kind: str
+    confidence: str
+    rule_id: str
+    severity: str
+    message: str
+    file: str
+    evidence: Dict[str, Any]
+    resolutions: List[str]
+    exception: Dict[str, Any]
+
+
+class CheckResult(BaseResult, total=False):
+    diff: Dict[str, Any]
+    findings: List[CheckFinding]
+    warnings: List[Dict[str, Any]]
     errors: List[CommandError]
