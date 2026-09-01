@@ -37,6 +37,45 @@ also touch.
 
 ## Done
 
-Resolved items are recorded in `changelog.md` (what shipped) and git history
-(exactly how) rather than kept here — this section stays empty between
-sessions.
+Normally this section stays empty between sessions (resolved items live in
+`changelog.md` + git history instead). Populated once here as a
+cross-session handoff summary at the owner's explicit request — clear this
+back out next time a session does routine cleanup, per the usual rule.
+
+All of it is on branch `feature/analyzing-adr-toolkit`, not merged/PR'd
+yet (owner's explicit choice: keep as-is). Full detail, code, and
+rationale for every item lives in `docs/adr-toolkit-audit-report.md` and
+the 3 (gitignored) plan files under `docs/superpowers/plans/2026-09-01-*`.
+
+**Critical** — atomic writes + directory locking (`core/atomic_io.py`,
+wired into create/exception/supersede so concurrent invocations can't
+duplicate ADR/exception IDs or corrupt files); ReDoS timeout guard on
+CHECK's author-supplied regex patterns; Markdown link-injection escape in
+the generated `docs/decisions/README.md`; structured stderr logging with
+correlation IDs (`core/telemetry.py`).
+
+**High** — `--dir`/`--root` path-escape guard (`PathEscapesRootError`);
+CI branch-coverage gate at 85% (measured baseline: 93.32%); `mypy --strict`
+CI gate + `core/contracts.py` (typed result shapes); `adr.py --diagnostic`
+timing flag; OS-level (fork+SIGKILL) proof that a mid-write crash never
+tears an ADR file; shared adapter-manifest validator
+(`scripts/adapter_sdk.py`) used by all 4 manifest-based harness adapters.
+
+**Medium** — common `AdrToolkitError` base class for all 6 domain
+exceptions (also closed a gap: `PathEscapesRootError` was raised but never
+actually caught at any of its 7 call sites until this pass); schema-drift
+regression test between `schemas/*.json` and the runtime validators (no
+`jsonschema` dependency added, by design); bulk-ADR (200 fixtures)
+performance sanity check; TTY-only human summary line on stderr
+(`ADR_TOOLKIT_NO_COLOR` to suppress); `core/contracts.py` extended from
+2/16 to 16/16 commands.
+
+**Declined, not done** — parsing-result caching (`functools.lru_cache`):
+this CLI is a fresh process per invocation, so an in-process cache can't
+reduce the actual cross-invocation re-parsing the audit worried about, and
+no single command re-parses a file more than once internally either. Left
+as a Critical-domain note in `docs/adr-toolkit-audit-report.md`, not
+reopened without a real usage signal that changes this analysis.
+
+Test suite: 395 → 465 passing, zero regressions. CI gained a `type-check`
+job and an 85% coverage gate.

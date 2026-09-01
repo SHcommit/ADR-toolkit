@@ -94,18 +94,39 @@ Excluded here, being handled elsewhere -- do not touch:
   another worktree. Every fix across all 3 passes that touched adapter or
   generator code was a code fix, not README prose.
 
-## Next step
+## Next step (for a new session picking this up cold)
 
-Nothing is currently in flight, and nothing is left unscheduled inside
-this worktree's scope -- `improvements.md`'s only remaining Open items
-are the 2 explicitly deferred to another worktree. If a future session is
-asked to "continue per improvements.md/handoff.md" again and finds
-nothing left there, that is the correct, complete state -- don't invent
-new work; ask the owner what's next. Every scope decision across all
-passes (Critical-then-High-then-Medium ordering, domain 1/5 exclusion,
-the other-worktree exclusions, the parsing-cache decline) was the owner's
-explicit call or a judgment call made and explained in-session, not
-something derivable from the audit report alone.
+**Nothing is currently in flight.** Working tree is clean, everything is
+committed on `feature/analyzing-adr-toolkit`, nothing pushed/PR'd.
+`improvements.md`'s `## Open` section has exactly 2 items left, both
+explicitly flagged `(다른 워크트리 확인)` -- they belong to a *different*
+worktree (automatic version sync), not this one. Do not start them here.
+
+So, concretely, for this worktree:
+
+1. There is no queued task. Do not invent one.
+2. If the user says "continue" / "다음 작업 진행해줘" without naming a
+   task: tell them the in-scope backlog is empty, and ask what they want
+   next (new feature? merge/PR this branch? something outside the audit
+   report entirely?) -- do not restart already-declined work
+   (parsing-result cache) or reach into another worktree's items without
+   being told to.
+3. If the user wants to finish this branch (merge to `develop` / open a
+   PR): that decision was deferred every time it came up this session
+   (owner chose "keep as-is" each time) -- ask again fresh, don't assume
+   the answer carried forward.
+4. If the user references a new audit finding or a fresh problem: that's
+   genuinely new work -- use the same pattern this session established
+   (writing-plans -> executing-plans, TDD, one commit per task, verify
+   real test/mypy output before each commit) rather than skipping
+   straight to edits.
+
+Every scope decision across all passes (Critical-then-High-then-Medium
+ordering, domain 1/5 exclusion, the other-worktree exclusions, the
+parsing-cache decline) was the owner's explicit call or a judgment call
+made and explained in-session, not something derivable from the audit
+report alone -- see `improvements.md`'s `## Done` for the full rationale
+on each.
 
 ## Verification
 
