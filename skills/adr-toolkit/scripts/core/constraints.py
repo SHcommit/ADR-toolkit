@@ -33,6 +33,18 @@ class ConstraintsError(AdrToolkitError):
     error_code = "BAD_CONSTRAINTS"
 
 
+def lint(body: str) -> list:
+    """Best-effort pre-flight check for a malformed constraints: block, so a
+    typo surfaces at CREATE/STATUS time instead of silently going
+    unenforced until CHECK runs against it later
+    (docs/adr-toolkit-audit-report.md §2.5 5.2)."""
+    try:
+        extract_constraints(body)
+    except ConstraintsError as exc:
+        return [{"code": "BAD_CONSTRAINTS", "detail": str(exc)}]
+    return []
+
+
 def extract_constraints(body: str) -> list:
     rules = []
     for fence_match in FENCE_RE.finditer(body):

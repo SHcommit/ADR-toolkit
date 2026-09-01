@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 
 from scripts.core import atomic_io
+from scripts.core import constraints
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.config import ConfigError, resolve_locale
@@ -176,7 +177,14 @@ def run(args) -> dict:
                 "errors": [{"code": "SCHEMA_ERROR", "detail": e} for e in schema_errors],
             }
 
-        return {"ok": True, "operation": "create", "dry_run": True, "would_create": str(target), "id": frontmatter_data["id"]}
+        return {
+            "ok": True,
+            "operation": "create",
+            "dry_run": True,
+            "would_create": str(target),
+            "id": frontmatter_data["id"],
+            "warnings": constraints.lint(draft["body"]),
+        }
 
     with atomic_io.adr_directory_lock(adr_dir):
         next_num = identifiers.next_id(adr_dir)
@@ -208,4 +216,5 @@ def run(args) -> dict:
             "dry_run": False,
             "created": str(target),
             "id": frontmatter_data["id"],
+            "warnings": constraints.lint(draft["body"]),
         }

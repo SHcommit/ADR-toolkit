@@ -30,6 +30,7 @@ class CreateResult(BaseResult, total=False):
     created: str
     would_create: str
     id: str
+    warnings: List[Dict[str, Any]]
     errors: List[CommandError]
 
 
@@ -103,6 +104,7 @@ class StatusResult(BaseResult, total=False):
     would_update: str
     updated: str
     to: str
+    warnings: List[Dict[str, Any]]
     errors: List[Dict[str, Any]]
 
 

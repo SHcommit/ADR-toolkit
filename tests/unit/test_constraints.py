@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.core.constraints import ConstraintsError, extract_constraints
+from scripts.core.constraints import ConstraintsError, extract_constraints, lint
 
 BODY_WITH_CONSTRAINTS = """# Use a provider port
 
@@ -91,3 +91,17 @@ def test_all_six_known_kinds_are_accepted():
             "    severity: major\n    message: \"m\"\n```\n"
         )
         assert extract_constraints(body)[0]["kind"] == kind
+
+
+def test_lint_returns_no_warnings_for_a_valid_body():
+    assert lint(BODY_WITH_CONSTRAINTS) == []
+
+
+def test_lint_returns_no_warnings_for_a_body_with_no_constraints_block():
+    assert lint("# Just prose\n\nNo constraints here.\n") == []
+
+
+def test_lint_returns_a_bad_constraints_warning_for_a_malformed_block():
+    warnings = lint(BODY_WITH_UNKNOWN_KIND)
+    assert warnings == [{"code": "BAD_CONSTRAINTS", "detail": warnings[0]["detail"]}]
+    assert "forbidden_imports" in warnings[0]["detail"]

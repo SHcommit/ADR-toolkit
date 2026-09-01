@@ -223,3 +223,46 @@ def test_conflicting_cli_and_draft_slugs_return_structured_error(tmp_path):
 
     assert result["ok"] is False
     assert result["errors"][0]["code"] == "CONFLICTING_SLUG_INPUT"
+
+
+def test_create_warns_on_malformed_constraints_block(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    draft_path = _write_draft(
+        tmp_path,
+        body=(
+            "# Decision\n\nBody.\n\n"
+            "```yaml\nconstraints:\n  - id: r\n    kind: forbidden_imports\n```\n"
+        ),
+    )
+
+    result = create.run(_args(tmp_path, draft_path, adr_dir))
+
+    assert result["ok"] is True
+    assert result["warnings"] == [{
+        "code": "BAD_CONSTRAINTS",
+        "detail": result["warnings"][0]["detail"],
+    }]
+    assert "forbidden_imports" in result["warnings"][0]["detail"]
+
+
+def test_create_dry_run_also_warns_on_malformed_constraints_block(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    draft_path = _write_draft(
+        tmp_path,
+        body="# Decision\n\n```yaml\nconstraints:\n  - id: r\n    kind: bogus\n```\n",
+    )
+
+    result = create.run(_args(tmp_path, draft_path, adr_dir, dry_run=True))
+
+    assert result["ok"] is True
+    assert result["warnings"][0]["code"] == "BAD_CONSTRAINTS"
+
+
+def test_create_has_no_warnings_for_a_clean_body(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    draft_path = _write_draft(tmp_path)
+
+    result = create.run(_args(tmp_path, draft_path, adr_dir))
+
+    assert result["ok"] is True
+    assert result["warnings"] == []
