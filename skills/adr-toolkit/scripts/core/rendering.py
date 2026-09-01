@@ -1,5 +1,18 @@
 """Render deterministic ADR Markdown from localized structural strings."""
+import re
+
 from scripts.core.locale import load_locale
+
+_MD_LINK_UNSAFE_RE = re.compile(r"[\\\[\]()]")
+
+
+def safe_md_link_text(text: str) -> str:
+    """Escape characters that would let ADR-authored text break out of a
+    Markdown `[text](target)` span -- e.g. close the link early and open a
+    second one pointing somewhere else."""
+    collapsed = " ".join(str(text).split())
+    return _MD_LINK_UNSAFE_RE.sub(lambda match: "\\" + match.group(0), collapsed)
+
 
 PROMPT_KEYS = (
     "prompt.title", "prompt.problem", "prompt.options", "prompt.decision",
