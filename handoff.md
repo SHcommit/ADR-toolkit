@@ -58,6 +58,28 @@ the remaining 14 commands (was 2/16, now 16/16) -- each shape read from
 the actual `run()` return statements, not guessed, and spot-checked
 against real error-path output for `status`/`supersede` too.
 
+**Low-priority follow-up** (3 of 4 audit-report Low items):
+`0307a1c` allows `proposed -> deprecated` and documents `constraints:`
+block review in `CONTRIBUTING.md`; `9a44342` adds `core/constraints.lint()`
+and wires it into `create.py` (always) and `status.py` (only on
+transition to `accepted`, since that's the status CHECK actually enforces
+constraints against) so a typo surfaces at authoring time instead of only
+at CHECK time -- `CreateResult`/`StatusResult` gained a `warnings` field
+to match. The 4th item (Antigravity in `harness-parity`) stays open,
+blocked on `agy` getting a public package registry.
+
+**Concurrent work (owner's own coordination, not this session's):** the
+owner assigned `improvements.md`'s "도입 지표 수집 스크립트"
+(adoption-metrics script, from `docs/enterprise-adoption.md` §7) to a
+**Codex session running in this same worktree/branch** in parallel with
+this session, specifically because it's a new-file-only task with no
+overlap against the files this session was touching. If you see an
+uncommitted or newly-committed `scripts/adoption_metrics.py` (or
+similarly named) plus a matching test file that you don't recognize
+authoring, that's Codex's work landing -- don't revert it, and check
+`improvements.md`'s enterprise-adoption.md sub-group for whether it's
+already been checked off before restarting it.
+
 All 3 plan files are gitignored by convention (`docs/superpowers/plans/`)
 but still on disk in this worktree.
 
@@ -134,37 +156,37 @@ Excluded here, being handled elsewhere -- do not touch:
 
 ## Next step (for a new session picking this up cold)
 
-**Nothing is currently in flight in this worktree's own scope**, but
-`improvements.md` now carries a **Low-priority tier** (added this
-session from `docs/enterprise-adoption.md` §8) that a future session can
-pick up -- see that file's `### Low` section for the exact items and
-their preconditions. Concretely:
+**Only one small item is truly open in this worktree's own scope**
+(the Antigravity/harness-parity one below); everything else left in
+`improvements.md` is either someone else's worktree, a precondition-gated
+enterprise-adoption item, or in flight in a parallel Codex session (see
+above). Concretely:
 
 1. `improvements.md`'s `## Open` → `### High` still has exactly 2 items
    left, both flagged `(다른 워크트리 확인)` -- still someone else's.
    Do not start them here.
-2. `improvements.md`'s new `### Low` section has items sourced from
-   `docs/enterprise-adoption.md`. Read that section's notes carefully
-   before starting any of them: most are **not pure code tasks** --
-   they're gated on real-world preconditions (the repository actually
-   going public, 2+ repositories existing) that no amount of local
-   editing satisfies. Don't "implement" a GitHub ruleset change by
-   writing a script that doesn't actually call the GitHub API against a
-   real public repo, and don't build multi-repo tooling against a
-   single-repo reality.
-3. If the user says "continue" / "다음 작업 진행해줘" without naming a
-   task: check `improvements.md`'s `### Low` section first (that's the
-   one open, actionable-albeit-constrained tier); don't restart
-   already-declined work (parsing-result cache) or reach into another
-   worktree's High items without being told to.
-4. If the user wants to finish this branch (merge to `develop` / open a
+2. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
+   item left (Antigravity in `harness-parity`), blocked on an external
+   fact (agy public registry support) -- don't start it, just note it's
+   blocked if asked.
+3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group: check
+   whether the Codex session's adoption-metrics work has landed and been
+   checked off before assuming it's still open. The other 3 items there
+   remain precondition-gated (repository going public, 2+ maintainers,
+   2+ repositories) -- **not pure code tasks**, don't "implement" a
+   GitHub ruleset change or multi-repo tooling against a single private
+   repo's reality.
+4. If the user says "continue" / "다음 작업 진행해줘" without naming a
+   task: at this point the honest answer may be "nothing is open here" --
+   say so and ask what's next, rather than inventing scope.
+5. If the user wants to finish this branch (merge to `develop` / open a
    PR): that decision was deferred every time it came up this session
    (owner chose "keep as-is" each time) -- ask again fresh, don't assume
    the answer carried forward. Note this branch now includes the merged
    `origin/develop` history (see above), so a future merge/PR back to
    `develop` should be a clean fast-forward-friendly merge, not a repeat
    of this session's conflict resolution.
-5. If the user references a new audit finding or a fresh problem: that's
+6. If the user references a new audit finding or a fresh problem: that's
    genuinely new work -- use the same pattern this session established
    (writing-plans -> executing-plans, TDD, one commit per task, verify
    real test/mypy output before each commit) rather than skipping
@@ -179,14 +201,14 @@ on each.
 
 ## Verification
 
-Full suite before the `origin/develop` merge:
-`python3 -m pytest tests/unit tests/integration -v` -> 465 passed. Re-run
-this after the merge to get the current combined count (develop's new
-`tests/integration/test_examples.py` and expanded
-`test_antigravity_adapter.py` add more). CI now also runs `type-check`
-(`mypy --strict`), `examples-drift` (from develop), and `pr-title-check`
-(from develop) jobs alongside the existing `pytest` (now coverage-gated
-at 85%), `version-drift`, and `harness-parity` jobs.
+`python3 -m pytest tests/unit tests/integration -v` -> 479 passed as of
+commit `9a44342` (395 at session start -> 465 before the `origin/develop`
+merge -> 469 after merging in develop's own new tests -> 479 after the
+Low-priority follow-up work). Re-run to pick up whatever Codex's parallel
+adoption-metrics work adds. CI now also runs `type-check` (`mypy
+--strict`), `examples-drift` (from develop), and `pr-title-check` (from
+develop) jobs alongside the existing `pytest` (now coverage-gated at
+85%), `version-drift`, and `harness-parity` jobs.
 
 ## Open risks
 

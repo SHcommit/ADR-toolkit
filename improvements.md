@@ -40,29 +40,14 @@ also touch.
 두 개의 서로 다른 출처가 섞여 있어 각 항목에 출처를 명시했다.
 
 **출처: `docs/adr-toolkit-audit-report.md`의 🟢 Low 리스크 항목 8개 중,
-"추가 조치 불요"이거나 이번 세션/`origin/develop` 병합으로 이미 해소된
-것(1.3 관련 없음, 6.1, 8.3, 8.4 PR 제목 체크는 `pr-title-check` job으로
-이미 존재, 5.3의 README 이스케이프 비일관성은 이번 세션 `safe_md_link_text`
-작업으로 이미 해소)을 제외하고, 실제로 아직 안 한 것만 남긴 4건:**
+"추가 조치 불요"이거나 이미 해소된 것을 제외하고 실제로 안 한 것 4건
+중 3건 완료(`0307a1c`, `9a44342`). 남은 건 1건뿐:**
 
 - [ ] *(전제조건: Antigravity CLI가 공개 패키지 레지스트리 지원)*
   **harness-parity CI에 Antigravity 편입** — 현재 Codex/Gemini만 CI에서
   실제 설치까지 검증하고 Antigravity(`agy`)는 README에 "수동 검증"으로
   명시됨. `agy` 작업 자체는 다른 브랜치 소관이라 이 항목도 그쪽과 함께
   검토. (감사 보고서 §2.1 1.2)
-- [ ] **CODEOWNERS로 `constraints:` 블록 보호 문서화** — 격리 계층 대신
-  프로세스 통제로: ADR 디렉터리의 `constraints:` 블록을 승인 권한자만
-  병합하도록 `CONTRIBUTING.md`에 명문화. 코드 변경 없이 문서 한 줄이면
-  됨 — 지금 바로 가능. (감사 보고서 §2.2 2.1)
-- [ ] **`proposed → deprecated` 전이 추가** — `core/lifecycle.py`의
-  `ALLOWED_TRANSITIONS["proposed"]`에 `"deprecated"` 한 줄 추가 +
-  `test_lifecycle.py`에 파라미터 1건 추가. 합의 없이 제안을 철회하는
-  실무 케이스 지원. 아키텍처 변경 불요, 지금 바로 가능. (감사 보고서
-  §2.5 5.1)
-- [ ] **CHECK 사전 린트를 CREATE/STATUS 시점으로 앞당기기** — 현재는
-  `constraints:` 블록 오탈자(ReDoS 포함)가 CHECK 실행 시점에야 발견됨.
-  `validate.py`에 이미 있는 파싱 흐름을 `create.py`/`status.py` 종료
-  직전에도 실행해 ADR 작성 시점에 조기 경고. (감사 보고서 §2.5 5.2)
 
 **출처: `docs/enterprise-adoption.md` §4/§6-9** — 코드/아키텍처 감사와는
 별개의, 조직 도입·거버넌스 성숙도를 다루는 문서. 아래 항목 대부분은
@@ -121,7 +106,17 @@ no single command re-parses a file more than once internally either. Left
 as a Critical-domain note in `docs/adr-toolkit-audit-report.md`, not
 reopened without a real usage signal that changes this analysis.
 
+**Low (audit-report-sourced, 3 of 4)** — `constraints:` block review
+documented in `CONTRIBUTING.md`; `proposed → deprecated` lifecycle
+transition added; CHECK's constraints-block lint moved earlier to
+CREATE/STATUS time (`core/constraints.lint()`, new `warnings` field on
+`CreateResult`/`StatusResult`) so a typo surfaces at authoring time
+instead of only when CHECK later runs against it. The 4th item
+(Antigravity in harness-parity CI) stays open, blocked on `agy` getting a
+public package registry.
+
 Test suite: 395 → 465 passing (this branch's own work), zero regressions;
-469 passing after merging `origin/develop`'s own new tests in. CI gained
-a `type-check` job and an 85% coverage gate (this branch), plus
-`examples-drift` and `pr-title-check` jobs (from `origin/develop`).
+469 after merging `origin/develop`; 479 after the Low-priority follow-up
+work above. CI gained a `type-check` job and an 85% coverage gate (this
+branch), plus `examples-drift` and `pr-title-check` jobs (from
+`origin/develop`).
