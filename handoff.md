@@ -5,9 +5,32 @@
 **The Critical, High-priority, and Medium-priority hardening passes are
 all done.** Every findable item from `docs/adr-toolkit-audit-report.md`
 that was in scope for this worktree is implemented, tested, and
-committed on `feature/analyzing-adr-toolkit`. Full suite: 452 passed (up
-from 395 at session start). Branch stays as-is per owner's explicit
-choice (not merged/PR'd yet).
+committed on `feature/analyzing-adr-toolkit`. Branch stays as-is per
+owner's explicit choice (not merged/PR'd yet).
+
+**`origin/develop` was merged into this branch** after diverging
+significantly: it now includes the `v0.2.1` release (examples redesign,
+Korean docs suite, `scripts/verify_examples.py` verification pipeline),
+the Antigravity (`agy`) plugin manifest enhancements, `.githooks/pre-push`,
+and a Conventional-Commits PR title CI check -- all from other
+worktrees/branches, per this repo's own scope split. The merge touched 3
+files with real conflicts, resolved as follows:
+- `changelog.md`: their `v0.2.1` release cut moved the old "Unreleased"
+  bullets into a `## v0.2.1 (2026-08-31)` section and started a fresh
+  "Unreleased" for post-release work; this branch's 16 hardening bullets
+  were genuinely-still-unreleased, so they were merged into that same
+  fresh "Unreleased" section alongside their 7 new bullets.
+- `tests/unit/test_antigravity_adapter.py`: both sides added a new test
+  function (this branch's shared-validator test, their symlink-layout
+  test) -- kept both. Their new test called `pytest.skip(...)` without
+  `import pytest`; added the import as part of resolving this, since
+  otherwise a symlink-unsupported environment would hit `NameError`
+  instead of skipping cleanly.
+- `handoff.md` (this file): kept this branch's detailed history, folded
+  in a short note (this paragraph) about what merged in from develop.
+  `.github/workflows/test.yml` auto-merged cleanly (both sides' new CI
+  jobs coexist: `pytest`+coverage, `type-check`, `examples-drift`,
+  `pr-title-check`, `harness-parity`, `version-drift`).
 
 **Critical pass** (`docs/superpowers/plans/2026-09-01-critical-hardening.md`):
 `fc46830` atomic write + lock primitives, `49ede49` create.py race fix,
@@ -41,8 +64,10 @@ but still on disk in this worktree.
 `improvements.md` now has: an empty `### Critical` section, a `### High`
 section containing only the 2 items explicitly deferred to another
 worktree, and a `### Medium` section with exactly one item -- the
-parsing-result cache, marked **declined with rationale** (see below).
-Nothing else is open in this worktree's scope.
+parsing-result cache, marked **declined with rationale** (see below). It
+also has a **Low-priority tier**, added at the owner's request, pulled
+from `docs/enterprise-adoption.md` §8 -- see that section below for why
+most of those items are precondition-gated rather than pure code tasks.
 
 **One Medium item was declined, not silently skipped:** the audit's
 `functools.lru_cache` suggestion for parsing-result caching provides zero
@@ -85,7 +110,8 @@ Excluded here, being handled elsewhere -- do not touch:
 
 - Domains 1 (core/plugin architecture) and 5 (governance/FSM) from the
   audit report.
-- Anything Antigravity (`agy`) adapter-related -- another branch.
+- Anything Antigravity (`agy`) adapter-related -- another branch (now
+  merged into `develop` as of this session's merge -- see above).
 - Automatic version sync -- another worktree; **do not touch
   `.github/workflows/release.yml` for any reason.** The 2 remaining
   "(다른 워크트리 확인)" items in `improvements.md`'s `### High` section
@@ -96,26 +122,37 @@ Excluded here, being handled elsewhere -- do not touch:
 
 ## Next step (for a new session picking this up cold)
 
-**Nothing is currently in flight.** Working tree is clean, everything is
-committed on `feature/analyzing-adr-toolkit`, nothing pushed/PR'd.
-`improvements.md`'s `## Open` section has exactly 2 items left, both
-explicitly flagged `(다른 워크트리 확인)` -- they belong to a *different*
-worktree (automatic version sync), not this one. Do not start them here.
+**Nothing is currently in flight in this worktree's own scope**, but
+`improvements.md` now carries a **Low-priority tier** (added this
+session from `docs/enterprise-adoption.md` §8) that a future session can
+pick up -- see that file's `### Low` section for the exact items and
+their preconditions. Concretely:
 
-So, concretely, for this worktree:
-
-1. There is no queued task. Do not invent one.
-2. If the user says "continue" / "다음 작업 진행해줘" without naming a
-   task: tell them the in-scope backlog is empty, and ask what they want
-   next (new feature? merge/PR this branch? something outside the audit
-   report entirely?) -- do not restart already-declined work
-   (parsing-result cache) or reach into another worktree's items without
-   being told to.
-3. If the user wants to finish this branch (merge to `develop` / open a
+1. `improvements.md`'s `## Open` → `### High` still has exactly 2 items
+   left, both flagged `(다른 워크트리 확인)` -- still someone else's.
+   Do not start them here.
+2. `improvements.md`'s new `### Low` section has items sourced from
+   `docs/enterprise-adoption.md`. Read that section's notes carefully
+   before starting any of them: most are **not pure code tasks** --
+   they're gated on real-world preconditions (the repository actually
+   going public, 2+ repositories existing) that no amount of local
+   editing satisfies. Don't "implement" a GitHub ruleset change by
+   writing a script that doesn't actually call the GitHub API against a
+   real public repo, and don't build multi-repo tooling against a
+   single-repo reality.
+3. If the user says "continue" / "다음 작업 진행해줘" without naming a
+   task: check `improvements.md`'s `### Low` section first (that's the
+   one open, actionable-albeit-constrained tier); don't restart
+   already-declined work (parsing-result cache) or reach into another
+   worktree's High items without being told to.
+4. If the user wants to finish this branch (merge to `develop` / open a
    PR): that decision was deferred every time it came up this session
    (owner chose "keep as-is" each time) -- ask again fresh, don't assume
-   the answer carried forward.
-4. If the user references a new audit finding or a fresh problem: that's
+   the answer carried forward. Note this branch now includes the merged
+   `origin/develop` history (see above), so a future merge/PR back to
+   `develop` should be a clean fast-forward-friendly merge, not a repeat
+   of this session's conflict resolution.
+5. If the user references a new audit finding or a fresh problem: that's
    genuinely new work -- use the same pattern this session established
    (writing-plans -> executing-plans, TDD, one commit per task, verify
    real test/mypy output before each commit) rather than skipping
@@ -130,12 +167,14 @@ on each.
 
 ## Verification
 
-Full suite: `python3 -m pytest tests/unit tests/integration -v` -> 465
-passed as of commit `1df6066` (464 on Windows, where the SIGKILL chaos
-test is skipped).
-
-CI now also runs a `type-check` job (`mypy --strict`) and gates the
-`pytest` job's coverage at 85%.
+Full suite before the `origin/develop` merge:
+`python3 -m pytest tests/unit tests/integration -v` -> 465 passed. Re-run
+this after the merge to get the current combined count (develop's new
+`tests/integration/test_examples.py` and expanded
+`test_antigravity_adapter.py` add more). CI now also runs `type-check`
+(`mypy --strict`), `examples-drift` (from develop), and `pr-title-check`
+(from develop) jobs alongside the existing `pytest` (now coverage-gated
+at 85%), `version-drift`, and `harness-parity` jobs.
 
 ## Open risks
 
@@ -158,4 +197,6 @@ CI now also runs a `type-check` job (`mypy --strict`) and gates the
 - (carried over, still true) GitHub branch/tag protection is unavailable
   on the current private plan; revisit once the repository goes public
   after most audit findings are done and the version bumps to 1.0.0 (see
-  project memory `project_v1_public_release_plan`).
+  project memory `project_v1_public_release_plan`) -- this is also the
+  precondition blocking `improvements.md`'s new Low-priority item #1
+  (`docs/enterprise-adoption.md`'s public-transition ruleset gate).
