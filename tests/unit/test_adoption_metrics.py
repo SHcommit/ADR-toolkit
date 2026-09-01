@@ -109,6 +109,40 @@ def test_read_exceptions_keeps_valid_records_and_warns_for_bad_json(tmp_path):
     assert warnings[0]["file"] == "0002.json"
 
 
+def test_read_adrs_warns_and_skips_an_invalid_date(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted", date="not-a-date")
+
+    records, warnings = adoption_metrics.read_adrs(adr_dir)
+
+    assert records == []
+    assert warnings[0]["code"] == "BAD_FRONTMATTER"
+    assert "date" in warnings[0]["detail"]
+
+
+def test_read_exceptions_warns_and_skips_an_invalid_expiry(tmp_path):
+    exceptions_dir = tmp_path / "exceptions"
+    exceptions_dir.mkdir()
+    invalid = {
+        "id": "EXC-0001",
+        "adr_id": "ADR-0001",
+        "rule_id": "r1",
+        "owner": "team",
+        "reason": "migration",
+        "scope": ["src/a.py"],
+        "created": "2026-01-01",
+        "expiry": "not-a-date",
+    }
+    (exceptions_dir / "0001.json").write_text(json.dumps(invalid), encoding="utf-8")
+
+    records, warnings = adoption_metrics.read_exceptions(tmp_path)
+
+    assert records == []
+    assert warnings[0]["code"] == "BAD_EXCEPTION"
+    assert "expiry" in warnings[0]["detail"]
+
+
 def test_decision_lead_time_is_median_completed_cycle_hours():
     events = [
         _event(
@@ -287,6 +321,34 @@ def test_supersession_rate_is_unavailable_when_no_acceptance_is_observed():
     assert result["rate"] is None
     assert result["accepted"] == 0
     assert result["reason"] == "No accepted transitions were observed in the period."
+
+
+def test_supersession_rate_counts_an_adr_first_observed_as_accepted():
+    events = [
+        _event(
+            "adr_created",
+            "2026-01-02T00:00:00Z",
+            source="git",
+            adr_id="ADR-0001",
+            status="accepted",
+        ),
+        _event(
+            "adr_status_changed",
+            "2026-01-03T00:00:00Z",
+            source="git",
+            adr_id="ADR-0001",
+            **{"from": "accepted", "to": "superseded"},
+        ),
+    ]
+
+    result = adoption_metrics.calculate_metrics([], [], events, SINCE, UNTIL)[
+        "supersession_rate"
+    ]
+
+    assert result["available"] is True
+    assert result["accepted"] == 1
+    assert result["superseded"] == 1
+    assert result["rate"] == 1.0
 
 
 def test_unresolved_violations_use_first_observation_after_latest_resolution():
@@ -651,3 +713,182 @@ def test_collect_github_payload_hides_provider_stderr_on_failure(tmp_path, monke
         }
     ]
     assert "secret-value" not in json.dumps(warnings)
+
+
+def test_cli_emits_one_json_report_and_degrades_without_optional_history(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+    assert return_code == 0
+    assert captured.err == ""
+    assert result["ok"] is True
+    assert result["operation"] == "adoption_metrics"
+    assert result["schema_version"] == 1
+    assert result["period"] == {"since": "2026-01-01", "until": "2026-01-31"}
+    assert set(result["metrics"]) == {
+        "decision_lead_time",
+        "review_latency",
+        "supersession_rate",
+        "unresolved_violations",
+        "exception_age",
+    }
+    assert result["metrics"]["decision_lead_time"]["available"] is False
+    assert result["metrics"]["exception_age"]["available"] is True
+    assert [warning["code"] for warning in result["warnings"]] == ["GIT_UNAVAILABLE"]
+
+
+def test_cli_uses_explicit_events_to_calculate_lead_time(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(
+        json.dumps(
+            _event(
+                "adr_created",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                status="proposed",
+            )
+        )
+        + "\n"
+        + json.dumps(
+            _event(
+                "adr_status_changed",
+                "2026-01-02T00:00:00Z",
+                adr_id="ADR-0001",
+                **{"from": "proposed", "to": "accepted"},
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--since",
+            "2026-01-01",
+            "--until",
+            "2026-01-31",
+            "--events",
+            "events.jsonl",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert return_code == 0
+    assert result["metrics"]["decision_lead_time"]["median_hours"] == 24.0
+    assert result["metrics"]["decision_lead_time"]["sources"] == ["events"]
+
+
+def test_cli_opt_in_github_failure_is_a_warning(tmp_path, capsys, monkeypatch):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    monkeypatch.setattr(
+        adoption_metrics,
+        "collect_github_payload",
+        lambda root: (
+            None,
+            [{"code": "GITHUB_UNAVAILABLE", "detail": "No authenticated provider."}],
+        ),
+    )
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--github",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert return_code == 0
+    assert [warning["code"] for warning in result["warnings"]] == [
+        "GIT_UNAVAILABLE",
+        "GITHUB_UNAVAILABLE",
+    ]
+
+
+def test_cli_returns_json_error_for_missing_adr_directory(tmp_path, capsys):
+    return_code = adoption_metrics.main(
+        ["--root", str(tmp_path), "--dir", "docs/missing", "--json"]
+    )
+
+    captured = capsys.readouterr()
+    result = json.loads(captured.out)
+    assert return_code == 1
+    assert captured.err == ""
+    assert result["ok"] is False
+    assert result["errors"][0]["code"] == "ADR_DIR_NOT_FOUND"
+
+
+def test_cli_returns_json_error_when_adr_directory_escapes_root(tmp_path, capsys):
+    outside = tmp_path.parent / "outside-decisions"
+    outside.mkdir(exist_ok=True)
+
+    return_code = adoption_metrics.main(
+        ["--root", str(tmp_path), "--dir", str(outside), "--json"]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert return_code == 1
+    assert result["errors"] == [
+        {
+            "code": "PATH_ESCAPES_ROOT",
+            "path": str(outside.resolve()),
+        }
+    ]
+
+
+def test_cli_returns_json_error_for_invalid_period(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--since",
+            "2026-02-01",
+            "--until",
+            "2026-01-01",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert return_code == 1
+    assert result["errors"] == [
+        {
+            "code": "INVALID_PERIOD",
+            "detail": "--since must be earlier than or equal to --until.",
+        }
+    ]
