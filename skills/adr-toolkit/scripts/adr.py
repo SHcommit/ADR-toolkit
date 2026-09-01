@@ -2,6 +2,7 @@
 """Single entrypoint for all ADR Toolkit deterministic operations."""
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -208,6 +209,9 @@ def main(argv=None) -> int:
     if getattr(args, "diagnostic", False):
         result["_diagnostics"] = {"elapsed_ms": round((time.perf_counter() - started_at) * 1000, 1)}
     print(json.dumps(result, indent=2, ensure_ascii=False))
+    if sys.stderr.isatty() and not os.environ.get("ADR_TOOLKIT_NO_COLOR"):
+        status_word = "ok" if result.get("ok") else "FAILED"
+        print(f"\033[2m→ {args.operation} {status_word}\033[0m", file=sys.stderr)
     return 0 if result.get("ok") else 1
 
 
