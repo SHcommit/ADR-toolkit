@@ -2,6 +2,7 @@
 """Collect provider-neutral ADR adoption metrics as deterministic JSON."""
 
 import argparse
+import hashlib
 import json
 import re
 import statistics
@@ -35,11 +36,12 @@ EXCEPTION_FIELD_TYPES = {
 }
 EXCEPTION_ID_RE = re.compile(r"^EXC-\d{4}$")
 ADR_ID_RE = re.compile(r"^ADR-\d{4}$")
+DATE_ONLY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 EVENT_REQUIRED_FIELDS = {
     "adr_created": {"adr_id", "status"},
     "adr_status_changed": {"adr_id", "from", "to"},
-    "review_requested": {"adr_id", "reviewer"},
-    "review_submitted": {"adr_id", "reviewer", "qualified"},
+    "review_requested": {"adr_id", "reviewer", "review_cycle"},
+    "review_submitted": {"adr_id", "reviewer", "review_cycle", "qualified"},
     "violation_observed": {"fingerprint", "adr_id", "rule_id"},
     "violation_resolved": {"fingerprint", "adr_id", "rule_id"},
 }
@@ -48,6 +50,7 @@ query($owner: String!, $name: String!, $cursor: String) {
   repository(owner: $owner, name: $name) {
     pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
       nodes {
+        id
         number
         author { login }
         files(first: 100) { nodes { path } pageInfo { hasNextPage } }
@@ -74,7 +77,7 @@ query($owner: String!, $name: String!, $cursor: String) {
           pageInfo { hasNextPage }
         }
       }
-      pageInfo { hasNextPage }
+      pageInfo { hasNextPage endCursor }
     }
   }
 }
@@ -160,7 +163,11 @@ def read_exceptions(adr_dir: Path) -> Tuple[List[Dict[str, Any]], List[Dict[str,
                     raise ValueError("{} must not be empty".format(field))
             if not data["scope"]:
                 raise ValueError("scope must contain at least one path pattern")
+            if not all(isinstance(item, str) for item in data["scope"]):
+                raise ValueError("scope items must be strings")
             for field in ("created", "expiry"):
+                if not DATE_ONLY_RE.fullmatch(data[field]):
+                    raise ValueError("{} must be YYYY-MM-DD".format(field))
                 try:
                     parse_timestamp(str(data[field]))
                 except ValueError as exc:
@@ -257,7 +264,9 @@ def _event_entity(event: Dict[str, Any]) -> str:
     if "fingerprint" in event:
         return str(event["fingerprint"])
     if event.get("event") in {"review_requested", "review_submitted"}:
-        return "{}:{}".format(event.get("adr_id"), event.get("reviewer"))
+        return "{}:{}:{}".format(
+            event.get("adr_id"), event.get("review_cycle"), event.get("reviewer")
+        )
     return str(event.get("adr_id"))
 
 
@@ -599,7 +608,10 @@ def normalize_github_reviews(
         if not adr_ids:
             continue
         author = _reviewer_login(pull_request.get("author"))
-        review_cycle = "github-pr-{}".format(pull_request.get("number"))
+        provider_cycle = str(pull_request.get("id") or pull_request.get("number"))
+        review_cycle = hashlib.sha256(
+            "github:{}".format(provider_cycle).encode("utf-8")
+        ).hexdigest()[:16]
         requested = set()
         timeline_nodes = sorted(
             timeline.get("nodes", []),
@@ -698,9 +710,21 @@ def _decision_lead_time(
                 if proposed_at <= _event_time(event) <= _event_time(outcome)
             )
 
-    event_adr_ids = set(by_adr)
+    terminal_event_adr_ids = {
+        adr_id
+        for adr_id, adr_events in by_adr.items()
+        if any(
+            (
+                event.get("status")
+                if event.get("event") == "adr_created"
+                else event.get("to")
+            )
+            in {"accepted", "rejected"}
+            for event in adr_events
+        )
+    }
     for adr in adrs:
-        if str(adr.get("id")) in event_adr_ids:
+        if str(adr.get("id")) in terminal_event_adr_ids:
             continue
         if adr.get("status") not in {"accepted", "rejected", "superseded"}:
             continue
@@ -817,7 +841,9 @@ def _supersession_rate(
 
 
 def _unresolved_violations(
-    events: List[Dict[str, Any]], until: datetime
+    events: List[Dict[str, Any]],
+    until: datetime,
+    current_snapshot: Optional[set] = None,
 ) -> Dict[str, Any]:
     violation_events = [
         event
@@ -825,7 +851,7 @@ def _unresolved_violations(
         if event.get("event") in {"violation_observed", "violation_resolved"}
         and _event_time(event) <= until
     ]
-    if not violation_events:
+    if not violation_events and current_snapshot is None:
         return {
             "available": False,
             "open_count": None,
@@ -836,31 +862,9 @@ def _unresolved_violations(
             "reason": "No CHECK violation observations were available.",
         }
 
-    current_events = [
-        event for event in violation_events if event.get("observation_mode") == "current"
-    ]
-    historical_events = [
-        event for event in violation_events if event.get("observation_mode") != "current"
-    ]
-    current_fingerprints = {
-        str(event.get("fingerprint"))
-        for event in current_events
-        if event.get("event") == "violation_observed"
-    }
-    if current_events and not historical_events:
-        return {
-            "available": True,
-            "open_count": len(current_fingerprints),
-            "age_available": False,
-            "median_age_days": None,
-            "max_age_days": None,
-            "sources": sorted({str(event.get("source")) for event in current_events}),
-            "reason": "Current CHECK results have no historical first-observed evidence.",
-        }
-
     open_since: Dict[str, datetime] = {}
     sources = set()
-    for event in sorted(historical_events, key=_event_time):
+    for event in sorted(violation_events, key=_event_time):
         fingerprint = str(event.get("fingerprint"))
         sources.add(str(event.get("source")))
         if event["event"] == "violation_resolved":
@@ -868,12 +872,14 @@ def _unresolved_violations(
         elif fingerprint not in open_since:
             open_since[fingerprint] = _event_time(event)
 
-    if current_events:
-        sources.update(str(event.get("source")) for event in current_events)
-        if not current_fingerprints.issubset(open_since):
+    if current_snapshot is not None:
+        sources.add("check_results")
+        if not current_snapshot:
+            open_since = {}
+        elif not current_snapshot.issubset(open_since):
             return {
                 "available": True,
-                "open_count": len(current_fingerprints),
+                "open_count": len(current_snapshot),
                 "age_available": False,
                 "median_age_days": None,
                 "max_age_days": None,
@@ -881,7 +887,7 @@ def _unresolved_violations(
                 "reason": "Some current violations lack historical first-observed evidence.",
             }
         open_since = {
-            fingerprint: open_since[fingerprint] for fingerprint in current_fingerprints
+            fingerprint: open_since[fingerprint] for fingerprint in current_snapshot
         }
 
     ages = [(until.date() - opened.date()).days for opened in open_since.values()]
@@ -925,12 +931,15 @@ def calculate_metrics(
     events: List[Dict[str, Any]],
     since: datetime,
     until: datetime,
+    current_violation_fingerprints: Optional[set] = None,
 ) -> Dict[str, Any]:
     return {
         "decision_lead_time": _decision_lead_time(adrs, events, since, until),
         "review_latency": _review_latency(events, since, until),
         "supersession_rate": _supersession_rate(events, since, until),
-        "unresolved_violations": _unresolved_violations(events, until),
+        "unresolved_violations": _unresolved_violations(
+            events, until, current_violation_fingerprints
+        ),
         "exception_age": _exception_age(exceptions, until),
     }
 
@@ -973,6 +982,23 @@ def _default_since(
     return min(candidates) if candidates else until
 
 
+def github_adr_paths(
+    root: Path, adr_dir: Path, adrs: List[Dict[str, Any]]
+) -> Dict[str, str]:
+    top_result = _run_git(root, ["rev-parse", "--show-toplevel"])
+    repository_root = (
+        Path(top_result.stdout.strip()).resolve()
+        if top_result.returncode == 0 and top_result.stdout.strip()
+        else root
+    )
+    return {
+        (adr_dir / str(adr["file"])).resolve().relative_to(repository_root).as_posix(): str(
+            adr["id"]
+        )
+        for adr in adrs
+    }
+
+
 def build_report(
     root: Path,
     adr_dir: Path,
@@ -989,9 +1015,15 @@ def build_report(
     exceptions, exception_warnings = read_exceptions(adr_dir)
     explicit_events, explicit_warnings = read_events(event_paths)
     check_events, check_warnings = read_events(check_paths)
-    for event in check_events:
-        event["source"] = "check_results"
-        event["observation_mode"] = "current"
+    current_violation_fingerprints = (
+        {
+            str(event["fingerprint"])
+            for event in check_events
+            if event.get("event") == "violation_observed"
+        }
+        if check_paths
+        else None
+    )
     git_events, git_warnings = collect_git_events(root, adr_dir)
 
     github_events: List[Dict[str, Any]] = []
@@ -999,10 +1031,7 @@ def build_report(
     if use_github:
         payload, github_warnings = collect_github_payload(root)
         if payload is not None:
-            adr_paths = {
-                (adr_dir / str(adr["file"])).relative_to(root).as_posix(): str(adr["id"])
-                for adr in adrs
-            }
+            adr_paths = github_adr_paths(root, adr_dir, adrs)
             github_events, normalization_warnings = normalize_github_reviews(
                 payload, adr_paths
             )
@@ -1011,7 +1040,6 @@ def build_report(
     events, merge_warnings = merge_events(
         [
             ("events", explicit_events),
-            ("check_results", check_events),
             ("git", git_events),
             ("github", github_events),
         ]
@@ -1034,7 +1062,12 @@ def build_report(
             "until": until.date().isoformat(),
         },
         "metrics": calculate_metrics(
-            adrs, exceptions, events, effective_since, until
+            adrs,
+            exceptions,
+            events,
+            effective_since,
+            until,
+            current_violation_fingerprints,
         ),
         "warnings": (
             adr_warnings

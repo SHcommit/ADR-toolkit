@@ -164,6 +164,27 @@ def test_read_exceptions_rejects_wrong_types_and_invalid_ids(tmp_path):
     assert warnings[0]["code"] == "BAD_EXCEPTION"
 
 
+def test_read_exceptions_rejects_non_string_scope_and_timestamp_dates(tmp_path):
+    exceptions_dir = tmp_path / "exceptions"
+    exceptions_dir.mkdir()
+    invalid = {
+        "id": "EXC-0001",
+        "adr_id": "ADR-0001",
+        "rule_id": "r1",
+        "owner": "team",
+        "reason": "migration",
+        "scope": [123],
+        "created": "2026-01-01T12:00:00Z",
+        "expiry": "2026-02-01",
+    }
+    (exceptions_dir / "0001.json").write_text(json.dumps(invalid), encoding="utf-8")
+
+    records, warnings = adoption_metrics.read_exceptions(tmp_path)
+
+    assert records == []
+    assert warnings[0]["code"] == "BAD_EXCEPTION"
+
+
 def test_exception_created_after_report_date_is_not_counted_as_negative_age():
     exceptions = [
         {"id": "EXC-0001", "created": "2026-02-01", "expiry": "2026-03-01"}
@@ -284,6 +305,24 @@ def test_decision_lead_time_does_not_replace_pre_period_first_outcome():
     ]
 
     assert result["coverage"] == {"eligible": 0, "measured": 0, "ratio": None}
+
+
+def test_decision_lead_time_uses_snapshot_fallback_after_only_proposed_event():
+    adrs = [{"id": "ADR-0001", "status": "accepted", "date": "2026-01-02"}]
+    events = [
+        _event(
+            "adr_created",
+            "2026-01-01T00:00:00Z",
+            adr_id="ADR-0001",
+            status="proposed",
+        )
+    ]
+
+    result = adoption_metrics.calculate_metrics(adrs, [], events, SINCE, UNTIL)[
+        "decision_lead_time"
+    ]
+
+    assert result["coverage"] == {"eligible": 1, "measured": 0, "ratio": 0.0}
 
 
 def test_review_latency_uses_first_qualified_review_after_request():
@@ -716,6 +755,27 @@ def test_read_events_rejects_wrong_payload_types(tmp_path):
     assert warnings[0]["code"] == "BAD_EVENT_SCHEMA"
 
 
+def test_read_events_requires_review_cycle_for_review_events(tmp_path):
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(
+        json.dumps(
+            _event(
+                "review_requested",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                reviewer="alice",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events, warnings = adoption_metrics.read_events([events_path])
+
+    assert events == []
+    assert warnings[0]["code"] == "BAD_EVENT_SCHEMA"
+
+
 def test_merge_events_treats_equivalent_utc_timestamp_spellings_as_duplicates():
     explicit = _event(
         "adr_created",
@@ -851,6 +911,22 @@ def test_collect_git_events_follows_rename_inside_a_nested_project_root(tmp_path
     ]
 
 
+def test_github_adr_paths_are_relative_to_git_top_level_for_nested_root(tmp_path):
+    repository = tmp_path / "repository"
+    root = repository / "nested-project"
+    adr_dir = root / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _git(repository, "init")
+
+    paths = adoption_metrics.github_adr_paths(
+        root, adr_dir, [{"id": "ADR-0001", "file": "0001-test.md"}]
+    )
+
+    assert paths == {
+        "nested-project/docs/decisions/0001-test.md": "ADR-0001"
+    }
+
+
 def test_collect_git_events_degrades_cleanly_outside_a_git_repository(tmp_path):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
@@ -889,6 +965,7 @@ def test_normalize_github_reviews_qualifies_requested_non_author_reviewer():
                     "nodes": [
                         {
                             "number": 7,
+                            "id": "PR_node_opaque_7",
                             "author": {"login": "owner"},
                             "files": {
                                 "nodes": [
@@ -943,6 +1020,7 @@ def test_normalize_github_reviews_qualifies_requested_non_author_reviewer():
         ("alice", True),
     ]
     assert all(event["adr_id"] == "ADR-0001" for event in events)
+    assert all(event["review_cycle"] != "github-pr-7" for event in events)
 
 
 def test_normalize_github_reviews_warns_when_provider_result_is_truncated():
@@ -1032,6 +1110,8 @@ def test_collect_github_payload_paginates_until_all_pull_requests_are_loaded(
         elif any(value == "cursor=CURSOR-1" for value in arguments):
             stdout = json.dumps(second_page)
         else:
+            query_argument = next(value for value in arguments if value.startswith("query="))
+            assert "pageInfo { hasNextPage endCursor }" in query_argument
             stdout = json.dumps(first_page)
         return subprocess.CompletedProcess(["gh", *arguments], 0, stdout, "")
 
@@ -1170,6 +1250,51 @@ def test_cli_current_check_results_report_count_without_inventing_age(tmp_path, 
     assert violations["age_available"] is False
     assert violations["median_age_days"] is None
     assert violations["sources"] == ["check_results"]
+
+
+def test_cli_empty_current_check_snapshot_reports_zero_and_closes_stale_history(
+    tmp_path, capsys
+):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    history_path = tmp_path / "events.jsonl"
+    history_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="f1",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    check_path = tmp_path / "check.jsonl"
+    check_path.write_text("", encoding="utf-8")
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--events",
+            "events.jsonl",
+            "--check-results",
+            "check.jsonl",
+            "--json",
+        ]
+    )
+
+    violations = json.loads(capsys.readouterr().out)["metrics"]["unresolved_violations"]
+    assert return_code == 0
+    assert violations["available"] is True
+    assert violations["open_count"] == 0
 
 
 def test_cli_opt_in_github_failure_is_a_warning(tmp_path, capsys, monkeypatch):

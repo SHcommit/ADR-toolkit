@@ -124,8 +124,8 @@ Supported event names are:
 | --- | --- | --- |
 | `adr_created` | `adr_id`, `status` | Establish first known lifecycle state |
 | `adr_status_changed` | `adr_id`, `from`, `to` | Establish decision and supersession transitions |
-| `review_requested` | `adr_id`, `reviewer` | Start review latency |
-| `review_submitted` | `adr_id`, `reviewer`, `qualified` | End review latency at first qualified review |
+| `review_requested` | `adr_id`, `reviewer`, `review_cycle` | Start review latency |
+| `review_submitted` | `adr_id`, `reviewer`, `review_cycle`, `qualified` | End review latency at first qualified review |
 | `violation_observed` | `fingerprint`, `adr_id`, `rule_id` | Open or continue a violation |
 | `violation_resolved` | `fingerprint`, `adr_id`, `rule_id` | Close a previously observed violation |
 
@@ -134,6 +134,11 @@ entity key. Duplicate events from explicit input, Git reconstruction, and
 GitHub are deduplicated. Evidence precedence is explicit JSONL, then local Git,
 then GitHub. A higher-precedence event wins when two sources disagree, and the
 conflict is emitted as a warning.
+
+`review_cycle` is a provider-neutral, opaque string shared by every request and
+submission belonging to one review cycle. Provider adapters must not expose a
+pull-request number directly; the GitHub collector hashes its provider node ID
+into a stable opaque cycle key.
 
 ## Git And GitHub Collection
 
@@ -194,7 +199,9 @@ closed after a later `violation_resolved` event. At `until`, report the open
 count and each open violation's whole-day age from first uninterrupted
 observation. `--check-results` is a current snapshot: count is available, but
 age is unavailable unless matching historical observations are supplied with
-`--events`. Active exceptions remain visible and do not close violations.
+`--events`. An empty `--check-results` file is an authoritative snapshot with
+zero open violations, not missing evidence. Active exceptions remain visible
+and do not close violations.
 
 ### Exception Age
 
