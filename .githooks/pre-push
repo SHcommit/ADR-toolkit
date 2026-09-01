@@ -1,0 +1,17 @@
+#!/bin/bash
+# .githooks/pre-push
+# Prevents direct git push to protected branches (develop, master)
+
+protected_branches="^(develop|master)$"
+
+while read local_ref local_oid remote_ref remote_oid; do
+    target_branch="${remote_ref#refs/heads/}"
+
+    if [[ "$target_branch" =~ $protected_branches ]]; then
+        echo "❌ [Direct Push Blocked] '$target_branch' 브랜치로 직접 push하는 것은 금지되어 있습니다."
+        echo "   반드시 feature/* 또는 fix/* 브랜치에서 PR(Pull Request)을 올려 병합하세요!"
+        exit 1
+    fi
+done
+
+exit 0
