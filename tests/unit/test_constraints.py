@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from scripts.core.constraints import ConstraintsError, extract_constraints, lint
@@ -105,3 +107,63 @@ def test_lint_returns_a_bad_constraints_warning_for_a_malformed_block():
     warnings = lint(BODY_WITH_UNKNOWN_KIND)
     assert warnings == [{"code": "BAD_CONSTRAINTS", "detail": warnings[0]["detail"]}]
     assert "forbidden_imports" in warnings[0]["detail"]
+
+
+def _body_with_pattern(kind: str, pattern: list) -> str:
+    return (
+        "```yaml\nconstraints:\n"
+        f"  - id: r\n    kind: {kind}\n    paths: [\"src/**\"]\n"
+        f"    pattern: {json.dumps(pattern)}\n"
+        "    severity: major\n    message: \"m\"\n```\n"
+    )
+
+
+@pytest.mark.parametrize("dangerous_pattern", [
+    r"(a+)+$",
+    r"(a*)*",
+    r"(a+)*",
+    r"((a+)+)+",
+    r"(x{1,3})+",
+])
+def test_nested_quantifier_pattern_is_rejected_for_content_pattern_kinds(dangerous_pattern):
+    for kind in ("forbidden_import", "dependency_forbidden"):
+        with pytest.raises(ConstraintsError) as exc:
+            extract_constraints(_body_with_pattern(kind, [dangerous_pattern]))
+        assert "nested quantifier" in str(exc.value)
+
+
+def test_nested_quantifier_check_never_actually_runs_the_pattern(monkeypatch):
+    # The whole point is that a dangerous pattern is rejected by inspecting
+    # the pattern *string* -- it must never reach re.compile()/re.search(),
+    # which is what makes this protection work identically without a
+    # runtime timeout (i.e. on Windows, where signal.SIGALRM doesn't exist).
+    import re as re_module
+
+    def _boom(*args, **kwargs):
+        raise AssertionError("a rejected pattern must never be compiled")
+
+    monkeypatch.setattr(re_module, "compile", _boom)
+
+    with pytest.raises(ConstraintsError):
+        extract_constraints(_body_with_pattern("forbidden_import", ["(a+)+"]))
+
+
+def test_ordinary_patterns_are_not_flagged_as_dangerous():
+    body = _body_with_pattern("forbidden_import", ["openai", "anthropic", "^foo.*bar$"])
+    rules = extract_constraints(body)
+    assert rules[0]["pattern"] == ["openai", "anthropic", "^foo.*bar$"]
+
+
+def test_nested_quantifier_in_a_non_regex_kind_is_not_rejected():
+    # required_path/forbidden_path treat `pattern` as glob syntax (via
+    # core/globs.py), which can't produce catastrophic backtracking --
+    # only forbidden_import/dependency_forbidden compile it as regex.
+    body = _body_with_pattern("required_path", ["src/(a+)+/registry.py"])
+    rules = extract_constraints(body)
+    assert rules[0]["pattern"] == ["src/(a+)+/registry.py"]
+
+
+def test_lint_reports_nested_quantifier_as_bad_constraints_warning():
+    warnings = lint(_body_with_pattern("forbidden_import", ["(a+)+"]))
+    assert warnings[0]["code"] == "BAD_CONSTRAINTS"
+    assert "nested quantifier" in warnings[0]["detail"]
