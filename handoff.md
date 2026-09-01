@@ -94,8 +94,12 @@ correctly blocked (agy still has no public registry, per
 `adapters/antigravity/README.md`) -- not everything merged from that
 worktree closes every item tied to it.
 
-**Adoption metrics follow-up completed:** `9a0de45`..`7fb373e` add the
-design, JSON-only `scripts/adoption_metrics.py` collector, and focused tests.
+**Adoption metrics follow-up completed:**
+
+- [x] `9a0de45`..`f814d64` add the design, JSON-only
+  `scripts/adoption_metrics.py` collector, focused tests, review fixes, and
+  final verification records.
+
 The collector calculates all five metrics from `docs/enterprise-adoption.md`
 §7 using ADR/exception data plus optional local Git, explicit JSONL event and
 CHECK snapshot files, and GitHub review evidence. Incomplete evidence is

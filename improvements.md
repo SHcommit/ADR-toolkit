@@ -113,6 +113,12 @@ instead of only when CHECK later runs against it. The 4th item
 (Antigravity in harness-parity CI) stays open, blocked on `agy` getting a
 public package registry.
 
+- [x] **도입 지표(adoption metrics) 수집 스크립트** —
+  `scripts/adoption_metrics.py`가 `docs/enterprise-adoption.md` §7의 다섯
+  지표를 JSON으로 계산한다. ADR/exception 스냅샷, 로컬 Git, 명시적 JSONL,
+  CHECK 스냅샷, 선택적 GitHub 리뷰 근거를 지원하며 불완전한 근거는
+  coverage/availability/warning으로 노출한다. (`9a0de45`..`f814d64`)
+
 **Windows ReDoS static complexity linter** (promoted from `handoff.md`'s
 Open Risks, not originally a numbered backlog item) — `core/constraints.py`
 now statically rejects a nested-quantifier `pattern` value (e.g. `(a+)+`)
