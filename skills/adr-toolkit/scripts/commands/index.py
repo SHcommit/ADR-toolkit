@@ -7,7 +7,7 @@ from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
 from scripts.core.relationships import render_mermaid, resolve
 from scripts.core.rendering import safe_md_link_text
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 
 # Last-resort English headers, used when even the English locale file is
 # unavailable — e.g. a copy-based install (permitted by
@@ -29,7 +29,9 @@ FALLBACK_STRINGS = {
 
 def run(args) -> dict:
     root = Path(getattr(args, "root", "."))
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="index")
+    if error:
+        return error
     try:
         locale = resolve_locale(
             cli_locale=getattr(args, "locale", None),

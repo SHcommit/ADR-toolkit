@@ -11,7 +11,7 @@ from scripts.core.adr_directory import iter_adr_files
 from scripts.core.constraints import ConstraintsError, extract_constraints
 from scripts.core.exceptions import applies_to, is_expired, validate_exception
 from scripts.core.git_paths import GitPathsError, list_existing_paths
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 from scripts.core.schema import validate_frontmatter
 from scripts.rules import conflict
 
@@ -55,7 +55,9 @@ def run(args) -> dict:
 
     # `--dir` is relative to `--root`, so `check --root /repo --dir docs/decisions`
     # means the same directory no matter what the process CWD happens to be.
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="check")
+    if error:
+        return error
     if not adr_dir.is_dir():
         # Silently proceeding here would emit a confident "no conflicts" for
         # what is really a configuration error.

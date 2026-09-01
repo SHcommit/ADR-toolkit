@@ -6,12 +6,14 @@ from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, load_repository_config
 from scripts.core.relationships import find_cycles, missing_targets, resolve, supersession_mismatches
 from scripts.core.schema import validate_frontmatter
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 
 
 def run(args) -> dict:
     root = Path(getattr(args, "root", "."))
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="validate")
+    if error:
+        return error
     errors = []
 
     try:

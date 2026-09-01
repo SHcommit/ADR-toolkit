@@ -2,9 +2,12 @@
 import subprocess
 from pathlib import Path
 
+from scripts.core.errors import AdrToolkitError
 
-class GitPathsError(RuntimeError):
+
+class GitPathsError(AdrToolkitError):
     """Git could not provide a trustworthy repository path inventory."""
+    error_code = "GIT_LS_FILES_FAILED"
 
 
 def list_existing_paths(root: Path) -> set:

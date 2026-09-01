@@ -5,7 +5,7 @@ from pathlib import Path
 
 from scripts.core import atomic_io
 from scripts.core.exceptions import validate_exception
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 
 REQUIRED_DRAFT_FIELDS = {"adr_id", "rule_id", "owner", "reason", "scope", "expiry"}
 
@@ -65,7 +65,9 @@ def run(args) -> dict:
             "errors": [{"code": "MISSING_DRAFT_FIELD", "fields": sorted(missing)}],
         }
 
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="exception")
+    if error:
+        return error
     exceptions_dir = adr_dir / "exceptions"
 
     # Validate against a preview ID first. This must not touch disk -- not

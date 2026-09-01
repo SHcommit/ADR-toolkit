@@ -9,6 +9,8 @@ approach rather than adding a YAML dependency.
 import json
 import re
 
+from scripts.core.errors import AdrToolkitError
+
 FENCE_RE = re.compile(r"```ya?ml\n(.*?)\n```", re.DOTALL)
 
 KNOWN_FIELDS = {"id", "kind", "paths", "pattern", "severity", "message"}
@@ -27,8 +29,8 @@ KNOWN_KINDS = {
 }
 
 
-class ConstraintsError(ValueError):
-    pass
+class ConstraintsError(AdrToolkitError):
+    error_code = "BAD_CONSTRAINTS"
 
 
 def extract_constraints(body: str) -> list:

@@ -10,7 +10,7 @@ from scripts.core import identifiers
 from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import DEFAULT_LOCALE
 from scripts.core.rendering import interactive_prompts, render_minimal
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 from scripts.core.schema import validate_frontmatter
 
 REQUIRED_DRAFT_FIELDS = {"title", "status", "body"}
@@ -123,7 +123,9 @@ def run(args) -> dict:
                 "errors": [{"code": "CONFIG_ERROR", "detail": str(exc)}],
             }
 
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="create")
+    if error:
+        return error
     missing = REQUIRED_DRAFT_FIELDS - draft.keys()
     if missing:
         return {
