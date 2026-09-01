@@ -2,6 +2,13 @@
 
 Lightweight human-readable summary of meaningful repository changes.
 
+## Unreleased
+
+- Added Conventional Commits PR title validation job (`pr-title-check`) to GitHub Actions workflow (`.github/workflows/test.yml`)
+  to enforce standard title format (`feat:`, `fix:`, `docs:`, etc.) for pull requests.
+- Updated `.github/PULL_REQUEST_TEMPLATE.md` with Conventional Commits title format guide and an explicit Examples Impact checklist
+  requiring example updates for `feat:` and `fix:` changes while skipping non-feature PRs.
+
 ## v0.2.1 (2026-08-31)
 
 - Redesigned and expanded `examples/` into representative, structured usage guides

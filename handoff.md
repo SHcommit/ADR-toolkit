@@ -1,25 +1,40 @@
 # handoff.md
 
-## Current task (2026-08-31)
+## Current task (2026-09-01)
 
-**v0.2.1 is released.** All changes (examples redesign, Korean guide, verification pipeline, and `v0.2.1` bump) have been committed, merged via Git Flow, tagged, and pushed to `origin`.
+Examples redesign, Korean documentation, automated verification pipeline, `v0.2.1` release, and PR Conventional Commits automation.
 
-- Redesigned `examples/` directory into 4 structured, realistic use cases with standardized `Scenario`, `Input`, `What Happens`, and `Output` sections:
-  - `examples/basic-usage.md`: Core INIT → RECORD → INDEX workflow.
-  - `examples/check-constraints.md`: Mechanical constraint enforcement (`forbidden_import`), `check --uncommitted`, resolution options, and exception registration.
-  - `examples/graph-visualization.md`: Decision evolution via `supersede` and exporting Mermaid / SVG relationship graphs.
-  - `examples/multilingual-adr.md`: Localized Korean (`--locale ko`) repository default with approved ASCII filename slug (`--slug`).
-- Added complete Korean documentation suite under [`examples/ko/`](examples/ko/README.md) (`basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`, `README.md`).
-- Built automated example verification and update script `scripts/verify_examples.py`:
-  - `--check`: Runs isolated execution of all example workflows to ensure CLI logic compatibility and prevent doc drift.
-  - `--update`: Re-executes CLI commands to update example output snippets automatically when `adr.py` CLI outputs or schemas change.
-- Added pytest integration test `tests/integration/test_examples.py` (`test_examples_execution_and_schema_parity`).
-- Bumped version to `0.2.1` across manifests (`skills/adr-toolkit/VERSION`, `SKILL.md`, `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`).
-- Updated `examples/README.md` index table and linked `examples/` from root `README.md`.
-- Public repository hygiene: `CONTRIBUTING.md`, `SECURITY.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`.
+### Implemented this session:
 
-## Latest local verification
+- **Examples Redesign (`examples/`)**: Created 4 structured, representative use-case guides (`basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`) using standard Scenario → Input → What Happens → Output format.
+- **Korean Documentation Suite (`examples/ko/`)**: Added full Korean translation suite (`basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`, `README.md`).
+- **Automated Verification Pipeline**:
+  - `scripts/verify_examples.py`: `--check` (executes example workflows in isolated temp repo) & `--update` (auto-updates JSON output snippets when CLI outputs change).
+  - `tests/integration/test_examples.py`: Integration test ensuring 100% executable example parity in `pytest`.
+- **v0.2.1 Release**: Bumped version to `0.2.1`, synced manifests (`SKILL.md`, `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`), tagged `v0.2.1` on `master`, merged via Git Flow, and pushed to `origin`.
+- **PR Title Linter & PR Template**: Added `pr-title-check` CI job to `.github/workflows/test.yml` enforcing Conventional Commits format (`feat:`, `fix:`, `docs:`, etc.) and updated `.github/PULL_REQUEST_TEMPLATE.md` with explicit Examples Impact checklist for `feat:`/`fix:` changes.
+- **Lifecycle Report**: Recorded automation strategy in `automated_examples_lifecycle_report.md` artifact.
 
-- `python3 -m pytest -q` -> `396 passed`
-- `python3 scripts/verify_examples.py --check` -> clean exit 0
-- `python3 scripts/sync_version.py --check` -> clean exit 0
+## Touched files
+
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/test.yml`
+- `examples/` (`README.md`, `basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`)
+- `examples/ko/` (`README.md`, `basic-usage.md`, `check-constraints.md`, `graph-visualization.md`, `multilingual-adr.md`)
+- `scripts/verify_examples.py`
+- `tests/integration/test_examples.py`
+- `skills/adr-toolkit/VERSION`
+- `skills/adr-toolkit/SKILL.md`
+- `.claude-plugin/plugin.json`
+- `adapters/gemini-cli/gemini-extension.json`
+- `changelog.md`
+- `handoff.md`
+
+## Next step
+
+1. Monitor CI run for `pr-title-check` and `examples-drift` on upcoming PRs into `develop`.
+2. When new features (`feat:`) or bug fixes (`fix:`) are added in future PRs, run `python3 scripts/verify_examples.py --check` and `--update` to keep examples automatically in sync.
+
+## Open risk
+
+- None. All 396 tests, version drift checks, and example verification checks pass cleanly across Python 3.9 & 3.12.
