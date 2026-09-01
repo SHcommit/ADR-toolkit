@@ -43,6 +43,32 @@ jobs:
       - name: Check manifest versions and descriptions are in sync
         run: python scripts/sync_version.py --check
 
+  examples-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify examples workflows execution and parity
+        run: python scripts/verify_examples.py --check
+
+  pr-title-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR Title Conventional Commits Format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "Checking PR Title: $TITLE"
+          REGEX="^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\([a-z0-9-]+\))?!?: .+"
+          if [[ ! "$TITLE" =~ $REGEX ]]; then
+            echo "❌ PR Title does not match Conventional Commits format."
+            echo "Expected format: type(scope): description (e.g. feat(cli): add discover command)"
+            exit 1
+          fi
+          echo "✓ PR Title matches Conventional Commits format."
+
   harness-parity:
     # Installs the real Codex CLI and Gemini CLI and drives their own plugin
     # commands against this repo, the same way a contributor would. Manifest
