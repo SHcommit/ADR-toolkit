@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import os
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -25,6 +27,33 @@ def _event(event, occurred_at, source="events", **payload):
         "source": source,
         **payload,
     }
+
+
+def _git(repo, *args, timestamp=None):
+    env = os.environ.copy()
+    if timestamp is not None:
+        env["GIT_AUTHOR_DATE"] = timestamp
+        env["GIT_COMMITTER_DATE"] = timestamp
+    return subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+
+def _write_adr(path, adr_id, status, date="2026-01-01"):
+    path.write_text(
+        "---\n"
+        "id: {}\n".format(adr_id)
+        + "title: Test decision\n"
+        + "status: {}\n".format(status)
+        + "date: {}\n".format(date)
+        + "---\nBody\n",
+        encoding="utf-8",
+    )
 
 
 def test_read_adrs_returns_valid_frontmatter_and_warns_for_malformed_file(tmp_path):
@@ -339,3 +368,286 @@ def test_exception_age_is_available_for_an_empty_exception_directory():
     assert result["active_count"] == 0
     assert result["median_age_days"] is None
     assert result["expired_count"] == 0
+
+
+def test_read_events_keeps_valid_lines_and_warns_for_invalid_records(tmp_path):
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(
+        json.dumps(
+            _event(
+                "adr_created",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                status="proposed",
+            )
+        )
+        + "\n"
+        + "{\n"
+        + json.dumps(
+            {
+                "schema_version": 2,
+                "event": "adr_created",
+                "occurred_at": "2026-01-01T00:00:00Z",
+                "source": "events",
+                "adr_id": "ADR-0002",
+                "status": "accepted",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events, warnings = adoption_metrics.read_events([events_path])
+
+    assert len(events) == 1
+    assert events[0]["adr_id"] == "ADR-0001"
+    assert [warning["code"] for warning in warnings] == [
+        "BAD_EVENT_JSON",
+        "BAD_EVENT_SCHEMA",
+    ]
+    assert [warning["line"] for warning in warnings] == [2, 3]
+
+
+def test_read_events_rejects_unknown_event_and_missing_required_payload(tmp_path):
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "event": "unknown",
+                "occurred_at": "2026-01-01T00:00:00Z",
+                "source": "events",
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "schema_version": 1,
+                "event": "review_requested",
+                "occurred_at": "2026-01-01T00:00:00Z",
+                "source": "events",
+                "adr_id": "ADR-0001",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events, warnings = adoption_metrics.read_events([events_path])
+
+    assert events == []
+    assert [warning["code"] for warning in warnings] == [
+        "BAD_EVENT_SCHEMA",
+        "BAD_EVENT_SCHEMA",
+    ]
+
+
+def test_merge_events_deduplicates_and_prefers_explicit_conflicting_payload():
+    explicit = _event(
+        "adr_created",
+        "2026-01-01T00:00:00Z",
+        source="manual_export",
+        adr_id="ADR-0001",
+        status="proposed",
+    )
+    reconstructed_duplicate = dict(explicit, source="git")
+    reconstructed_conflict = dict(explicit, source="git", status="accepted")
+
+    events, warnings = adoption_metrics.merge_events(
+        [("events", [explicit]), ("git", [reconstructed_duplicate, reconstructed_conflict])]
+    )
+
+    assert events == [explicit]
+    assert warnings == [
+        {
+            "code": "EVENT_CONFLICT",
+            "event": "adr_created",
+            "entity": "ADR-0001",
+            "kept_source": "events",
+            "discarded_source": "git",
+        }
+    ]
+
+
+def test_collect_git_events_reconstructs_proposed_to_accepted_in_path_with_spaces(
+    tmp_path,
+):
+    root = tmp_path / "repo with spaces"
+    adr_dir = root / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _git(root, "init")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.com")
+    adr_path = adr_dir / "0001-test.md"
+    _write_adr(adr_path, "ADR-0001", "proposed")
+    _git(root, "add", str(adr_path.relative_to(root)))
+    _git(root, "commit", "-m", "propose", timestamp="2026-01-01T00:00:00Z")
+    _write_adr(adr_path, "ADR-0001", "accepted")
+    _git(root, "add", str(adr_path.relative_to(root)))
+    _git(root, "commit", "-m", "accept", timestamp="2026-01-02T00:00:00Z")
+
+    events, warnings = adoption_metrics.collect_git_events(root, adr_dir)
+
+    assert warnings == []
+    assert events == [
+        _event(
+            "adr_created",
+            "2026-01-01T00:00:00+00:00",
+            source="git",
+            adr_id="ADR-0001",
+            status="proposed",
+        ),
+        _event(
+            "adr_status_changed",
+            "2026-01-02T00:00:00+00:00",
+            source="git",
+            adr_id="ADR-0001",
+            **{"from": "proposed", "to": "accepted"},
+        ),
+    ]
+
+
+def test_collect_git_events_does_not_invent_proposed_for_terminal_first_commit(tmp_path):
+    root = tmp_path / "repo"
+    adr_dir = root / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _git(root, "init")
+    _git(root, "config", "user.name", "Test")
+    _git(root, "config", "user.email", "test@example.com")
+    adr_path = adr_dir / "0001-test.md"
+    _write_adr(adr_path, "ADR-0001", "accepted")
+    _git(root, "add", str(adr_path.relative_to(root)))
+    _git(root, "commit", "-m", "record", timestamp="2026-01-01T00:00:00Z")
+
+    events, warnings = adoption_metrics.collect_git_events(root, adr_dir)
+
+    assert warnings == []
+    assert [event["status"] for event in events if event["event"] == "adr_created"] == [
+        "accepted"
+    ]
+    assert not any(
+        event.get("status") == "proposed" or event.get("to") == "proposed"
+        for event in events
+    )
+
+
+def test_collect_git_events_degrades_cleanly_outside_a_git_repository(tmp_path):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+
+    events, warnings = adoption_metrics.collect_git_events(tmp_path, adr_dir)
+
+    assert events == []
+    assert warnings == [
+        {
+            "code": "GIT_UNAVAILABLE",
+            "detail": "Root is not a Git work tree.",
+        }
+    ]
+
+
+def test_normalize_github_reviews_qualifies_requested_non_author_reviewer():
+    payload = {
+        "data": {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [
+                        {
+                            "number": 7,
+                            "author": {"login": "owner"},
+                            "files": {
+                                "nodes": [
+                                    {"path": "docs/decisions/0001-test.md"},
+                                    {"path": "src/app.py"},
+                                ]
+                            },
+                            "timelineItems": {
+                                "nodes": [
+                                    {
+                                        "__typename": "ReviewRequestedEvent",
+                                        "createdAt": "2026-01-01T00:00:00Z",
+                                        "requestedReviewer": {
+                                            "__typename": "User",
+                                            "login": "alice",
+                                        },
+                                    },
+                                    {
+                                        "__typename": "PullRequestReview",
+                                        "submittedAt": "2026-01-01T01:00:00Z",
+                                        "author": {"login": "bob"},
+                                    },
+                                    {
+                                        "__typename": "PullRequestReview",
+                                        "submittedAt": "2026-01-01T02:00:00Z",
+                                        "author": {"login": "owner"},
+                                    },
+                                    {
+                                        "__typename": "PullRequestReview",
+                                        "submittedAt": "2026-01-01T03:00:00Z",
+                                        "author": {"login": "alice"},
+                                    },
+                                ]
+                            },
+                        }
+                    ],
+                    "pageInfo": {"hasNextPage": False},
+                }
+            }
+        }
+    }
+
+    events, warnings = adoption_metrics.normalize_github_reviews(
+        payload, {"docs/decisions/0001-test.md": "ADR-0001"}
+    )
+
+    assert warnings == []
+    submitted = [event for event in events if event["event"] == "review_submitted"]
+    assert [(event["reviewer"], event["qualified"]) for event in submitted] == [
+        ("bob", False),
+        ("owner", False),
+        ("alice", True),
+    ]
+    assert all(event["adr_id"] == "ADR-0001" for event in events)
+
+
+def test_normalize_github_reviews_warns_when_provider_result_is_truncated():
+    payload = {
+        "data": {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [],
+                    "pageInfo": {"hasNextPage": True},
+                }
+            }
+        }
+    }
+
+    events, warnings = adoption_metrics.normalize_github_reviews(payload, {})
+
+    assert events == []
+    assert warnings == [
+        {
+            "code": "GITHUB_RESULTS_TRUNCATED",
+            "detail": "GitHub returned more pull requests than this collection fetched.",
+        }
+    ]
+
+
+def test_collect_github_payload_hides_provider_stderr_on_failure(tmp_path, monkeypatch):
+    def fail_gh(root, arguments):
+        return subprocess.CompletedProcess(
+            ["gh", *arguments], returncode=1, stdout="", stderr="token=secret-value"
+        )
+
+    monkeypatch.setattr(adoption_metrics, "_run_gh", fail_gh)
+
+    payload, warnings = adoption_metrics.collect_github_payload(tmp_path)
+
+    assert payload is None
+    assert warnings == [
+        {
+            "code": "GITHUB_UNAVAILABLE",
+            "detail": "Could not determine the GitHub repository.",
+        }
+    ]
+    assert "secret-value" not in json.dumps(warnings)
