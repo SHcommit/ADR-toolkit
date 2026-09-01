@@ -3,10 +3,24 @@ import json
 from datetime import date
 from pathlib import Path
 
+from scripts.core import atomic_io
 from scripts.core.exceptions import validate_exception
 from scripts.core.repository_paths import resolve_from_root
 
 REQUIRED_DRAFT_FIELDS = {"adr_id", "rule_id", "owner", "reason", "scope", "expiry"}
+
+
+def _build_exception(draft: dict, exception_id: str) -> dict:
+    return {
+        "id": exception_id,
+        "adr_id": draft["adr_id"],
+        "rule_id": draft["rule_id"],
+        "owner": draft["owner"],
+        "reason": draft["reason"],
+        "scope": draft["scope"],
+        "expiry": draft["expiry"],
+        "created": draft.get("created") or date.today().isoformat(),
+    }
 
 
 def _next_id(exceptions_dir: Path) -> int:
@@ -53,21 +67,16 @@ def run(args) -> dict:
 
     adr_dir = resolve_from_root(root, args.dir)
     exceptions_dir = adr_dir / "exceptions"
-    next_num = _next_id(exceptions_dir)
-    exception_id = f"EXC-{next_num:04d}"
 
-    data = {
-        "id": exception_id,
-        "adr_id": draft["adr_id"],
-        "rule_id": draft["rule_id"],
-        "owner": draft["owner"],
-        "reason": draft["reason"],
-        "scope": draft["scope"],
-        "expiry": draft["expiry"],
-        "created": draft.get("created") or date.today().isoformat(),
-    }
-
-    schema_errors = validate_exception(data)
+    # Validate against a preview ID first. This must not touch disk -- not
+    # even to create exceptions_dir or a lock file -- so a SCHEMA_ERROR and
+    # a dry run both leave the filesystem untouched. Validity never depends
+    # on which sequential number gets assigned (the ID always matches
+    # EXC-NNNN by construction), so this result stays correct even if a
+    # concurrent writer changes the real next number before the write below.
+    preview_num = _next_id(exceptions_dir)
+    preview_id = f"EXC-{preview_num:04d}"
+    schema_errors = validate_exception(_build_exception(draft, preview_id))
     if schema_errors:
         return {
             "ok": False,
@@ -75,24 +84,27 @@ def run(args) -> dict:
             "errors": [{"code": "SCHEMA_ERROR", "detail": e} for e in schema_errors],
         }
 
-    target = exceptions_dir / f"{next_num:04d}.json"
-
     if dry_run:
+        target = exceptions_dir / f"{preview_num:04d}.json"
         return {
             "ok": True,
             "operation": "exception",
             "dry_run": True,
             "would_create": str(target),
-            "id": exception_id,
+            "id": preview_id,
         }
 
-    exceptions_dir.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    with atomic_io.adr_directory_lock(exceptions_dir):
+        next_num = _next_id(exceptions_dir)
+        exception_id = f"EXC-{next_num:04d}"
+        data = _build_exception(draft, exception_id)
+        target = exceptions_dir / f"{next_num:04d}.json"
+        atomic_io.atomic_write_text(target, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
-    return {
-        "ok": True,
-        "operation": "exception",
-        "dry_run": False,
-        "created": str(target),
-        "id": exception_id,
-    }
+        return {
+            "ok": True,
+            "operation": "exception",
+            "dry_run": False,
+            "created": str(target),
+            "id": exception_id,
+        }
