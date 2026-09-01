@@ -304,3 +304,9 @@ def test_real_manifests_have_a_description_matching_skill_md():
         for key in key_path:
             target = target[key]
         assert target == canonical, f"{path} description has drifted from SKILL.md"
+
+
+def test_discover_untracked_manifests_finds_no_untracked_files_in_clean_repo():
+    untracked = _sync_version.discover_untracked_manifests()
+    assert untracked == [], f"untracked plugin manifests found: {untracked}"
+

@@ -14,7 +14,7 @@ Follow the repository policy in `AGENTS.md`.
 - Release branches merge to `master` and back to `develop`.
 - Tags named `v*` are created only from `master`.
 
-## Local Checks
+## Local Checks & Pre-Commit
 
 Run the relevant checks before opening a pull request:
 
@@ -24,6 +24,19 @@ python3 scripts/sync_version.py --check
 python3 skills/adr-toolkit/scripts/adr.py validate --dir docs/decisions --json
 python3 skills/adr-toolkit/scripts/adr.py index --dir docs/decisions --json
 ```
+
+You can also install the local pre-commit hook to run these checks automatically before committing:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### Plugin Adapters & Manifest Governance
+
+If you add or modify a harness adapter (e.g. under `adapters/` or `.claude-plugin/`):
+- Every `plugin.json` or `gemini-extension.json` must be registered in `MANIFEST_SPECS` and `DESCRIPTION_MANIFEST_SPECS` in `scripts/sync_version.py`.
+- `python3 scripts/sync_version.py --check` will fail in CI if an untracked or out-of-sync manifest file is added.
 
 For changes that may affect accepted architectural decisions, also run:
 
