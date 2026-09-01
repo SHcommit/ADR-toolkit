@@ -143,14 +143,14 @@ def test_supersede_rolls_back_old_file_when_new_file_write_fails(tmp_path, monke
     new_path.write_text(NEW_ADR, encoding="utf-8")
     old_before = old_path.read_text(encoding="utf-8")
     new_before = new_path.read_text(encoding="utf-8")
-    original_write_text = type(old_path).write_text
+    original_atomic_write_text = supersede.atomic_io.atomic_write_text
 
-    def fail_new_file_write(path, text, *args, **kwargs):
+    def fail_new_file_write(path, content, **kwargs):
         if path == new_path:
             raise OSError("simulated new ADR write failure")
-        return original_write_text(path, text, *args, **kwargs)
+        return original_atomic_write_text(path, content, **kwargs)
 
-    monkeypatch.setattr(type(old_path), "write_text", fail_new_file_write)
+    monkeypatch.setattr(supersede.atomic_io, "atomic_write_text", fail_new_file_write)
 
     with pytest.raises(OSError, match="simulated new ADR write failure"):
         supersede.run(_args(tmp_path))
@@ -202,18 +202,18 @@ def test_supersede_double_write_failure_reports_inconsistent_state_not_silent(tm
     new_path.write_text(NEW_ADR, encoding="utf-8")
 
     call_count = {"old_writes": 0}
-    original_write_text = type(old_path).write_text
+    original_atomic_write_text = supersede.atomic_io.atomic_write_text
 
-    def fail_new_then_rollback(path, text, *args, **kwargs):
+    def fail_new_then_rollback(path, content, **kwargs):
         if path == new_path:
             raise OSError("simulated new ADR write failure")
         if path == old_path:
             call_count["old_writes"] += 1
             if call_count["old_writes"] == 2:
                 raise OSError("simulated rollback failure")
-        return original_write_text(path, text, *args, **kwargs)
+        return original_atomic_write_text(path, content, **kwargs)
 
-    monkeypatch.setattr(type(old_path), "write_text", fail_new_then_rollback)
+    monkeypatch.setattr(supersede.atomic_io, "atomic_write_text", fail_new_then_rollback)
 
     with pytest.raises(RuntimeError, match="rollback of .* also failed"):
         supersede.run(_args(tmp_path))
