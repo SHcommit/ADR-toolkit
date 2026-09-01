@@ -4,6 +4,7 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Fixed Windows CP1252 console encoding failure (`UnicodeEncodeError: 'charmap' codec can't encode character '\u2713'`) in `scripts/verify_examples.py` and `tests/integration/test_examples.py` by replacing non-ASCII symbols with ASCII tags (`[ok]`, `[error]`), reconfiguring stdout/stderr UTF-8 streams, and setting `PYTHONIOENCODING=utf-8` in subprocess calls.
 - Added untracked manifest discovery (`discover_untracked_manifests`) in `scripts/sync_version.py` to automatically prevent untracked plugin/extension manifests from being added in PRs without version/description tracking.
 - Added `.pre-commit-config.yaml` for local contributor pre-commit checks and updated `CONTRIBUTING.md` with manifest governance guidelines.
 - Enhanced Antigravity CLI (`agy`) plugin manifest (`adapters/antigravity/plugin.json`) with `version` tracking integrated into `scripts/sync_version.py`, expanded unit test assertions in `test_antigravity_adapter.py` (including symlink layout simulation) and `test_readme.py`, and updated `README.md` documentation.

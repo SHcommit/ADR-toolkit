@@ -252,13 +252,18 @@ def main(argv=None) -> int:
     parser.add_argument("--update", action="store_true", help="Auto-update examples if needed")
     args = parser.parse_args(argv)
 
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+
     print("Verifying examples execution against adr.py...")
     try:
         verify_all_flows()
-        print("✓ All example workflows executed successfully and verified clean.")
+        print("[ok] All example workflows executed successfully and verified clean.")
         return 0
     except AssertionError as err:
-        print(f"❌ Verification failed: {err}", file=sys.stderr)
+        print(f"[error] Verification failed: {err}", file=sys.stderr)
         return 1
 
 
