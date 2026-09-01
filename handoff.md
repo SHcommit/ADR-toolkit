@@ -224,7 +224,7 @@ on each.
 
 ## Verification
 
-`python3 -m pytest tests/unit tests/integration -q` -> 537 passed after the
+`python3 -m pytest tests/unit tests/integration -q` -> 541 passed after the
 adoption-metrics collector and review fixes. `mypy --strict` over the three CI
 target modules, examples verification, version-sync verification, collector
 compilation, and `git diff --check` also pass.
