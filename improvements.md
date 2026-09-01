@@ -15,22 +15,6 @@ also touch.
 
 ### High
 
-- [ ] **저장소 경로 탈출 방지** — `core/repository_paths.py`.
-  `--dir`/`--root`가 저장소 루트 밖을 가리키지 못하도록 경계 검사.
-  (감사 보고서 §2.2 2.3)
-- [ ] **테스트 커버리지 측정 도입** — `.github/workflows/test.yml`에
-  `pytest-cov --cov-branch --cov-fail-under=85` 추가. `release.yml`은
-  건드리지 않음. (감사 보고서 §2.8 8.1)
-- [ ] **mypy + TypedDict 계약 타이핑** — 신규 `core/contracts.py`, CI에
-  `mypy --strict` 게이트. (감사 보고서 §2.4 4.1)
-- [ ] **진단/타이밍 모드** — `adr.py`에 `--diagnostic` 플래그로 실행
-  시간 계측 노출. (감사 보고서 §2.7 7.2)
-- [ ] **카오스(SIGKILL) 복원력 테스트** — 원자적 쓰기 완료 후, 쓰기
-  도중 강제 종료 시 ADR 파일이 항상 유효 상태인지 검증하는 테스트 추가.
-  (감사 보고서 §2.8 8.2)
-- [ ] **어댑터 매니페스트 검증기 추출 (코드만)** — 신규
-  `scripts/adapter_sdk.py`의 `validate_adapter_manifest`. 튜토리얼
-  문서화는 README 작업 쪽에서 처리. (감사 보고서 §2.6 6.3)
 - [ ] *(다른 워크트리 확인)* **공급망 보안(체크섬/서명)** —
   `.github/workflows/release.yml`에 SHA-256/Sigstore 서명 단계. 자동
   버전 동기화 작업이 같은 파일을 건드릴 수 있어 그쪽에 붙이는 것을 권장.

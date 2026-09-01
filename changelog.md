@@ -4,6 +4,18 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- `--dir`/`--root` now reject a relative path that resolves outside the
+  given root, closing a path-escape gap.
+- CI now measures branch coverage (currently 93%) and fails below 85%.
+- Added a `mypy --strict` CI gate over the fully-typed core modules
+  (`atomic_io`, `telemetry`, the new `contracts` module of TypedDict result
+  shapes).
+- Added `adr.py --diagnostic` (must precede the operation name) to include
+  an `elapsed_ms` timing field in the JSON result.
+- Verified at the OS level (fork + SIGKILL) that a process killed mid-write
+  never leaves a torn ADR file.
+- Extracted a shared adapter-manifest validator (`scripts/adapter_sdk.py`)
+  used by all 4 manifest-based harness adapters' tests.
 - ADR and exception creation, and SUPERSEDE's two-file update, are now
   atomic and race-free under concurrent invocation (file locking + write to
   a temp file followed by an atomic rename).
