@@ -13,29 +13,6 @@ README prose, which are being handled in other worktrees/branches. The two
 items below flagged "(다른 워크트리 확인)" touch files those efforts may
 also touch.
 
-### Critical
-
-**구현 계획**: `docs/superpowers/plans/2026-09-01-critical-hardening.md`
-(Task 1-8, TDD 단계별). 세션이 끊겨도 이 계획 파일의 체크박스 +
-`git log --oneline`에 남는 태스크별 커밋 메시지로 어디까지 됐는지 바로
-알 수 있다 — 상세 재개 절차는 `handoff.md` 참고.
-
-- [ ] **원자적 파일 쓰기 + ID 채번 락** — `identifiers.py`, `create.py`,
-  `exception.py`, `supersede.py`; 신규 `core/atomic_io.py`. 락 없는
-  glob→max+1 채번과 비원자적 `write_text`를 `adr_directory_lock` +
-  `atomic_write_text`로 교체. (감사 보고서 §1 Top-3 #1, §2.3 3.3)
-- [ ] **ADR 정규식 ReDoS 가드** — `rules/conflict.py`. `constraints:`의
-  `pattern` 필드 실행에 하드 타임아웃(POSIX: SIGALRM, Windows: 정적
-  중첩 정량자 린트). (감사 보고서 §1 Top-3 #2, §2.2 2.3)
-- [ ] **생성된 README 링크 이스케이프** — `core/rendering.py`,
-  `commands/index.py`. `render_mermaid`의 `_mermaid_label`처럼 title을
-  이스케이프해 `docs/decisions/README.md` 생성 시 링크 하이재킹 방지.
-  자동 생성 코드 수정이며 사람이 쓰는 README 문서 작업과는 무관.
-  (감사 보고서 §1 Top-3 #2, §2.2 2.3)
-- [ ] **구조화 로깅** — 신규 `core/telemetry.py`, `adr.py`. stderr에
-  JSON 로그(operation, correlation_id, exception type) 추가, stdout의
-  순수 JSON 결과 계약은 불변 유지. (감사 보고서 §1 Top-3 #3, §2.7 7.1)
-
 ### High
 
 - [ ] **저장소 경로 탈출 방지** — `core/repository_paths.py`.

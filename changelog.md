@@ -4,6 +4,18 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- ADR and exception creation, and SUPERSEDE's two-file update, are now
+  atomic and race-free under concurrent invocation (file locking + write to
+  a temp file followed by an atomic rename).
+- CHECK's author-supplied `constraints:` regex patterns now have a 0.25s
+  evaluation timeout on Linux/macOS, closing a ReDoS risk (Windows CI is
+  unaffected but not yet guarded — tracked in `improvements.md`).
+- INDEX's generated decision-log README now escapes ADR titles, closing a
+  Markdown link-injection risk.
+- Uncaught errors now log a structured, correlation-ID-tagged JSON line to
+  stderr (`ADR_TOOLKIT_LOG_LEVEL` controls the threshold) instead of
+  disappearing silently; the same correlation ID appears in the stdout
+  JSON error response.
 - Added a `harness-parity` CI job that installs the real Codex CLI and
   Gemini CLI and drives their own plugin/extension commands (marketplace
   add, install, list) against this repo, then runs `preflight`/`init`/

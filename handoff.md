@@ -2,38 +2,38 @@
 
 ## Current task (2026-09-01)
 
-Executing `docs/superpowers/plans/2026-09-01-critical-hardening.md` --
-implementation plan for the 4 Critical-risk findings from
-`docs/adr-toolkit-audit-report.md` (also tracked in `improvements.md`'s
-`## Open` -> `### Critical` section):
+**The Critical hardening pass is done.** All 4 Critical-risk findings from
+`docs/adr-toolkit-audit-report.md` are implemented, tested, and committed
+on `feature/analyzing-adr-toolkit`, following
+`docs/superpowers/plans/2026-09-01-critical-hardening.md` (gitignored by
+convention, still on disk in this worktree) task-by-task with TDD:
 
-1. Atomic file writes + ID allocation lock (`core/atomic_io.py`, wired into
-   `create.py`, `exception.py`, `supersede.py`).
-2. ReDoS timeout guard for author-supplied regex (`rules/conflict.py`).
-3. Markdown link-injection escape for ADR titles in the generated
-   `docs/decisions/README.md` (`core/rendering.py`, `commands/index.py`).
-4. Structured stderr logging with correlation IDs (`core/telemetry.py`,
-   wired into `adr.py`'s global exception handler).
+1. `fc46830` feat: add atomic write and directory lock primitives
+2. `49ede49` fix: make ADR creation race-free under concurrent invocation
+3. `68bbd98` fix: make exception creation race-free under concurrent invocation
+4. `cec7215` fix: make SUPERSEDE writes atomic and lock-protected
+5. `c0ff907` fix: add ReDoS timeout guard to CHECK's author-supplied regex patterns
+6. `7afdcd5` fix: escape ADR titles in generated README to prevent link injection
+7. `11c8f4b` feat: add structured stderr logging with correlation IDs
 
-The plan is split into 8 tasks (Task 1-7 = one deliverable each, Task 8 =
-close out the backlog docs). Each task ends with its own commit, so
-**`git log --oneline` against the plan's task list is the source of truth
-for what's already done** if this session is interrupted -- check which of
-these commit messages exist before resuming (and cross-check the plan
-file's own `- [ ]`/`- [x]` checkboxes, which are updated as steps land):
+`improvements.md`'s Critical section is now empty (items removed per this
+file's own convention: resolved work lives in `changelog.md`'s Unreleased
+section + git history, not duplicated into `## Done`). Full suite: 415
+passed (up from 395 at session start).
 
-- `feat: add atomic write and directory lock primitives` (Task 1)
-- `fix: make ADR creation race-free under concurrent invocation` (Task 2)
-- `fix: make exception creation race-free under concurrent invocation` (Task 3)
-- `fix: make SUPERSEDE writes atomic and lock-protected` (Task 4)
-- `fix: add ReDoS timeout guard to CHECK's author-supplied regex patterns` (Task 5)
-- `fix: escape ADR titles in generated README to prevent link injection` (Task 6)
-- `feat: add structured stderr logging with correlation IDs` (Task 7)
-- `docs: close out Critical hardening backlog items` (Task 8)
-
-This session chose **inline execution** (`superpowers:executing-plans`),
-not subagent-driven -- a fresh session resuming should do the same unless
-the owner says otherwise.
+Two real regressions were caught by TDD mid-session and fixed before
+committing, worth knowing if touching this code again:
+- `create.py`/`exception.py`: naively wrapping everything in
+  `adr_directory_lock` made *dry runs* (and, for `exception.py`,
+  *schema-validation failures*) create the directory + lock file as a side
+  effect, breaking existing tests that assert nothing is created. Fixed by
+  keeping preview/validation paths outside the lock and only locking the
+  actual allocate-and-write step.
+- `supersede.py`: two existing tests monkeypatched `Path.write_text`
+  directly to simulate a write failure; that seam disappeared once writes
+  route through `atomic_io.atomic_write_text`, so both were retargeted to
+  patch `supersede.atomic_io.atomic_write_text` instead (same intent, same
+  assertions).
 
 ## Scope for this worktree
 
@@ -51,42 +51,45 @@ Excluded here, being handled elsewhere -- do not touch:
   deliberately deferred to that other worktree for exactly this reason --
   see the "(다른 워크트리 확인)" flags in `improvements.md`.
 - README prose (root README.md, `adapters/*/README.md` content) -- another
-  worktree. Task 6's fix to `commands/index.py` is a security fix in the
-  *generator code* for `docs/decisions/README.md`, not README prose, and
-  correctly stays in scope here -- don't confuse the two if asked to skip
-  "README work".
+  worktree. The Task 6 fix above touched `commands/index.py` -- that's a
+  security fix in the *generator code* for `docs/decisions/README.md`, not
+  README prose, and correctly stayed in scope here.
 
 ## Next step
 
-If resuming: open `docs/superpowers/plans/2026-09-01-critical-hardening.md`,
-find the first unchecked step, confirm against `git log` that its task's
-commit doesn't already exist, and continue from there with
-`superpowers:executing-plans`.
-
-After Task 8 lands, the remaining backlog (`improvements.md`'s High/Medium
-sections) is unscheduled -- ask the owner before starting any of it. The
-Critical-only scope for this pass, and the domain/worktree exclusions
-above, were the owner's explicit calls in conversation, not something
-derivable from the audit report alone.
+Nothing is currently in flight. `improvements.md`'s remaining backlog
+(High: repository path escape guard, test coverage measurement, mypy/
+TypedDict, diagnostic/timing mode, chaos SIGKILL test, adapter SDK
+extraction, plus the two other-worktree-flagged items; Medium: JSON Schema
+single-source-of-truth, common error base class, output contract schema
+freeze, parsing cache, bulk-ADR benchmark, TTY-aware CLI output) is
+unscheduled -- **ask the owner before starting any of it**. The
+Critical-only scope for the pass just completed, and the domain/worktree
+exclusions above, were the owner's explicit calls in conversation, not
+something derivable from the audit report alone.
 
 ## Verification
 
-Full suite: `python3 -m pytest tests/unit tests/integration -v`.
-Baseline before this session's changes: 395 passed. Expect it to grow by
-roughly 15-18 tests across Tasks 1-7 (see the plan file's per-task test
-files for the exact count).
+Full suite: `python3 -m pytest tests/unit tests/integration -v` -> 415
+passed as of commit `11c8f4b`.
 
 ## Open risks
 
-- The ReDoS guard (Task 5) is POSIX-only (`signal.SIGALRM`); Windows CI is
+- The ReDoS guard is POSIX-only (`signal.SIGALRM`); Windows CI is
   unaffected but unguarded against catastrophic-backtracking patterns --
-  a known, documented gap in the audit report, not a regression introduced
-  by this work.
-- `supersede.py`'s two-file update (Task 4) guarantees each individual
-  file is never torn by a mid-write crash, but does not guarantee the
-  *pair* stays consistent if the process is killed between the two atomic
-  writes -- true two-phase commit across files was explicitly scoped out
-  (see the plan's Task 4 code comments).
+  a known, documented gap, not a regression introduced by this work.
+- `supersede.py`'s two-file update guarantees each individual file is
+  never torn by a mid-write crash, but does not guarantee the *pair*
+  stays consistent if the process is killed between the two atomic writes
+  -- true two-phase commit across files was explicitly scoped out (see
+  the plan's Task 4 code comments). The backlog's "카오스(SIGKILL)
+  복원력 테스트" High item follows up on this.
+- Every successful `create`/`exception`/`supersede` call now leaves a
+  `.adr-toolkit.lock` (0-byte, dotfile) inside `docs/decisions/` and
+  `docs/decisions/exceptions/` permanently -- this is intentional (it's
+  the cross-process mutex), doesn't match `*.md`/`*.json` globs so nothing
+  else picks it up, but is a new, permanent artifact worth knowing about
+  if someone notices it in a repo diff.
 - (carried over from the audit, still true) CHECK deliberately cannot
   prove prose, business rationale, or organizational claims; those remain
   human-review evidence.
