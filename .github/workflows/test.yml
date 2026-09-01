@@ -29,9 +29,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install pytest
+        run: pip install pytest pytest-cov
       - name: Run tests
-        run: python -m pytest tests/unit tests/integration -v
+        run: python -m pytest tests/unit tests/integration -v --cov=skills/adr-toolkit/scripts --cov-branch --cov-report=term-missing --cov-fail-under=85
 
   version-drift:
     runs-on: ubuntu-latest
