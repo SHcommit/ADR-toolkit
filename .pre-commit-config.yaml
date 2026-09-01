@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: sync-version-check
+        name: sync-version-check
+        entry: python3 scripts/sync_version.py --check
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pytest-unit
+        name: pytest-unit
+        entry: python3 -m pytest tests/unit -q
+        language: system
+        pass_filenames: false
+        always_run: true
