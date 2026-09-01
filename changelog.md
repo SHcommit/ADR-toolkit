@@ -4,6 +4,8 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added `.githooks/pre-push` script to block direct local `git push` to protected branches (`develop`, `master`)
+  and direct contributors to use Pull Requests (`feature/*` / `fix/*`).
 - Added Conventional Commits PR title validation job (`pr-title-check`) to GitHub Actions workflow (`.github/workflows/test.yml`)
   to enforce standard title format (`feat:`, `fix:`, `docs:`, etc.) for pull requests.
 - Updated `.github/PULL_REQUEST_TEMPLATE.md` with Conventional Commits title format guide and an explicit Examples Impact checklist

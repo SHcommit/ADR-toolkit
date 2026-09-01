@@ -12,6 +12,7 @@ Examples redesign, Korean documentation, automated verification pipeline, `v0.2.
   - `scripts/verify_examples.py`: `--check` (executes example workflows in isolated temp repo) & `--update` (auto-updates JSON output snippets when CLI outputs change).
   - `tests/integration/test_examples.py`: Integration test ensuring 100% executable example parity in `pytest`.
 - **v0.2.1 Release**: Bumped version to `0.2.1`, synced manifests (`SKILL.md`, `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`), tagged `v0.2.1` on `master`, merged via Git Flow, and pushed to `origin`.
+- **Git Pre-push Hook (`.githooks/pre-push`)**: Created pre-push hook configured via `git config core.hooksPath .githooks` to block direct local pushes to `develop` and `master`, enforcing PR-based merges.
 - **PR Title Linter & PR Template**: Added `pr-title-check` CI job to `.github/workflows/test.yml` enforcing Conventional Commits format (`feat:`, `fix:`, `docs:`, etc.) and updated `.github/PULL_REQUEST_TEMPLATE.md` with explicit Examples Impact checklist for `feat:`/`fix:` changes.
 - **Lifecycle Report**: Recorded automation strategy in `automated_examples_lifecycle_report.md` artifact.
 
