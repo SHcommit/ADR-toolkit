@@ -4,7 +4,9 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
-- Enhanced Antigravity CLI (`agy`) plugin manifest (`adapters/antigravity/plugin.json`) with `version` tracking integrated into `scripts/sync_version.py`, expanded unit test assertions in `test_antigravity_adapter.py` and `test_readme.py`, and updated `README.md` documentation for flexible `agy` plugin integration.
+- Added untracked manifest discovery (`discover_untracked_manifests`) in `scripts/sync_version.py` to automatically prevent untracked plugin/extension manifests from being added in PRs without version/description tracking.
+- Added `.pre-commit-config.yaml` for local contributor pre-commit checks and updated `CONTRIBUTING.md` with manifest governance guidelines.
+- Enhanced Antigravity CLI (`agy`) plugin manifest (`adapters/antigravity/plugin.json`) with `version` tracking integrated into `scripts/sync_version.py`, expanded unit test assertions in `test_antigravity_adapter.py` (including symlink layout simulation) and `test_readme.py`, and updated `README.md` documentation.
 - Added Conventional Commits PR title validation job (`pr-title-check`) to GitHub Actions workflow (`.github/workflows/test.yml`)
   to enforce standard title format (`feat:`, `fix:`, `docs:`, etc.) for pull requests.
 - Updated `.github/PULL_REQUEST_TEMPLATE.md` with Conventional Commits title format guide and an explicit Examples Impact checklist

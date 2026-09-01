@@ -7,7 +7,9 @@ Working on branch `feature/agy-plugin-implements-2`:
 
 - Enhanced Antigravity CLI (`agy`) plugin manifest (`adapters/antigravity/plugin.json`) with `version` field.
 - Registered `adapters/antigravity/plugin.json` version tracking in `scripts/sync_version.py` (`MANIFEST_SPECS`).
-- Updated unit test assertions in `tests/unit/test_antigravity_adapter.py` and `tests/unit/test_readme.py`.
+- Added `discover_untracked_manifests()` in `scripts/sync_version.py` to automatically catch and block any untracked plugin/extension manifest added in PRs.
+- Created `.pre-commit-config.yaml` for pre-commit verification and updated `CONTRIBUTING.md` with manifest governance rules.
+- Updated unit test assertions in `tests/unit/test_antigravity_adapter.py` (including symlink layout simulation), `tests/unit/test_sync_version.py`, and `tests/unit/test_readme.py`.
 - Updated `adapters/antigravity/README.md` and `README.md` documentation.
 
 ## Touched files

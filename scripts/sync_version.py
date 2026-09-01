@@ -149,6 +149,28 @@ def require_known_paths() -> None:
         names = ", ".join(f"{_display_path(p)} ({key})" for p, key in keyless)
         raise SystemExit(f"tracked manifest(s) lost a tracked key: {names}")
 
+    untracked = discover_untracked_manifests()
+    if untracked:
+        names = ", ".join(_display_path(p) for p in sorted(untracked, key=str))
+        raise SystemExit(f"untracked plugin/extension manifest(s) found: {names}")
+
+
+def discover_untracked_manifests() -> list:
+    """Discover any untracked plugin or extension manifest files in the repo.
+
+    Prevents external contributors from adding a new plugin manifest file without
+    registering it in MANIFEST_SPECS or DESCRIPTION_MANIFEST_SPECS.
+    """
+    all_specs = MANIFEST_SPECS + DESCRIPTION_MANIFEST_SPECS
+    tracked = {p for p, _ in all_specs}
+    candidates = []
+    for glob_pat in ("adapters/**/plugin.json", "adapters/**/*.json", ".claude-plugin/*.json"):
+        for path in REPO_ROOT.glob(glob_pat):
+            if path.name in ("plugin.json", "gemini-extension.json", "antigravity-plugin.json") and path.is_file():
+                if path not in tracked:
+                    candidates.append(path)
+    return candidates
+
 
 def _display_path(path: Path) -> str:
     try:

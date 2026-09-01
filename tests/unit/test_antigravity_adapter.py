@@ -26,3 +26,30 @@ def test_manifest_schema_field_points_at_antigravity_schema():
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert data["$schema"] == "https://antigravity.google/schemas/v1/plugin.json"
 
+
+def test_antigravity_adapter_directory_layout_and_symlink_structure(tmp_path):
+    # Simulate Antigravity plugin installation layout:
+    # adapters/antigravity/plugin.json + skills/adr-toolkit symlink
+    repo_root = Path(__file__).resolve().parents[2]
+    adapter_dir = tmp_path / "adapters" / "antigravity"
+    adapter_dir.mkdir(parents=True)
+
+    manifest_copy = adapter_dir / "plugin.json"
+    manifest_copy.write_text(MANIFEST.read_text(encoding="utf-8"), encoding="utf-8")
+
+    skills_dir = adapter_dir / "skills"
+    skills_dir.mkdir()
+    target_skill = repo_root / "skills" / "adr-toolkit"
+    symlink_path = skills_dir / "adr-toolkit"
+
+    try:
+        symlink_path.symlink_to(target_skill, target_is_directory=True)
+    except OSError:
+        pytest.skip("Symlink creation not supported on this platform/user permission")
+
+    assert manifest_copy.is_file()
+    assert (symlink_path / "SKILL.md").is_file()
+    manifest_data = json.loads(manifest_copy.read_text(encoding="utf-8"))
+    assert manifest_data["name"] == "adr-toolkit"
+
+
