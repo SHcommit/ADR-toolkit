@@ -94,17 +94,13 @@ correctly blocked (agy still has no public registry, per
 `adapters/antigravity/README.md`) -- not everything merged from that
 worktree closes every item tied to it.
 
-**Concurrent work (owner's own coordination, not this session's):** the
-owner assigned `improvements.md`'s "도입 지표 수집 스크립트"
-(adoption-metrics script, from `docs/enterprise-adoption.md` §7) to a
-**Codex session running in this same worktree/branch** in parallel with
-this session, specifically because it's a new-file-only task with no
-overlap against the files this session was touching. If you see an
-uncommitted or newly-committed `scripts/adoption_metrics.py` (or
-similarly named) plus a matching test file that you don't recognize
-authoring, that's Codex's work landing -- don't revert it, and check
-`improvements.md`'s enterprise-adoption.md sub-group for whether it's
-already been checked off before restarting it.
+**Adoption metrics follow-up completed:** `9a0de45`..`7fb373e` add the
+design, JSON-only `scripts/adoption_metrics.py` collector, and focused tests.
+The collector calculates all five metrics from `docs/enterprise-adoption.md`
+§7 using ADR/exception data plus optional local Git, explicit JSONL event and
+CHECK snapshot files, and GitHub review evidence. Incomplete evidence is
+reported through coverage, availability, and warning fields rather than being
+silently treated as complete data.
 
 All 3 plan files are gitignored by convention (`docs/superpowers/plans/`)
 but still on disk in this worktree.
@@ -182,9 +178,8 @@ code again:
 - README prose (root README.md, `adapters/*/README.md` content) --
   still another worktree's; every fix across all passes that touched
   adapter or generator code was a code fix, not README prose.
-- **Do not touch what the parallel Codex session is doing** (the
-  adoption-metrics collector -- already 4 commits in as of `45b3472`,
-  see below). Don't revert, refactor, or duplicate its work.
+- The adoption-metrics collector is complete; future changes should preserve
+  its provider-neutral evidence contracts and JSON-only stdout behavior.
 
 ## Next step (for a new session picking this up cold)
 
@@ -202,13 +197,9 @@ parallel Codex session's. Concretely:
    item left (Antigravity in `harness-parity`), re-verified against
    `adapters/antigravity/README.md` and still blocked on an external fact
    (agy has no public package registry) -- don't start it.
-3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group: check
-   whether the Codex session's adoption-metrics work has been checked off
-   before assuming it's still open (as of this note it's implemented --
-   `9a0de45`..`45b3472` -- but not yet reflected in `improvements.md`
-   since this session was told not to touch that item's bookkeeping). The
-   other 3 items there remain precondition-gated (repository going
-   public, 2+ maintainers, 2+ repositories) -- **not pure code tasks**.
+3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group now has
+   only 3 precondition-gated items (repository going public, 2+ maintainers,
+   2+ repositories) -- **not pure code tasks**.
 4. If the user says "continue" / "다음 작업 진행해줘" without naming a
    task: the supply-chain item is the one thing to offer; otherwise ask
    what's next rather than inventing scope.
@@ -233,11 +224,10 @@ on each.
 
 ## Verification
 
-`python3 -m pytest tests/unit tests/integration -v` -> 518 passed as of
-commit `26021a9` (395 at session start -> 465 before the `origin/develop`
-merge -> 469 after merging in develop's own new tests -> 479 after the
-Low-priority follow-up work -> 518 current, which also includes the
-parallel Codex session's adoption-metrics tests landing in this branch).
+`python3 -m pytest tests/unit tests/integration -q` -> 537 passed after the
+adoption-metrics collector and review fixes. `mypy --strict` over the three CI
+target modules, examples verification, version-sync verification, collector
+compilation, and `git diff --check` also pass.
 CI now also runs `type-check` (`mypy --strict`), `examples-drift` (from
 develop), and `pr-title-check` (from develop) jobs alongside the existing
 `pytest` (now coverage-gated at 85%), `version-drift`, and

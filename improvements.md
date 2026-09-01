@@ -57,7 +57,6 @@ closed out or reworded below. README prose is still another worktree's.
 - [ ] *(전제조건: 저장소 public 전환)* **Public 전환 게이트 실제 적용** — PR template/`CONTRIBUTING.md`/`SECURITY.md`는 이미 존재함(v0.2.1에 포함, `origin/develop` 병합으로 확인). 남은 건 `master`/`develop`/`v*` 태그에 대한 실제 GitHub ruleset(PR 필수, required CI, conversation resolution, force-push/삭제 차단) 적용과 API로 실제 상태 재조회뿐 — 코드 작업이 아니라 저장소를 public 전환한 뒤 GitHub 설정/API에서 해야 하는 작업. `project_v1_public_release_plan` 메모리 참고(1.0.0 시점 public 전환 계획). (enterprise-adoption.md §4, §9)
 - [ ] *(전제조건: qualified maintainer 2명 이상)* **CODEOWNERS 독립 승인 활성화** — 현재 1인 운영 상태에서 필수 code-owner review를 켜면 운영을 막거나 형식적 self-review만 만든다고 보고서 자체가 명시적으로 경고함. 인원 조건 충족 전엔 시작하지 않음. (enterprise-adoption.md §4, §9 "지금 구현하지 않을 것")
 - [ ] *(전제조건: 저장소 2개 이상)* **조직 단위 ruleset/reusable workflow/audit export/taxonomy** — 여러 저장소가 같은 운영 문제를 반복할 때 설계 시작. 지금은 저장소가 1개뿐이라 시작 조건 미충족. (enterprise-adoption.md §6, §8 항목 5)
-- [ ] **도입 지표(adoption metrics) 수집 스크립트** — decision lead time, exception age, unresolved violations 같은 지표는 이미 존재하는 ADR frontmatter(`date`, `status`)와 exception JSON(`created`, `expiry`)만으로 계산 가능해 public 전환이나 멀티레포 없이도 지금 시작할 수 있음. 다만 "이 지표를 수집한다는 사실만으로 성숙도가 올라가지 않는다"는 보고서 자체의 경고를 유념 — 지표 정의 버전 관리, 실제 운영 개선 연결까지 되어야 의미가 있음. (enterprise-adoption.md §7)
 
 ## Done
 

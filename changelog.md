@@ -4,6 +4,12 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added `scripts/adoption_metrics.py`, a JSON-only collector for the five
+  enterprise adoption metrics defined in `docs/enterprise-adoption.md`:
+  decision lead time, review latency, supersession rate, unresolved CHECK
+  violations, and exception age. It combines portable ADR/exception data with
+  optional local Git, explicit JSONL event, CHECK snapshot, and GitHub review
+  evidence while reporting source coverage and incomplete-evidence warnings.
 - `core/contracts.py` now covers all 16 commands' output shapes (was 2).
 - `PathEscapesRootError` (added in the prior session's path-escape fix)
   is now caught at all 7 call sites and reported as a structured
