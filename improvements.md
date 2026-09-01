@@ -7,22 +7,21 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 Backlog derived from `docs/adr-toolkit-audit-report.md`. Scope for this
 worktree excludes domains 1 (core/plugin architecture) and 5 (governance/
-FSM) — already scored 72/80 and mostly "no action needed" in the audit —
-plus anything Antigravity-adapter-related, automatic version sync, and
-README prose, which are being handled in other worktrees/branches. The two
-items below flagged "(다른 워크트리 확인)" touch files those efforts may
-also touch.
+FSM) — already scored 72/80 and mostly "no action needed" in the audit.
+The Antigravity-adapter and automatic-version-sync work that used to be
+a separate worktree has since been merged via GitHub PR #6/#7 into
+`origin/develop`, which this branch pulled in (`0a0db8a`) — "다른
+워크트리 확인" items were re-checked against that merged code and either
+closed out or reworded below. README prose is still another worktree's.
 
 ### High
 
-- [ ] *(다른 워크트리 확인)* **공급망 보안(체크섬/서명)** —
-  `.github/workflows/release.yml`에 SHA-256/Sigstore 서명 단계. 자동
-  버전 동기화 작업이 같은 파일을 건드릴 수 있어 그쪽에 붙이는 것을 권장.
-  (감사 보고서 §2.2 2.2)
-- [ ] *(다른 워크트리 확인)* **8.4 자동 버전 산정 방향 재검토** — 감사
-  보고서 원 권고는 "semantic-release류 자동 버전 산정 강제 도입
-  비권장"이었음. 진행 중인 자동 버전 동기화 작업 방향과 배치되지 않는지
-  확인. (감사 보고서 §2.8 8.4)
+- [ ] **공급망 보안(체크섬/서명)** — `.github/workflows/release.yml`
+  확인 결과 여전히 테스트/버전 체크/릴리스 생성만 있고 SHA-256/Sigstore
+  서명 단계는 없음. 더 이상 다른 워크트리가 이 파일을 동시에 만지고
+  있지 않으므로(그 작업은 이미 병합됨) 이제 이 워크트리에서 진행 가능 —
+  다만 릴리스 파이프라인(운영 인프라)을 건드리는 작업이라 시작 전
+  오너 확인 필요. (감사 보고서 §2.2 2.2)
 
 ### Medium
 
@@ -44,10 +43,10 @@ also touch.
 중 3건 완료(`0307a1c`, `9a44342`). 남은 건 1건뿐:**
 
 - [ ] *(전제조건: Antigravity CLI가 공개 패키지 레지스트리 지원)*
-  **harness-parity CI에 Antigravity 편입** — 현재 Codex/Gemini만 CI에서
-  실제 설치까지 검증하고 Antigravity(`agy`)는 README에 "수동 검증"으로
-  명시됨. `agy` 작업 자체는 다른 브랜치 소관이라 이 항목도 그쪽과 함께
-  검토. (감사 보고서 §2.1 1.2)
+  **harness-parity CI에 Antigravity 편입** — agy 관련 작업(PR #6)은
+  이미 병합됐지만 `adapters/antigravity/README.md`를 재확인한 결과 여전히
+  "Manually verified"뿐, agy 자체가 아직 공개 패키지 레지스트리를
+  지원하지 않음 — 전제조건 그대로 미충족. (감사 보고서 §2.1 1.2)
 
 **출처: `docs/enterprise-adoption.md` §4/§6-9** — 코드/아키텍처 감사와는
 별개의, 조직 도입·거버넌스 성숙도를 다루는 문서. 아래 항목 대부분은
@@ -122,6 +121,17 @@ at parse time for `forbidden_import`/`dependency_forbidden` rules, closing
 the gap where `rules/conflict.py`'s runtime SIGALRM timeout guard is
 POSIX-only and Windows had zero ReDoS protection. Heuristic, not a full
 detector -- alternation-based ReDoS shapes remain uncaught.
+
+**8.4 자동 버전 산정 방향 재검토 — reviewed, closed, no code change.**
+The Antigravity/version-sync worktree's work merged in via PR #6/#7
+(`origin/develop`, pulled into this branch at `0a0db8a`). Re-checked
+`scripts/sync_version.py` and `.github/workflows/release.yml` against the
+audit's original recommendation ("manual version bump, don't force
+semantic-release-style automation") -- confirmed no conflict: versioning
+is still manual (`VERSION` file + `sync_version.py --check`), no
+auto-bump tooling was introduced. Removed from Open; the supply-chain
+signing item stays open (verified not implemented) but no longer flagged
+"다른 워크트리 확인" since that worktree's work is already merged.
 
 Test suite: 395 → 465 passing (this branch's own work), zero regressions;
 469 after merging `origin/develop`; 479 after the Low-priority follow-up

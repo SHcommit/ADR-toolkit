@@ -79,6 +79,21 @@ positive) and that a rejected pattern never reaches `re.compile()`.
 Heuristic, not a full ReDoS detector -- alternation-based shapes like
 `(a|a)*` remain uncaught, noted in the code.
 
+**Backlog reconciliation** (docs-only, no commit yet as of writing this):
+the owner pointed out that PR #6 (`feature/agy-plugin-implements-2`) and
+PR #7 (`feature/add-githooks`) -- the "다른 워크트리" that the High
+section's 2 items were deferred to -- are both already merged into
+`origin/develop` and pulled into this branch. Re-checked both items
+against the actual current code rather than assuming: the 8.4
+auto-version-direction review is genuinely done (no conflict found,
+moved to `## Done`) and removed from Open; the supply-chain signing item
+is genuinely still unimplemented (confirmed by reading `release.yml`) and
+stays Open, just with the stale "다른 워크트리 확인" framing removed.
+Also re-verified the Antigravity/harness-parity Low item is still
+correctly blocked (agy still has no public registry, per
+`adapters/antigravity/README.md`) -- not everything merged from that
+worktree closes every item tied to it.
+
 **Concurrent work (owner's own coordination, not this session's):** the
 owner assigned `improvements.md`'s "도입 지표 수집 스크립트"
 (adoption-metrics script, from `docs/enterprise-adoption.md` §7) to a
@@ -151,52 +166,58 @@ code again:
 
 ## Scope for this worktree
 
-Excluded here, being handled elsewhere -- do not touch:
-
 - Domains 1 (core/plugin architecture) and 5 (governance/FSM) from the
-  audit report.
-- Anything Antigravity (`agy`) adapter-related -- another branch (now
-  merged into `develop` as of this session's merge -- see above).
-- Automatic version sync -- another worktree; **do not touch
-  `.github/workflows/release.yml` for any reason.** The 2 remaining
-  "(다른 워크트리 확인)" items in `improvements.md`'s `### High` section
-  are deliberately left there for that other worktree.
+  audit report -- still out of scope, already scored well.
+- **The Antigravity (`agy`) adapter and automatic-version-sync worktree
+  no longer exists as a separate concern** -- its work merged via GitHub
+  PR #6/#7 into `origin/develop`, which this branch pulled in (`0a0db8a`).
+  Re-verified against the actual merged code (not assumed): confirmed
+  `scripts/sync_version.py`/`release.yml` still do manual-only version
+  bumps (no conflict with the audit's recommendation -- that review item
+  is now closed, see `improvements.md`'s `## Done`), and confirmed
+  `.github/workflows/release.yml` still has no supply-chain checksum/
+  signing step (that item is now open and startable in this worktree,
+  not blocked by a concurrent editor anymore -- but touches the release
+  pipeline, so confirm with the owner before starting).
 - README prose (root README.md, `adapters/*/README.md` content) --
-  another worktree. Every fix across all 3 passes that touched adapter or
-  generator code was a code fix, not README prose.
+  still another worktree's; every fix across all passes that touched
+  adapter or generator code was a code fix, not README prose.
+- **Do not touch what the parallel Codex session is doing** (the
+  adoption-metrics collector -- already 4 commits in as of `45b3472`,
+  see below). Don't revert, refactor, or duplicate its work.
 
 ## Next step (for a new session picking this up cold)
 
-**Only one small item is truly open in this worktree's own scope**
-(the Antigravity/harness-parity one below); everything else left in
-`improvements.md` is either someone else's worktree, a precondition-gated
-enterprise-adoption item, or in flight in a parallel Codex session (see
-above). Concretely:
+**One real, startable item exists in `improvements.md`'s `## Open`**:
+supply-chain checksums/signing for `.github/workflows/release.yml`
+(§2.2 2.2) -- verified not implemented, no longer blocked by a separate
+worktree, but touches the release pipeline so confirm with the owner
+before starting. Everything else is either precondition-gated or the
+parallel Codex session's. Concretely:
 
-1. `improvements.md`'s `## Open` → `### High` still has exactly 2 items
-   left, both flagged `(다른 워크트리 확인)` -- still someone else's.
-   Do not start them here.
+1. `improvements.md`'s `### High` now has exactly 1 item (the
+   supply-chain one above) -- startable with owner confirmation, since
+   it modifies `release.yml`.
 2. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
-   item left (Antigravity in `harness-parity`), blocked on an external
-   fact (agy public registry support) -- don't start it, just note it's
-   blocked if asked.
+   item left (Antigravity in `harness-parity`), re-verified against
+   `adapters/antigravity/README.md` and still blocked on an external fact
+   (agy has no public package registry) -- don't start it.
 3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group: check
-   whether the Codex session's adoption-metrics work has landed and been
-   checked off before assuming it's still open. The other 3 items there
-   remain precondition-gated (repository going public, 2+ maintainers,
-   2+ repositories) -- **not pure code tasks**, don't "implement" a
-   GitHub ruleset change or multi-repo tooling against a single private
-   repo's reality.
+   whether the Codex session's adoption-metrics work has been checked off
+   before assuming it's still open (as of this note it's implemented --
+   `9a0de45`..`45b3472` -- but not yet reflected in `improvements.md`
+   since this session was told not to touch that item's bookkeeping). The
+   other 3 items there remain precondition-gated (repository going
+   public, 2+ maintainers, 2+ repositories) -- **not pure code tasks**.
 4. If the user says "continue" / "다음 작업 진행해줘" without naming a
-   task: at this point the honest answer may be "nothing is open here" --
-   say so and ask what's next, rather than inventing scope.
+   task: the supply-chain item is the one thing to offer; otherwise ask
+   what's next rather than inventing scope.
 5. If the user wants to finish this branch (merge to `develop` / open a
    PR): that decision was deferred every time it came up this session
    (owner chose "keep as-is" each time) -- ask again fresh, don't assume
-   the answer carried forward. Note this branch now includes the merged
-   `origin/develop` history (see above), so a future merge/PR back to
-   `develop` should be a clean fast-forward-friendly merge, not a repeat
-   of this session's conflict resolution.
+   the answer carried forward. This branch already includes the merged
+   `origin/develop` history, so a future merge/PR back to `develop`
+   should be a clean fast-forward-friendly merge.
 6. If the user references a new audit finding or a fresh problem: that's
    genuinely new work -- use the same pattern this session established
    (writing-plans -> executing-plans, TDD, one commit per task, verify
