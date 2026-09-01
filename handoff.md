@@ -94,6 +94,25 @@ correctly blocked (agy still has no public registry, per
 `adapters/antigravity/README.md`) -- not everything merged from that
 worktree closes every item tied to it.
 
+**Supply-chain attestation completed** (`18d4662`, the item the
+"Backlog reconciliation" note below left open): `.github/workflows/release.yml`
+now packages `skills/adr-toolkit/` into a version-named tarball, SHA-256
+checksums it, and generates a Sigstore-backed GitHub Artifact Attestation
+(`actions/attest-build-provenance@v2`, keyless/OIDC -- no private key to
+manage or rotate) for it; both the tarball and checksum are attached to
+the GitHub Release. Chose this over signing the git tag itself because
+tags in this project are created locally by a human before the triggering
+push (`AGENTS.md`'s documented release process), so CI has no way to
+retroactively sign an already-pushed tag -- attestation instead ties
+provenance to the exact commit the tag points to. `SECURITY.md` gained a
+"Verifying a Release" section (`sha256sum -c` + `gh attestation verify`)
+that also clarifies git-clone/adapter-install paths verify via Git/GitHub
+history, not this archive. Full option analysis:
+`docs/worklogs/2026-09-01-supply-chain-attestation.md`. Verified: YAML
+syntax, full test suite green (541 passed, no regressions) -- the actual
+OIDC attestation issuance/verification flow itself can only be confirmed
+end-to-end on a real `v*` tag push, not locally.
+
 **Adoption metrics follow-up completed:**
 
 - [x] `9a0de45`..`f814d64` add the design, JSON-only
@@ -174,11 +193,9 @@ code again:
   Re-verified against the actual merged code (not assumed): confirmed
   `scripts/sync_version.py`/`release.yml` still do manual-only version
   bumps (no conflict with the audit's recommendation -- that review item
-  is now closed, see `improvements.md`'s `## Done`), and confirmed
-  `.github/workflows/release.yml` still has no supply-chain checksum/
-  signing step (that item is now open and startable in this worktree,
-  not blocked by a concurrent editor anymore -- but touches the release
-  pipeline, so confirm with the owner before starting).
+  is now closed, see `improvements.md`'s `## Done`); the supply-chain
+  checksum/signing gap this note originally flagged is also closed now
+  (`18d4662`, GitHub Artifact Attestation -- see `## Done` above).
 - README prose (root README.md, `adapters/*/README.md` content) --
   still another worktree's; every fix across all passes that touched
   adapter or generator code was a code fix, not README prose.
@@ -187,32 +204,32 @@ code again:
 
 ## Next step (for a new session picking this up cold)
 
-**One real, startable item exists in `improvements.md`'s `## Open`**:
-supply-chain checksums/signing for `.github/workflows/release.yml`
-(§2.2 2.2) -- verified not implemented, no longer blocked by a separate
-worktree, but touches the release pipeline so confirm with the owner
-before starting. Everything else is either precondition-gated or the
-parallel Codex session's. Concretely:
+**`improvements.md`'s `### High` section is now empty.** The last item
+(supply-chain attestation) landed in `18d4662`. Everything left in
+`## Open` is either precondition-gated on a real-world fact this
+worktree can't change, or belongs to the parallel Codex session (already
+done). Concretely:
 
-1. `improvements.md`'s `### High` now has exactly 1 item (the
-   supply-chain one above) -- startable with owner confirmation, since
-   it modifies `release.yml`.
+1. `improvements.md`'s `### Medium` and `### High` are both empty --
+   nothing there to pick up.
 2. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
    item left (Antigravity in `harness-parity`), re-verified against
    `adapters/antigravity/README.md` and still blocked on an external fact
    (agy has no public package registry) -- don't start it.
-3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group now has
-   only 3 precondition-gated items (repository going public, 2+ maintainers,
+3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group has
+   3 precondition-gated items (repository going public, 2+ maintainers,
    2+ repositories) -- **not pure code tasks**.
 4. If the user says "continue" / "다음 작업 진행해줘" without naming a
-   task: the supply-chain item is the one thing to offer; otherwise ask
-   what's next rather than inventing scope.
+   task: there is no ready-to-start backlog item left -- say so and ask
+   what's next (a new audit finding, a precondition that's now met, or
+   finishing the branch) rather than inventing scope.
 5. If the user wants to finish this branch (merge to `develop` / open a
    PR): that decision was deferred every time it came up this session
    (owner chose "keep as-is" each time) -- ask again fresh, don't assume
    the answer carried forward. This branch already includes the merged
    `origin/develop` history, so a future merge/PR back to `develop`
-   should be a clean fast-forward-friendly merge.
+   should be a clean fast-forward-friendly merge. With the backlog now
+   empty of startable items, this is a reasonable point to raise it.
 6. If the user references a new audit finding or a fresh problem: that's
    genuinely new work -- use the same pattern this session established
    (writing-plans -> executing-plans, TDD, one commit per task, verify

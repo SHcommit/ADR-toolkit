@@ -16,12 +16,8 @@ closed out or reworded below. README prose is still another worktree's.
 
 ### High
 
-- [ ] **공급망 보안(체크섬/서명)** — `.github/workflows/release.yml`
-  확인 결과 여전히 테스트/버전 체크/릴리스 생성만 있고 SHA-256/Sigstore
-  서명 단계는 없음. 더 이상 다른 워크트리가 이 파일을 동시에 만지고
-  있지 않으므로(그 작업은 이미 병합됨) 이제 이 워크트리에서 진행 가능 —
-  다만 릴리스 파이프라인(운영 인프라)을 건드리는 작업이라 시작 전
-  오너 확인 필요. (감사 보고서 §2.2 2.2)
+`### High`에 남은 항목 없음 — 마지막 항목(공급망 보안)은 아래 `## Done`
+참고.
 
 ### Medium
 
@@ -86,7 +82,15 @@ CI branch-coverage gate at 85% (measured baseline: 93.32%); `mypy --strict`
 CI gate + `core/contracts.py` (typed result shapes); `adr.py --diagnostic`
 timing flag; OS-level (fork+SIGKILL) proof that a mid-write crash never
 tears an ADR file; shared adapter-manifest validator
-(`scripts/adapter_sdk.py`) used by all 4 manifest-based harness adapters.
+(`scripts/adapter_sdk.py`) used by all 4 manifest-based harness adapters;
+supply-chain build provenance attestation on the release pipeline
+(`18d4662`) — `.github/workflows/release.yml` now packages
+`skills/adr-toolkit/` into a version-named tarball, SHA-256 checksums it,
+and generates a Sigstore-backed GitHub Artifact Attestation
+(`actions/attest-build-provenance@v2`, keyless/OIDC) for it; `SECURITY.md`
+gained a "Verifying a Release" section. This was the last item in
+`### High`; see `docs/worklogs/2026-09-01-supply-chain-attestation.md`
+for the full option analysis and rationale.
 
 **Medium** — common `AdrToolkitError` base class for all 6 domain
 exceptions (also closed a gap: `PathEscapesRootError` was raised but never

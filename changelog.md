@@ -4,6 +4,11 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- `.github/workflows/release.yml` now packages `skills/adr-toolkit/` into a
+  version-named tarball, SHA-256 checksums it, and generates a Sigstore-backed
+  GitHub Artifact Attestation (`actions/attest-build-provenance@v2`, keyless)
+  for it; the tarball and checksum are attached to the GitHub Release.
+  `SECURITY.md` documents how to verify a downloaded release archive.
 - Added `scripts/adoption_metrics.py`, a JSON-only collector for the five
   enterprise adoption metrics defined in `docs/enterprise-adoption.md`:
   decision lead time, review latency, supersession rate, unresolved CHECK
