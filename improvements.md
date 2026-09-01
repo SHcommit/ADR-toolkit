@@ -115,8 +115,18 @@ instead of only when CHECK later runs against it. The 4th item
 (Antigravity in harness-parity CI) stays open, blocked on `agy` getting a
 public package registry.
 
+**Windows ReDoS static complexity linter** (promoted from `handoff.md`'s
+Open Risks, not originally a numbered backlog item) — `core/constraints.py`
+now statically rejects a nested-quantifier `pattern` value (e.g. `(a+)+`)
+at parse time for `forbidden_import`/`dependency_forbidden` rules, closing
+the gap where `rules/conflict.py`'s runtime SIGALRM timeout guard is
+POSIX-only and Windows had zero ReDoS protection. Heuristic, not a full
+detector -- alternation-based ReDoS shapes remain uncaught.
+
 Test suite: 395 → 465 passing (this branch's own work), zero regressions;
 469 after merging `origin/develop`; 479 after the Low-priority follow-up
-work above. CI gained a `type-check` job and an 85% coverage gate (this
-branch), plus `examples-drift` and `pr-title-check` jobs (from
-`origin/develop`).
+work; 518 as of this note (includes a parallel Codex session's own
+adoption-metrics commits landing in this same branch -- see `handoff.md`,
+not itemized here since that work isn't this session's to describe). CI
+gained a `type-check` job and an 85% coverage gate (this branch), plus
+`examples-drift` and `pr-title-check` jobs (from `origin/develop`).

@@ -68,6 +68,17 @@ at CHECK time -- `CreateResult`/`StatusResult` gained a `warnings` field
 to match. The 4th item (Antigravity in `harness-parity`) stays open,
 blocked on `agy` getting a public package registry.
 
+**Windows ReDoS gap closed** (`26021a9`, promoted from this file's own
+Open Risks below, not a numbered backlog item): `core/constraints.py`
+statically rejects nested-quantifier `pattern` values (`(a+)+`-shaped) at
+parse time for `forbidden_import`/`dependency_forbidden` rules -- a
+string-level check that works the same on every OS, unlike
+`rules/conflict.py`'s SIGALRM-based runtime timeout (POSIX-only). Verified
+against the real dogfooded `ADR-0011` constraints block (no false
+positive) and that a rejected pattern never reaches `re.compile()`.
+Heuristic, not a full ReDoS detector -- alternation-based shapes like
+`(a|a)*` remain uncaught, noted in the code.
+
 **Concurrent work (owner's own coordination, not this session's):** the
 owner assigned `improvements.md`'s "도입 지표 수집 스크립트"
 (adoption-metrics script, from `docs/enterprise-adoption.md` §7) to a
@@ -201,19 +212,25 @@ on each.
 
 ## Verification
 
-`python3 -m pytest tests/unit tests/integration -v` -> 479 passed as of
-commit `9a44342` (395 at session start -> 465 before the `origin/develop`
+`python3 -m pytest tests/unit tests/integration -v` -> 518 passed as of
+commit `26021a9` (395 at session start -> 465 before the `origin/develop`
 merge -> 469 after merging in develop's own new tests -> 479 after the
-Low-priority follow-up work). Re-run to pick up whatever Codex's parallel
-adoption-metrics work adds. CI now also runs `type-check` (`mypy
---strict`), `examples-drift` (from develop), and `pr-title-check` (from
-develop) jobs alongside the existing `pytest` (now coverage-gated at
-85%), `version-drift`, and `harness-parity` jobs.
+Low-priority follow-up work -> 518 current, which also includes the
+parallel Codex session's adoption-metrics tests landing in this branch).
+CI now also runs `type-check` (`mypy --strict`), `examples-drift` (from
+develop), and `pr-title-check` (from develop) jobs alongside the existing
+`pytest` (now coverage-gated at 85%), `version-drift`, and
+`harness-parity` jobs.
 
 ## Open risks
 
-- The ReDoS guard is POSIX-only (`signal.SIGALRM`); Windows CI is
-  unaffected but unguarded -- a known, documented gap.
+- ~~The ReDoS guard is POSIX-only...~~ **Mitigated (`26021a9`)**: the
+  runtime SIGALRM timeout is still POSIX-only, but a static
+  nested-quantifier check in `core/constraints.py` now rejects the most
+  common ReDoS shape at parse time on every platform, so Windows is no
+  longer completely unguarded. Not a full ReDoS detector -- alternation-
+  based patterns (`(a|a)*`-shaped) still rely on the POSIX-only runtime
+  guard and remain unmitigated on Windows.
 - `supersede.py`'s two-file update guarantees each individual file is
   never torn by a mid-write crash, but not that the *pair* stays
   consistent if killed between the two writes -- true two-phase commit
