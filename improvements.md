@@ -37,12 +37,43 @@ also touch.
 
 ### Low
 
-`docs/enterprise-adoption.md` §4/§6-9 기반 — 이건 `docs/adr-toolkit-audit-report.md`(코드/아키텍처 감사)와는 별개의, 조직 도입·거버넌스 성숙도를 다루는 문서다. 아래 항목 대부분은 코드로 "구현"할 수 있는 게 아니라 실제 세계의 전제조건(저장소 public 전환, 유지관리자 인원, 저장소 개수)에 막혀 있으니, 시작 전에 전제조건부터 확인할 것.
+두 개의 서로 다른 출처가 섞여 있어 각 항목에 출처를 명시했다.
+
+**출처: `docs/adr-toolkit-audit-report.md`의 🟢 Low 리스크 항목 8개 중,
+"추가 조치 불요"이거나 이번 세션/`origin/develop` 병합으로 이미 해소된
+것(1.3 관련 없음, 6.1, 8.3, 8.4 PR 제목 체크는 `pr-title-check` job으로
+이미 존재, 5.3의 README 이스케이프 비일관성은 이번 세션 `safe_md_link_text`
+작업으로 이미 해소)을 제외하고, 실제로 아직 안 한 것만 남긴 4건:**
+
+- [ ] *(전제조건: Antigravity CLI가 공개 패키지 레지스트리 지원)*
+  **harness-parity CI에 Antigravity 편입** — 현재 Codex/Gemini만 CI에서
+  실제 설치까지 검증하고 Antigravity(`agy`)는 README에 "수동 검증"으로
+  명시됨. `agy` 작업 자체는 다른 브랜치 소관이라 이 항목도 그쪽과 함께
+  검토. (감사 보고서 §2.1 1.2)
+- [ ] **CODEOWNERS로 `constraints:` 블록 보호 문서화** — 격리 계층 대신
+  프로세스 통제로: ADR 디렉터리의 `constraints:` 블록을 승인 권한자만
+  병합하도록 `CONTRIBUTING.md`에 명문화. 코드 변경 없이 문서 한 줄이면
+  됨 — 지금 바로 가능. (감사 보고서 §2.2 2.1)
+- [ ] **`proposed → deprecated` 전이 추가** — `core/lifecycle.py`의
+  `ALLOWED_TRANSITIONS["proposed"]`에 `"deprecated"` 한 줄 추가 +
+  `test_lifecycle.py`에 파라미터 1건 추가. 합의 없이 제안을 철회하는
+  실무 케이스 지원. 아키텍처 변경 불요, 지금 바로 가능. (감사 보고서
+  §2.5 5.1)
+- [ ] **CHECK 사전 린트를 CREATE/STATUS 시점으로 앞당기기** — 현재는
+  `constraints:` 블록 오탈자(ReDoS 포함)가 CHECK 실행 시점에야 발견됨.
+  `validate.py`에 이미 있는 파싱 흐름을 `create.py`/`status.py` 종료
+  직전에도 실행해 ADR 작성 시점에 조기 경고. (감사 보고서 §2.5 5.2)
+
+**출처: `docs/enterprise-adoption.md` §4/§6-9** — 코드/아키텍처 감사와는
+별개의, 조직 도입·거버넌스 성숙도를 다루는 문서. 아래 항목 대부분은
+코드로 "구현"할 수 있는 게 아니라 실제 세계의 전제조건(저장소 public
+전환, 유지관리자 인원, 저장소 개수)에 막혀 있으니, 시작 전에
+전제조건부터 확인할 것.
 
 - [ ] *(전제조건: 저장소 public 전환)* **Public 전환 게이트 실제 적용** — PR template/`CONTRIBUTING.md`/`SECURITY.md`는 이미 존재함(v0.2.1에 포함, `origin/develop` 병합으로 확인). 남은 건 `master`/`develop`/`v*` 태그에 대한 실제 GitHub ruleset(PR 필수, required CI, conversation resolution, force-push/삭제 차단) 적용과 API로 실제 상태 재조회뿐 — 코드 작업이 아니라 저장소를 public 전환한 뒤 GitHub 설정/API에서 해야 하는 작업. `project_v1_public_release_plan` 메모리 참고(1.0.0 시점 public 전환 계획). (enterprise-adoption.md §4, §9)
 - [ ] *(전제조건: qualified maintainer 2명 이상)* **CODEOWNERS 독립 승인 활성화** — 현재 1인 운영 상태에서 필수 code-owner review를 켜면 운영을 막거나 형식적 self-review만 만든다고 보고서 자체가 명시적으로 경고함. 인원 조건 충족 전엔 시작하지 않음. (enterprise-adoption.md §4, §9 "지금 구현하지 않을 것")
 - [ ] *(전제조건: 저장소 2개 이상)* **조직 단위 ruleset/reusable workflow/audit export/taxonomy** — 여러 저장소가 같은 운영 문제를 반복할 때 설계 시작. 지금은 저장소가 1개뿐이라 시작 조건 미충족. (enterprise-adoption.md §6, §8 항목 5)
-- [ ] **도입 지표(adoption metrics) 수집 스크립트** — decision lead time, exception age, unresolved violations 같은 지표는 이미 존재하는 ADR frontmatter(`date`, `status`)와 exception JSON(`created`, `expiry`)만으로 계산 가능해 public 전환이나 멀티레포 없이도 지금 시작할 수 있음(이 Low 섹션에서 유일하게 전제조건이 없는 항목). 다만 "이 지표를 수집한다는 사실만으로 성숙도가 올라가지 않는다"는 보고서 자체의 경고를 유념 — 지표 정의 버전 관리, 실제 운영 개선 연결까지 되어야 의미가 있음. (enterprise-adoption.md §7)
+- [ ] **도입 지표(adoption metrics) 수집 스크립트** — decision lead time, exception age, unresolved violations 같은 지표는 이미 존재하는 ADR frontmatter(`date`, `status`)와 exception JSON(`created`, `expiry`)만으로 계산 가능해 public 전환이나 멀티레포 없이도 지금 시작할 수 있음. 다만 "이 지표를 수집한다는 사실만으로 성숙도가 올라가지 않는다"는 보고서 자체의 경고를 유념 — 지표 정의 버전 관리, 실제 운영 개선 연결까지 되어야 의미가 있음. (enterprise-adoption.md §7)
 
 ## Done
 

@@ -65,9 +65,21 @@ but still on disk in this worktree.
 section containing only the 2 items explicitly deferred to another
 worktree, and a `### Medium` section with exactly one item -- the
 parsing-result cache, marked **declined with rationale** (see below). It
-also has a **Low-priority tier**, added at the owner's request, pulled
-from `docs/enterprise-adoption.md` §8 -- see that section below for why
-most of those items are precondition-gated rather than pure code tasks.
+also has a **Low-priority tier with two sourced sub-groups**, added at
+the owner's request:
+- 4 items pulled from `docs/adr-toolkit-audit-report.md`'s own 🟢 Low-risk
+  findings (the ones that actually still need action -- most of the 8
+  Low findings in that report were "no action needed" or already resolved
+  by this session's work or the `origin/develop` merge, e.g. its
+  Conventional-Commits PR title suggestion is now the merged-in
+  `pr-title-check` CI job).
+- 4 items pulled from `docs/enterprise-adoption.md` §8 (a separate
+  governance/adoption-maturity report) -- see that file's notes below for
+  why most of those are precondition-gated rather than pure code tasks.
+
+(An earlier pass in this session mistakenly added only the
+enterprise-adoption.md half when asked to pull Low items "from the
+report" -- corrected once the ambiguity was pointed out.)
 
 **One Medium item was declined, not silently skipped:** the audit's
 `functools.lru_cache` suggestion for parsing-result caching provides zero
