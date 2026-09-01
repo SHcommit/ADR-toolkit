@@ -4,6 +4,20 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- `PathEscapesRootError` (added in the prior session's path-escape fix)
+  is now caught at all 7 call sites and reported as a structured
+  `PATH_ESCAPES_ROOT` error instead of falling through to a generic
+  internal error. All 6 domain exception classes now share a common
+  `AdrToolkitError` base with a stable `error_code`.
+- Added a test that fails if `schemas/*.json` and the runtime validators
+  in `core/schema.py`/`core/exceptions.py` ever diverge -- without adding
+  a `jsonschema` dependency.
+- `core/contracts.py` now also covers CHECK's result shape.
+- Added a sanity check proving `search`/`index` don't degrade
+  catastrophically at 200 ADRs.
+- `adr.py` now prints a one-line human-readable summary to stderr when
+  stderr is a real terminal (set `ADR_TOOLKIT_NO_COLOR` to suppress);
+  stdout's JSON contract and piped/redirected usage are unaffected.
 - `--dir`/`--root` now reject a relative path that resolves outside the
   given root, closing a path-escape gap.
 - CI now measures branch coverage (currently 93%) and fails below 85%.
