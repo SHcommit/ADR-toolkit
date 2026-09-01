@@ -49,9 +49,8 @@ non-Git SCMs, and manually exported audit data.
 The implementation is a single repository tool, `scripts/adoption_metrics.py`,
 split internally into four boundaries:
 
-1. Local readers parse ADR frontmatter, exception JSON, and optional historical
-   CHECK observation files without importing the skill-internal `scripts`
-   package.
+1. Local readers parse ADR frontmatter, exception JSON, and optional current
+   CHECK snapshot files without importing the skill-internal `scripts` package.
 2. Collectors normalize explicit JSONL, local Git history, and optional GitHub
    review data into provider-neutral events.
 3. Pure calculation functions consume current records and normalized events.
@@ -100,6 +99,12 @@ All timestamps are parsed as ISO 8601. Date-only inputs represent midnight UTC
 for interval filtering and whole-day age calculations. Invalid inputs produce a
 non-zero exit and a JSON error object; an individual malformed ADR, exception,
 or event becomes a warning while other valid records are still processed.
+
+Each `--check-results` file is a current snapshot, not an event-history input.
+Every non-empty line must therefore be a valid `violation_observed` record at
+or before `--until`. A successfully read empty snapshot authoritatively means
+zero current violations. A missing, malformed, mixed-event, or future-dated
+snapshot emits warnings and is not allowed to replace historical evidence.
 
 ## Normalized Events
 

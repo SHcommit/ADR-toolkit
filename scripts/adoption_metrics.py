@@ -260,6 +260,39 @@ def read_events(
     return events, warnings
 
 
+def read_check_snapshot(
+    paths: List[Path], until: datetime
+) -> Tuple[Optional[set], List[Dict[str, Any]]]:
+    if not paths:
+        return None, []
+
+    events, warnings = read_events(paths)
+    complete = not warnings
+    fingerprints = set()
+    for event in events:
+        if event["event"] != "violation_observed":
+            warnings.append(
+                {
+                    "code": "BAD_CHECK_SNAPSHOT",
+                    "detail": "CHECK snapshots may contain only violation_observed records.",
+                }
+            )
+            complete = False
+            continue
+        if _event_time(event) > until:
+            warnings.append(
+                {
+                    "code": "BAD_CHECK_SNAPSHOT",
+                    "detail": "CHECK snapshot contains an observation after --until.",
+                }
+            )
+            complete = False
+            continue
+        fingerprints.add(str(event["fingerprint"]))
+
+    return (fingerprints if complete else None), warnings
+
+
 def _event_entity(event: Dict[str, Any]) -> str:
     if "fingerprint" in event:
         return str(event["fingerprint"])
@@ -1014,15 +1047,8 @@ def build_report(
     adrs, adr_warnings = read_adrs(adr_dir)
     exceptions, exception_warnings = read_exceptions(adr_dir)
     explicit_events, explicit_warnings = read_events(event_paths)
-    check_events, check_warnings = read_events(check_paths)
-    current_violation_fingerprints = (
-        {
-            str(event["fingerprint"])
-            for event in check_events
-            if event.get("event") == "violation_observed"
-        }
-        if check_paths
-        else None
+    current_violation_fingerprints, check_warnings = read_check_snapshot(
+        check_paths, until
     )
     git_events, git_warnings = collect_git_events(root, adr_dir)
 

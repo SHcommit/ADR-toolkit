@@ -5,6 +5,8 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 
 _ADOPTION_METRICS_PATH = (
     Path(__file__).resolve().parents[2] / "scripts" / "adoption_metrics.py"
@@ -1295,6 +1297,162 @@ def test_cli_empty_current_check_snapshot_reports_zero_and_closes_stale_history(
     assert return_code == 0
     assert violations["available"] is True
     assert violations["open_count"] == 0
+
+
+@pytest.mark.parametrize("snapshot_contents", ["{not-json}\n", None])
+def test_cli_invalid_check_snapshot_does_not_clear_stale_history(
+    tmp_path, capsys, snapshot_contents
+):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    history_path = tmp_path / "events.jsonl"
+    history_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="f1",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    check_path = tmp_path / "check.jsonl"
+    if snapshot_contents is not None:
+        check_path.write_text(snapshot_contents, encoding="utf-8")
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--events",
+            "events.jsonl",
+            "--check-results",
+            "check.jsonl",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert return_code == 0
+    assert result["metrics"]["unresolved_violations"]["open_count"] == 1
+
+
+def test_cli_non_violation_check_record_does_not_clear_stale_history(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    history_path = tmp_path / "events.jsonl"
+    history_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="f1",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    check_path = tmp_path / "check.jsonl"
+    check_path.write_text(
+        json.dumps(
+            _event(
+                "violation_resolved",
+                "2026-01-30T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="f1",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--events",
+            "events.jsonl",
+            "--check-results",
+            "check.jsonl",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["metrics"]["unresolved_violations"]["open_count"] == 1
+    assert any(warning["code"] == "BAD_CHECK_SNAPSHOT" for warning in result["warnings"])
+
+
+def test_cli_check_record_after_until_does_not_replace_history(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    history_path = tmp_path / "events.jsonl"
+    history_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="old",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    check_path = tmp_path / "check.jsonl"
+    check_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-02-01T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r2",
+                fingerprint="future",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--events",
+            "events.jsonl",
+            "--check-results",
+            "check.jsonl",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    violations = result["metrics"]["unresolved_violations"]
+    assert violations["open_count"] == 1
+    assert violations["median_age_days"] == 30
+    assert any(warning["code"] == "BAD_CHECK_SNAPSHOT" for warning in result["warnings"])
 
 
 def test_cli_opt_in_github_failure_is_a_warning(tmp_path, capsys, monkeypatch):
