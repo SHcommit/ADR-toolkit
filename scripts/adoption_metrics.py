@@ -23,6 +23,18 @@ REQUIRED_EXCEPTION_FIELDS = {
     "created",
     "expiry",
 }
+EXCEPTION_FIELD_TYPES = {
+    "id": str,
+    "adr_id": str,
+    "rule_id": str,
+    "owner": str,
+    "reason": str,
+    "scope": list,
+    "created": str,
+    "expiry": str,
+}
+EXCEPTION_ID_RE = re.compile(r"^EXC-\d{4}$")
+ADR_ID_RE = re.compile(r"^ADR-\d{4}$")
 EVENT_REQUIRED_FIELDS = {
     "adr_created": {"adr_id", "status"},
     "adr_status_changed": {"adr_id", "from", "to"},
@@ -32,9 +44,9 @@ EVENT_REQUIRED_FIELDS = {
     "violation_resolved": {"fingerprint", "adr_id", "rule_id"},
 }
 GITHUB_REVIEW_QUERY = """
-query($owner: String!, $name: String!) {
+query($owner: String!, $name: String!, $cursor: String) {
   repository(owner: $owner, name: $name) {
-    pullRequests(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+    pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
       nodes {
         number
         author { login }
@@ -132,6 +144,22 @@ def read_exceptions(adr_dir: Path) -> Tuple[List[Dict[str, Any]], List[Dict[str,
             missing = sorted(REQUIRED_EXCEPTION_FIELDS - set(data))
             if missing:
                 raise ValueError("missing required field(s): {}".format(", ".join(missing)))
+            for field, expected_type in EXCEPTION_FIELD_TYPES.items():
+                if not isinstance(data[field], expected_type):
+                    raise ValueError(
+                        "field {!r} must be {}, got {}".format(
+                            field, expected_type.__name__, type(data[field]).__name__
+                        )
+                    )
+            if not EXCEPTION_ID_RE.fullmatch(data["id"]):
+                raise ValueError("id does not match EXC-NNNN")
+            if not ADR_ID_RE.fullmatch(data["adr_id"]):
+                raise ValueError("adr_id does not match ADR-NNNN")
+            for field in ("owner", "reason", "rule_id"):
+                if not data[field].strip():
+                    raise ValueError("{} must not be empty".format(field))
+            if not data["scope"]:
+                raise ValueError("scope must contain at least one path pattern")
             for field in ("created", "expiry"):
                 try:
                     parse_timestamp(str(data[field]))
@@ -167,6 +195,16 @@ def _validate_event(data: Any) -> None:
     ) - set(data)
     if missing:
         raise ValueError("missing required field(s): {}".format(", ".join(sorted(missing))))
+    string_fields = EVENT_REQUIRED_FIELDS[str(event_name)] - {"qualified"}
+    for field in string_fields | {"occurred_at", "source"}:
+        if not isinstance(data[field], str) or not data[field].strip():
+            raise ValueError("field {!r} must be a non-empty string".format(field))
+    if event_name == "review_submitted" and not isinstance(data["qualified"], bool):
+        raise ValueError("field 'qualified' must be bool")
+    if "review_cycle" in data and (
+        not isinstance(data["review_cycle"], str) or not data["review_cycle"].strip()
+    ):
+        raise ValueError("field 'review_cycle' must be a non-empty string")
     parse_timestamp(str(data["occurred_at"]))
 
 
@@ -210,6 +248,7 @@ def read_events(
                     }
                 )
                 continue
+            data["occurred_at"] = parse_timestamp(data["occurred_at"]).isoformat()
             events.append(data)
     return events, warnings
 
@@ -231,7 +270,9 @@ def _event_identity(event: Dict[str, Any]) -> Tuple[str, str, str]:
 
 
 def _event_payload(event: Dict[str, Any]) -> Dict[str, Any]:
-    return {key: value for key, value in event.items() if key != "source"}
+    payload = {key: value for key, value in event.items() if key != "source"}
+    payload["occurred_at"] = parse_timestamp(str(event["occurred_at"])).isoformat()
+    return payload
 
 
 def merge_events(
@@ -267,13 +308,18 @@ def merge_events(
 
 
 def _run_git(root: Path, arguments: List[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git"] + arguments,
-        cwd=str(root),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    command = ["git"] + arguments
+    try:
+        return subprocess.run(
+            command,
+            cwd=str(root),
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError:
+        return subprocess.CompletedProcess(command, 127, "", "")
 
 
 def collect_git_events(
@@ -284,12 +330,18 @@ def collect_git_events(
         return [], [
             {"code": "GIT_UNAVAILABLE", "detail": "Root is not a Git work tree."}
         ]
+    top_result = _run_git(root, ["rev-parse", "--show-toplevel"])
+    if top_result.returncode != 0:
+        return [], [
+            {"code": "GIT_UNAVAILABLE", "detail": "Could not resolve Git top-level."}
+        ]
+    git_root = Path(top_result.stdout.strip()).resolve()
 
     events: List[Dict[str, Any]] = []
     warnings: List[Dict[str, Any]] = []
     for path in sorted(adr_dir.glob("[0-9]*.md")):
         try:
-            relative_path = path.resolve().relative_to(root.resolve()).as_posix()
+            relative_path = path.resolve().relative_to(git_root).as_posix()
         except ValueError:
             warnings.append(
                 {
@@ -300,7 +352,7 @@ def collect_git_events(
             )
             continue
         history = _run_git(
-            root,
+            git_root,
             ["log", "--follow", "--format=%H%x1f%aI", "--", relative_path],
         )
         if history.returncode != 0:
@@ -313,12 +365,13 @@ def collect_git_events(
             )
             continue
 
-        versions: List[Tuple[str, str, Dict[str, str]]] = []
-        for line in reversed([item for item in history.stdout.splitlines() if item]):
+        versions_newest_first: List[Tuple[str, str, Dict[str, str]]] = []
+        historical_path = relative_path
+        for line in [item for item in history.stdout.splitlines() if item]:
             commit, separator, timestamp = line.partition("\x1f")
             if not separator:
                 continue
-            shown = _run_git(root, ["show", "{}:{}".format(commit, relative_path)])
+            shown = _run_git(git_root, ["show", "{}:{}".format(commit, historical_path)])
             if shown.returncode != 0:
                 warnings.append(
                     {
@@ -344,7 +397,22 @@ def collect_git_events(
                     }
                 )
                 continue
-            versions.append((commit, occurred_at, data))
+            versions_newest_first.append((commit, occurred_at, data))
+
+            names = _run_git(
+                git_root,
+                ["diff-tree", "--no-commit-id", "--name-status", "-r", "-M", commit],
+            )
+            if names.returncode == 0:
+                for changed_line in names.stdout.splitlines():
+                    parts = changed_line.split("\t")
+                    if len(parts) == 3 and parts[0].startswith("R"):
+                        old_name, new_name = parts[1], parts[2]
+                        if new_name == historical_path:
+                            historical_path = old_name
+                            break
+
+        versions = list(reversed(versions_newest_first))
 
         previous_status = None
         previous_id = None
@@ -391,13 +459,18 @@ def collect_git_events(
 
 
 def _run_gh(root: Path, arguments: List[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["gh"] + arguments,
-        cwd=str(root),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    command = ["gh"] + arguments
+    try:
+        return subprocess.run(
+            command,
+            cwd=str(root),
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError:
+        return subprocess.CompletedProcess(command, 127, "", "")
 
 
 def collect_github_payload(
@@ -422,9 +495,10 @@ def collect_github_payload(
             }
         ]
 
-    result = _run_gh(
-        root,
-        [
+    all_nodes: List[Dict[str, Any]] = []
+    cursor = None
+    while True:
+        arguments = [
             "api",
             "graphql",
             "-f",
@@ -433,24 +507,40 @@ def collect_github_payload(
             "owner={}".format(owner),
             "-F",
             "name={}".format(name),
-        ],
-    )
-    if result.returncode != 0:
-        return None, [
-            {
-                "code": "GITHUB_UNAVAILABLE",
-                "detail": "Could not collect GitHub review history.",
-            }
         ]
-    try:
-        return json.loads(result.stdout), []
-    except json.JSONDecodeError:
-        return None, [
-            {
-                "code": "GITHUB_BAD_RESPONSE",
-                "detail": "GitHub returned invalid review JSON.",
-            }
-        ]
+        if cursor is not None:
+            arguments += ["-F", "cursor={}".format(cursor)]
+        result = _run_gh(root, arguments)
+        if result.returncode != 0:
+            return None, [
+                {
+                    "code": "GITHUB_UNAVAILABLE",
+                    "detail": "Could not collect GitHub review history.",
+                }
+            ]
+        try:
+            page_payload = json.loads(result.stdout)
+            pull_requests = page_payload["data"]["repository"]["pullRequests"]
+            all_nodes.extend(pull_requests["nodes"])
+            page_info = pull_requests["pageInfo"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            return None, [
+                {
+                    "code": "GITHUB_BAD_RESPONSE",
+                    "detail": "GitHub returned invalid review JSON.",
+                }
+            ]
+        if not page_info.get("hasNextPage"):
+            pull_requests["nodes"] = all_nodes
+            return page_payload, []
+        cursor = page_info.get("endCursor")
+        if not cursor:
+            return None, [
+                {
+                    "code": "GITHUB_BAD_RESPONSE",
+                    "detail": "GitHub pagination omitted its next cursor.",
+                }
+            ]
 
 
 def _reviewer_login(node: Any) -> Any:
@@ -482,12 +572,14 @@ def normalize_github_reviews(
         )
 
     events: List[Dict[str, Any]] = []
+    incomplete = False
     for pull_request in nodes:
         files = pull_request.get("files", {})
         timeline = pull_request.get("timelineItems", {})
         if files.get("pageInfo", {}).get("hasNextPage") or timeline.get(
             "pageInfo", {}
         ).get("hasNextPage"):
+            incomplete = True
             warnings.append(
                 {
                     "code": "GITHUB_PR_RESULTS_TRUNCATED",
@@ -496,6 +588,7 @@ def normalize_github_reviews(
                     ),
                 }
             )
+            continue
         adr_ids = sorted(
             {
                 adr_paths[file_node.get("path")]
@@ -506,6 +599,7 @@ def normalize_github_reviews(
         if not adr_ids:
             continue
         author = _reviewer_login(pull_request.get("author"))
+        review_cycle = "github-pr-{}".format(pull_request.get("number"))
         requested = set()
         timeline_nodes = sorted(
             timeline.get("nodes", []),
@@ -527,6 +621,7 @@ def normalize_github_reviews(
                             "source": "github",
                             "adr_id": adr_id,
                             "reviewer": reviewer,
+                            "review_cycle": review_cycle,
                         }
                     )
             elif node.get("__typename") == "PullRequestReview":
@@ -545,8 +640,11 @@ def normalize_github_reviews(
                             "adr_id": adr_id,
                             "reviewer": reviewer,
                             "qualified": qualified,
+                            "review_cycle": review_cycle,
                         }
                     )
+    if incomplete:
+        return [], warnings
     return sorted(events, key=_event_time), warnings
 
 
@@ -565,7 +663,10 @@ def _coverage(eligible: int, measured: int) -> Dict[str, Any]:
 
 
 def _decision_lead_time(
-    events: List[Dict[str, Any]], since: datetime, until: datetime
+    adrs: List[Dict[str, Any]],
+    events: List[Dict[str, Any]],
+    since: datetime,
+    until: datetime,
 ) -> Dict[str, Any]:
     by_adr: Dict[str, List[Dict[str, Any]]] = {}
     for event in events:
@@ -583,10 +684,10 @@ def _decision_lead_time(
             status = event.get("status") if event["event"] == "adr_created" else event.get("to")
             if status == "proposed" and proposed_at is None:
                 proposed_at = _event_time(event)
-            if status in {"accepted", "rejected"} and _in_period(event, since, until):
+            if status in {"accepted", "rejected"}:
                 outcome = event
                 break
-        if outcome is None:
+        if outcome is None or not _in_period(outcome, since, until):
             continue
         eligible += 1
         if proposed_at is not None and proposed_at <= _event_time(outcome):
@@ -596,6 +697,16 @@ def _decision_lead_time(
                 for event in ordered
                 if proposed_at <= _event_time(event) <= _event_time(outcome)
             )
+
+    event_adr_ids = set(by_adr)
+    for adr in adrs:
+        if str(adr.get("id")) in event_adr_ids:
+            continue
+        if adr.get("status") not in {"accepted", "rejected", "superseded"}:
+            continue
+        observed_at = parse_timestamp(str(adr.get("date")))
+        if since <= observed_at <= until:
+            eligible += 1
 
     result: Dict[str, Any] = {
         "available": bool(durations),
@@ -617,13 +728,21 @@ def _review_latency(
     durations: List[float] = []
     open_cycles = 0
     sources = set()
-    for request in sorted(requests, key=_event_time):
-        if not (since <= _event_time(request) <= until):
+    cycles: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    for request in requests:
+        adr_id = str(request.get("adr_id"))
+        cycle_id = str(request.get("review_cycle") or adr_id)
+        cycles.setdefault((adr_id, cycle_id), []).append(request)
+
+    for (adr_id, cycle_id), cycle_requests in cycles.items():
+        request = min(cycle_requests, key=_event_time)
+        if _event_time(request) > until:
             continue
         candidates = [
             event
             for event in submissions
-            if event.get("adr_id") == request.get("adr_id")
+            if str(event.get("adr_id")) == adr_id
+            and str(event.get("review_cycle") or adr_id) == cycle_id
             and event.get("qualified") is True
             and _event_time(event) >= _event_time(request)
             and _event_time(event) <= until
@@ -633,10 +752,13 @@ def _review_latency(
             sources.add(str(request.get("source")))
             continue
         submitted = min(candidates, key=_event_time)
+        if _event_time(submitted) < since:
+            continue
         durations.append(
             (_event_time(submitted) - _event_time(request)).total_seconds() / 3600
         )
-        sources.update((str(request.get("source")), str(submitted.get("source"))))
+        sources.update(str(item.get("source")) for item in cycle_requests)
+        sources.add(str(submitted.get("source")))
 
     eligible = len(durations) + open_cycles
     result: Dict[str, Any] = {
@@ -667,11 +789,12 @@ def _supersession_rate(
         if event.get("to") == "accepted"
         or (event.get("event") == "adr_created" and event.get("status") == "accepted")
     }
-    superseded_ids = {
+    superseded_in_period = {
         str(event.get("adr_id"))
         for event in lifecycle_events
         if event.get("to") == "superseded"
     }
+    superseded_ids = superseded_in_period & accepted_ids
     accepted = len(accepted_ids)
     superseded = len(superseded_ids)
     sources = sorted(
@@ -713,15 +836,53 @@ def _unresolved_violations(
             "reason": "No CHECK violation observations were available.",
         }
 
+    current_events = [
+        event for event in violation_events if event.get("observation_mode") == "current"
+    ]
+    historical_events = [
+        event for event in violation_events if event.get("observation_mode") != "current"
+    ]
+    current_fingerprints = {
+        str(event.get("fingerprint"))
+        for event in current_events
+        if event.get("event") == "violation_observed"
+    }
+    if current_events and not historical_events:
+        return {
+            "available": True,
+            "open_count": len(current_fingerprints),
+            "age_available": False,
+            "median_age_days": None,
+            "max_age_days": None,
+            "sources": sorted({str(event.get("source")) for event in current_events}),
+            "reason": "Current CHECK results have no historical first-observed evidence.",
+        }
+
     open_since: Dict[str, datetime] = {}
     sources = set()
-    for event in sorted(violation_events, key=_event_time):
+    for event in sorted(historical_events, key=_event_time):
         fingerprint = str(event.get("fingerprint"))
         sources.add(str(event.get("source")))
         if event["event"] == "violation_resolved":
             open_since.pop(fingerprint, None)
         elif fingerprint not in open_since:
             open_since[fingerprint] = _event_time(event)
+
+    if current_events:
+        sources.update(str(event.get("source")) for event in current_events)
+        if not current_fingerprints.issubset(open_since):
+            return {
+                "available": True,
+                "open_count": len(current_fingerprints),
+                "age_available": False,
+                "median_age_days": None,
+                "max_age_days": None,
+                "sources": sorted(sources),
+                "reason": "Some current violations lack historical first-observed evidence.",
+            }
+        open_since = {
+            fingerprint: open_since[fingerprint] for fingerprint in current_fingerprints
+        }
 
     ages = [(until.date() - opened.date()).days for opened in open_since.values()]
     return {
@@ -742,6 +903,8 @@ def _exception_age(
     for exception in exceptions:
         created = parse_timestamp(str(exception["created"])).date()
         expiry = parse_timestamp(str(exception["expiry"])).date()
+        if created > until.date():
+            continue
         if expiry < until.date():
             expired_count += 1
         else:
@@ -763,9 +926,8 @@ def calculate_metrics(
     since: datetime,
     until: datetime,
 ) -> Dict[str, Any]:
-    del adrs  # Current ADR snapshots are retained for future coverage extensions.
     return {
-        "decision_lead_time": _decision_lead_time(events, since, until),
+        "decision_lead_time": _decision_lead_time(adrs, events, since, until),
         "review_latency": _review_latency(events, since, until),
         "supersession_rate": _supersession_rate(events, since, until),
         "unresolved_violations": _unresolved_violations(events, until),
@@ -825,7 +987,11 @@ def build_report(
 
     adrs, adr_warnings = read_adrs(adr_dir)
     exceptions, exception_warnings = read_exceptions(adr_dir)
-    explicit_events, explicit_warnings = read_events(event_paths + check_paths)
+    explicit_events, explicit_warnings = read_events(event_paths)
+    check_events, check_warnings = read_events(check_paths)
+    for event in check_events:
+        event["source"] = "check_results"
+        event["observation_mode"] = "current"
     git_events, git_warnings = collect_git_events(root, adr_dir)
 
     github_events: List[Dict[str, Any]] = []
@@ -845,6 +1011,7 @@ def build_report(
     events, merge_warnings = merge_events(
         [
             ("events", explicit_events),
+            ("check_results", check_events),
             ("git", git_events),
             ("github", github_events),
         ]
@@ -873,6 +1040,7 @@ def build_report(
             adr_warnings
             + exception_warnings
             + explicit_warnings
+            + check_warnings
             + git_warnings
             + github_warnings
             + merge_warnings

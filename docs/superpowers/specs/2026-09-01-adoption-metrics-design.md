@@ -144,8 +144,9 @@ status-transition events using the commit author timestamp. It does not infer a
 is excluded from lead-time coverage. Rename following is best effort and emits
 a warning if an ADR ID changes.
 
-The GitHub collector queries pull requests that touched an ADR file during the
-requested interval. A review is qualified when it is submitted by a reviewer
+The GitHub collector paginates through pull requests and selects review cycles
+completed during the requested interval after normalization. A review is
+qualified when it is submitted by a reviewer
 who was explicitly requested for that pull request; self-review by the PR author
 does not qualify. The first qualified submitted review after the first review
 request ends the interval. The normalized event keeps no provider-specific URL
@@ -155,6 +156,10 @@ GitHub collection is an enhancement, not a prerequisite. Repositories on other
 providers can export equivalent `review_requested` and `review_submitted`
 events. A repository with neither source receives an unavailable review metric,
 not a guessed value.
+
+If GitHub truncates the file or timeline connection inside any pull request,
+the collector discards GitHub review evidence for that run and emits a warning;
+partial provider evidence must not produce a confident latency.
 
 ## Metric Definitions
 
@@ -174,11 +179,12 @@ as open review cycles but are not included in the median.
 
 ### Supersession Rate
 
-The numerator is the number of ADRs transitioning to `superseded` within the
-interval. The denominator is the number of ADRs transitioning to `accepted`
-within the same interval. Report a JSON number in the range 0 through 1, or
-`null` when the denominator is zero. Also report both raw counts so consumers do
-not over-interpret a small sample.
+The denominator is the cohort of ADRs first observed as `accepted` or
+transitioning to `accepted` within the interval. The numerator is the members
+of that same cohort that also transition to `superseded` within the interval.
+Report a JSON number in the range 0 through 1, or `null` when the denominator is
+zero. Also report both raw counts so consumers do not over-interpret a small
+sample.
 
 ### Unresolved Violations
 
@@ -186,8 +192,9 @@ A violation is identified by the stable fingerprint supplied by the CHECK
 observation producer. It is open after its latest `violation_observed` event and
 closed after a later `violation_resolved` event. At `until`, report the open
 count and each open violation's whole-day age from first uninterrupted
-observation. If only a current CHECK result exists, count is available but age
-is unavailable. Active exceptions remain visible and do not close violations.
+observation. `--check-results` is a current snapshot: count is available, but
+age is unavailable unless matching historical observations are supplied with
+`--events`. Active exceptions remain visible and do not close violations.
 
 ### Exception Age
 

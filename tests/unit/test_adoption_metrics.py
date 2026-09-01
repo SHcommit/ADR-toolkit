@@ -143,6 +143,40 @@ def test_read_exceptions_warns_and_skips_an_invalid_expiry(tmp_path):
     assert "expiry" in warnings[0]["detail"]
 
 
+def test_read_exceptions_rejects_wrong_types_and_invalid_ids(tmp_path):
+    exceptions_dir = tmp_path / "exceptions"
+    exceptions_dir.mkdir()
+    invalid = {
+        "id": "bad-id",
+        "adr_id": "bad-adr",
+        "rule_id": ["r1"],
+        "owner": ["team"],
+        "reason": "migration",
+        "scope": "src/a.py",
+        "created": "2026-01-01",
+        "expiry": "2026-02-01",
+    }
+    (exceptions_dir / "0001.json").write_text(json.dumps(invalid), encoding="utf-8")
+
+    records, warnings = adoption_metrics.read_exceptions(tmp_path)
+
+    assert records == []
+    assert warnings[0]["code"] == "BAD_EXCEPTION"
+
+
+def test_exception_created_after_report_date_is_not_counted_as_negative_age():
+    exceptions = [
+        {"id": "EXC-0001", "created": "2026-02-01", "expiry": "2026-03-01"}
+    ]
+
+    result = adoption_metrics.calculate_metrics([], exceptions, [], SINCE, UNTIL)[
+        "exception_age"
+    ]
+
+    assert result["active_count"] == 0
+    assert result["expired_count"] == 0
+
+
 def test_decision_lead_time_is_median_completed_cycle_hours():
     events = [
         _event(
@@ -203,6 +237,53 @@ def test_decision_lead_time_excludes_terminal_first_observation_from_coverage():
     assert result["median_hours"] is None
     assert result["coverage"] == {"eligible": 1, "measured": 0, "ratio": 0.0}
     assert result["reason"] == "No completed decision had observable proposed history."
+
+
+def test_decision_lead_time_uses_current_terminal_adrs_for_coverage_without_history():
+    adrs = [
+        {
+            "id": "ADR-0001",
+            "title": "A",
+            "status": "accepted",
+            "date": "2026-01-02",
+            "file": "0001-a.md",
+        }
+    ]
+
+    result = adoption_metrics.calculate_metrics(adrs, [], [], SINCE, UNTIL)[
+        "decision_lead_time"
+    ]
+
+    assert result["coverage"] == {"eligible": 1, "measured": 0, "ratio": 0.0}
+
+
+def test_decision_lead_time_does_not_replace_pre_period_first_outcome():
+    events = [
+        _event(
+            "adr_created",
+            "2025-12-01T00:00:00Z",
+            adr_id="ADR-0001",
+            status="proposed",
+        ),
+        _event(
+            "adr_status_changed",
+            "2025-12-02T00:00:00Z",
+            adr_id="ADR-0001",
+            **{"from": "proposed", "to": "accepted"},
+        ),
+        _event(
+            "adr_status_changed",
+            "2026-01-02T00:00:00Z",
+            adr_id="ADR-0001",
+            **{"from": "deprecated", "to": "accepted"},
+        ),
+    ]
+
+    result = adoption_metrics.calculate_metrics([], [], events, SINCE, UNTIL)[
+        "decision_lead_time"
+    ]
+
+    assert result["coverage"] == {"eligible": 0, "measured": 0, "ratio": None}
 
 
 def test_review_latency_uses_first_qualified_review_after_request():
@@ -269,6 +350,72 @@ def test_review_latency_reports_open_cycle_without_adding_it_to_median():
     assert result["median_hours"] == 12.0
     assert result["open_cycles"] == 1
     assert result["coverage"] == {"eligible": 2, "measured": 1, "ratio": 0.5}
+
+
+def test_review_latency_filters_completed_cycles_by_submission_time():
+    events = [
+        _event(
+            "review_requested",
+            "2026-01-09T00:00:00Z",
+            adr_id="ADR-0001",
+            reviewer="alice",
+            review_cycle="pr-7",
+        ),
+        _event(
+            "review_submitted",
+            "2026-01-11T00:00:00Z",
+            adr_id="ADR-0001",
+            reviewer="alice",
+            qualified=True,
+            review_cycle="pr-7",
+        ),
+    ]
+
+    result = adoption_metrics.calculate_metrics(
+        [],
+        [],
+        events,
+        datetime(2026, 1, 10, tzinfo=timezone.utc),
+        UNTIL,
+    )["review_latency"]
+
+    assert result["sample_size"] == 1
+    assert result["median_hours"] == 48.0
+
+
+def test_review_latency_groups_multiple_requested_reviewers_into_one_cycle():
+    events = [
+        _event(
+            "review_requested",
+            "2026-01-01T00:00:00Z",
+            adr_id="ADR-0001",
+            reviewer="alice",
+            review_cycle="pr-7",
+        ),
+        _event(
+            "review_requested",
+            "2026-01-01T01:00:00Z",
+            adr_id="ADR-0001",
+            reviewer="bob",
+            review_cycle="pr-7",
+        ),
+        _event(
+            "review_submitted",
+            "2026-01-01T06:00:00Z",
+            adr_id="ADR-0001",
+            reviewer="bob",
+            qualified=True,
+            review_cycle="pr-7",
+        ),
+    ]
+
+    result = adoption_metrics.calculate_metrics([], [], events, SINCE, UNTIL)[
+        "review_latency"
+    ]
+
+    assert result["sample_size"] == 1
+    assert result["median_hours"] == 6.0
+    assert result["coverage"] == {"eligible": 1, "measured": 1, "ratio": 1.0}
 
 
 def test_supersession_rate_uses_transitions_within_period():
@@ -349,6 +496,49 @@ def test_supersession_rate_counts_an_adr_first_observed_as_accepted():
     assert result["accepted"] == 1
     assert result["superseded"] == 1
     assert result["rate"] == 1.0
+
+
+def test_supersession_rate_excludes_supersessions_outside_period_accepted_cohort():
+    events = [
+        _event(
+            "adr_created",
+            "2025-12-01T00:00:00Z",
+            adr_id="ADR-OLD-1",
+            status="accepted",
+        ),
+        _event(
+            "adr_created",
+            "2025-12-02T00:00:00Z",
+            adr_id="ADR-OLD-2",
+            status="accepted",
+        ),
+        _event(
+            "adr_created",
+            "2026-01-02T00:00:00Z",
+            adr_id="ADR-NEW",
+            status="accepted",
+        ),
+        _event(
+            "adr_status_changed",
+            "2026-01-03T00:00:00Z",
+            adr_id="ADR-OLD-1",
+            **{"from": "accepted", "to": "superseded"},
+        ),
+        _event(
+            "adr_status_changed",
+            "2026-01-04T00:00:00Z",
+            adr_id="ADR-OLD-2",
+            **{"from": "accepted", "to": "superseded"},
+        ),
+    ]
+
+    result = adoption_metrics.calculate_metrics([], [], events, SINCE, UNTIL)[
+        "supersession_rate"
+    ]
+
+    assert result["accepted"] == 1
+    assert result["superseded"] == 0
+    assert result["rate"] == 0.0
 
 
 def test_unresolved_violations_use_first_observation_after_latest_resolution():
@@ -504,6 +694,47 @@ def test_read_events_rejects_unknown_event_and_missing_required_payload(tmp_path
     ]
 
 
+def test_read_events_rejects_wrong_payload_types(tmp_path):
+    events_path = tmp_path / "events.jsonl"
+    events_path.write_text(
+        json.dumps(
+            _event(
+                "review_submitted",
+                "2026-01-01T00:00:00Z",
+                adr_id="ADR-0001",
+                reviewer="alice",
+                qualified="yes",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    events, warnings = adoption_metrics.read_events([events_path])
+
+    assert events == []
+    assert warnings[0]["code"] == "BAD_EVENT_SCHEMA"
+
+
+def test_merge_events_treats_equivalent_utc_timestamp_spellings_as_duplicates():
+    explicit = _event(
+        "adr_created",
+        "2026-01-01T00:00:00Z",
+        adr_id="ADR-0001",
+        status="accepted",
+    )
+    reconstructed = dict(
+        explicit, occurred_at="2026-01-01T00:00:00+00:00", source="git"
+    )
+
+    events, warnings = adoption_metrics.merge_events(
+        [("events", [explicit]), ("git", [reconstructed])]
+    )
+
+    assert len(events) == 1
+    assert warnings == []
+
+
 def test_merge_events_deduplicates_and_prefers_explicit_conflicting_payload():
     explicit = _event(
         "adr_created",
@@ -593,6 +824,33 @@ def test_collect_git_events_does_not_invent_proposed_for_terminal_first_commit(t
     )
 
 
+def test_collect_git_events_follows_rename_inside_a_nested_project_root(tmp_path):
+    repository = tmp_path / "repository"
+    root = repository / "nested-project"
+    adr_dir = root / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _git(repository, "init")
+    _git(repository, "config", "user.name", "Test")
+    _git(repository, "config", "user.email", "test@example.com")
+    old_path = adr_dir / "0001-old.md"
+    new_path = adr_dir / "0001-new.md"
+    _write_adr(old_path, "ADR-0001", "proposed")
+    _git(repository, "add", str(old_path.relative_to(repository)))
+    _git(repository, "commit", "-m", "propose", timestamp="2026-01-01T00:00:00Z")
+    _git(repository, "mv", str(old_path.relative_to(repository)), str(new_path.relative_to(repository)))
+    _write_adr(new_path, "ADR-0001", "accepted")
+    _git(repository, "add", str(new_path.relative_to(repository)))
+    _git(repository, "commit", "-m", "rename and accept", timestamp="2026-01-02T00:00:00Z")
+
+    events, warnings = adoption_metrics.collect_git_events(root, adr_dir)
+
+    assert warnings == []
+    assert [(event["event"], event.get("status"), event.get("to")) for event in events] == [
+        ("adr_created", "proposed", None),
+        ("adr_status_changed", None, "accepted"),
+    ]
+
+
 def test_collect_git_events_degrades_cleanly_outside_a_git_repository(tmp_path):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
@@ -606,6 +864,21 @@ def test_collect_git_events_degrades_cleanly_outside_a_git_repository(tmp_path):
             "detail": "Root is not a Git work tree.",
         }
     ]
+
+
+def test_collect_git_events_degrades_when_git_executable_is_missing(tmp_path, monkeypatch):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+
+    def missing_executable(*args, **kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(adoption_metrics.subprocess, "run", missing_executable)
+
+    events, warnings = adoption_metrics.collect_git_events(tmp_path, adr_dir)
+
+    assert events == []
+    assert warnings[0]["code"] == "GIT_UNAVAILABLE"
 
 
 def test_normalize_github_reviews_qualifies_requested_non_author_reviewer():
@@ -715,6 +988,62 @@ def test_collect_github_payload_hides_provider_stderr_on_failure(tmp_path, monke
     assert "secret-value" not in json.dumps(warnings)
 
 
+def test_collect_github_payload_degrades_when_gh_executable_is_missing(
+    tmp_path, monkeypatch
+):
+    def missing_executable(*args, **kwargs):
+        raise FileNotFoundError("gh")
+
+    monkeypatch.setattr(adoption_metrics.subprocess, "run", missing_executable)
+
+    payload, warnings = adoption_metrics.collect_github_payload(tmp_path)
+
+    assert payload is None
+    assert warnings[0]["code"] == "GITHUB_UNAVAILABLE"
+
+
+def test_collect_github_payload_paginates_until_all_pull_requests_are_loaded(
+    tmp_path, monkeypatch
+):
+    first_page = {
+        "data": {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [{"number": 1}],
+                    "pageInfo": {"hasNextPage": True, "endCursor": "CURSOR-1"},
+                }
+            }
+        }
+    }
+    second_page = {
+        "data": {
+            "repository": {
+                "pullRequests": {
+                    "nodes": [{"number": 2}],
+                    "pageInfo": {"hasNextPage": False, "endCursor": None},
+                }
+            }
+        }
+    }
+
+    def fake_gh(root, arguments):
+        if arguments[:2] == ["repo", "view"]:
+            stdout = json.dumps({"nameWithOwner": "owner/repo"})
+        elif any(value == "cursor=CURSOR-1" for value in arguments):
+            stdout = json.dumps(second_page)
+        else:
+            stdout = json.dumps(first_page)
+        return subprocess.CompletedProcess(["gh", *arguments], 0, stdout, "")
+
+    monkeypatch.setattr(adoption_metrics, "_run_gh", fake_gh)
+
+    payload, warnings = adoption_metrics.collect_github_payload(tmp_path)
+
+    nodes = payload["data"]["repository"]["pullRequests"]["nodes"]
+    assert [node["number"] for node in nodes] == [1, 2]
+    assert warnings == []
+
+
 def test_cli_emits_one_json_report_and_degrades_without_optional_history(tmp_path, capsys):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
@@ -799,6 +1128,48 @@ def test_cli_uses_explicit_events_to_calculate_lead_time(tmp_path, capsys):
     assert return_code == 0
     assert result["metrics"]["decision_lead_time"]["median_hours"] == 24.0
     assert result["metrics"]["decision_lead_time"]["sources"] == ["events"]
+
+
+def test_cli_current_check_results_report_count_without_inventing_age(tmp_path, capsys):
+    adr_dir = tmp_path / "docs" / "decisions"
+    adr_dir.mkdir(parents=True)
+    _write_adr(adr_dir / "0001-test.md", "ADR-0001", "accepted")
+    check_path = tmp_path / "check.jsonl"
+    check_path.write_text(
+        json.dumps(
+            _event(
+                "violation_observed",
+                "2026-01-31T00:00:00Z",
+                adr_id="ADR-0001",
+                rule_id="r1",
+                fingerprint="ADR-0001:r1:src/a.py",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    return_code = adoption_metrics.main(
+        [
+            "--root",
+            str(tmp_path),
+            "--dir",
+            "docs/decisions",
+            "--until",
+            "2026-01-31",
+            "--check-results",
+            "check.jsonl",
+            "--json",
+        ]
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    violations = result["metrics"]["unresolved_violations"]
+    assert return_code == 0
+    assert violations["open_count"] == 1
+    assert violations["age_available"] is False
+    assert violations["median_age_days"] is None
+    assert violations["sources"] == ["check_results"]
 
 
 def test_cli_opt_in_github_failure_is_a_warning(tmp_path, capsys, monkeypatch):
