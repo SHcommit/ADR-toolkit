@@ -4,6 +4,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from scripts.core import atomic_io
 from scripts.core import frontmatter as fm
 from scripts.core import identifiers
 from scripts.core.config import ConfigError, resolve_locale
@@ -13,6 +14,21 @@ from scripts.core.repository_paths import resolve_from_root
 from scripts.core.schema import validate_frontmatter
 
 REQUIRED_DRAFT_FIELDS = {"title", "status", "body"}
+
+
+def _build_frontmatter(draft: dict, next_num: int, locale: str) -> dict:
+    return {
+        "id": f"ADR-{next_num:04d}",
+        "title": draft["title"],
+        "status": draft["status"],
+        "date": draft.get("date") or date.today().isoformat(),
+        "locale": locale,
+        "decision_makers": draft.get("decision_makers", []),
+        "related": draft.get("related", []),
+        "affected_paths": draft.get("affected_paths", []),
+        "tags": draft.get("tags", []),
+        "retrospective": draft.get("retrospective", False),
+    }
 
 
 def _prompt(input_fn, question: str) -> str:
@@ -133,50 +149,61 @@ def run(args) -> dict:
             "errors": [{"code": "INVALID_SLUG", "detail": str(exc)}],
         }
 
-    next_num = identifiers.next_id(adr_dir)
-    filename = identifiers.format_filename(next_num, slug)
-    target = adr_dir / filename
-
-    if target.exists():
-        return {
-            "ok": False,
-            "operation": "create",
-            "errors": [{"code": "FILE_ALREADY_EXISTS", "path": str(target)}],
-        }
-
-    frontmatter_data = {
-        "id": f"ADR-{next_num:04d}",
-        "title": draft["title"],
-        "status": draft["status"],
-        "date": draft.get("date") or date.today().isoformat(),
-        "locale": locale,
-        "decision_makers": draft.get("decision_makers", []),
-        "related": draft.get("related", []),
-        "affected_paths": draft.get("affected_paths", []),
-        "tags": draft.get("tags", []),
-        "retrospective": draft.get("retrospective", False),
-    }
-
-    schema_errors = validate_frontmatter(frontmatter_data)
-    if schema_errors:
-        return {
-            "ok": False,
-            "operation": "create",
-            "errors": [{"code": "SCHEMA_ERROR", "detail": e} for e in schema_errors],
-        }
-
-    content = fm.serialize(frontmatter_data, draft["body"].strip() + "\n")
-
     if dry_run:
+        # A dry run must not create anything on disk -- not even adr_dir or
+        # a lock file -- so ID allocation here is an unprotected preview. A
+        # concurrent real `create` could take this exact ID before one
+        # actually runs; that's fine since nothing here is persisted.
+        next_num = identifiers.next_id(adr_dir)
+        filename = identifiers.format_filename(next_num, slug)
+        target = adr_dir / filename
+
+        if target.exists():
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "FILE_ALREADY_EXISTS", "path": str(target)}],
+            }
+
+        frontmatter_data = _build_frontmatter(draft, next_num, locale)
+        schema_errors = validate_frontmatter(frontmatter_data)
+        if schema_errors:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "SCHEMA_ERROR", "detail": e} for e in schema_errors],
+            }
+
         return {"ok": True, "operation": "create", "dry_run": True, "would_create": str(target), "id": frontmatter_data["id"]}
 
-    adr_dir.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
+    with atomic_io.adr_directory_lock(adr_dir):
+        next_num = identifiers.next_id(adr_dir)
+        filename = identifiers.format_filename(next_num, slug)
+        target = adr_dir / filename
 
-    return {
-        "ok": True,
-        "operation": "create",
-        "dry_run": False,
-        "created": str(target),
-        "id": frontmatter_data["id"],
-    }
+        if target.exists():
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "FILE_ALREADY_EXISTS", "path": str(target)}],
+            }
+
+        frontmatter_data = _build_frontmatter(draft, next_num, locale)
+        schema_errors = validate_frontmatter(frontmatter_data)
+        if schema_errors:
+            return {
+                "ok": False,
+                "operation": "create",
+                "errors": [{"code": "SCHEMA_ERROR", "detail": e} for e in schema_errors],
+            }
+
+        content = fm.serialize(frontmatter_data, draft["body"].strip() + "\n")
+        atomic_io.atomic_write_text(target, content)
+
+        return {
+            "ok": True,
+            "operation": "create",
+            "dry_run": False,
+            "created": str(target),
+            "id": frontmatter_data["id"],
+        }
