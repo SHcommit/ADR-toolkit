@@ -4,6 +4,7 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- `core/contracts.py` now covers all 16 commands' output shapes (was 2).
 - `PathEscapesRootError` (added in the prior session's path-escape fix)
   is now caught at all 7 call sites and reported as a structured
   `PATH_ESCAPES_ROOT` error instead of falling through to a generic

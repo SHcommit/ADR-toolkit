@@ -27,17 +27,22 @@ High pass left behind (all 7 `resolve_from_root` call sites now catch
 it), `e3d592b` schema-drift detection test (no `jsonschema` dependency
 added -- see rationale in that commit), `2933575` extended
 `contracts.py` to cover CHECK, `d7368f6` bulk-ADR performance sanity
-check, `c3ed01d` TTY-only stderr summary line, (this commit) docs
-closeout.
+check, `c3ed01d` TTY-only stderr summary line, `77ce206` docs closeout.
+
+**Follow-up** (owner asked to continue per `improvements.md`/`handoff.md`
+after the Medium pass): `1df6066` extended `core/contracts.py` to cover
+the remaining 14 commands (was 2/16, now 16/16) -- each shape read from
+the actual `run()` return statements, not guessed, and spot-checked
+against real error-path output for `status`/`supersede` too.
 
 All 3 plan files are gitignored by convention (`docs/superpowers/plans/`)
 but still on disk in this worktree.
 
 `improvements.md` now has: an empty `### Critical` section, a `### High`
 section containing only the 2 items explicitly deferred to another
-worktree, and a `### Medium` section with one item marked **declined with
-rationale** (parsing-result caching -- see below) and one marked
-partially done (output contract schema, 2 of 16 commands covered).
+worktree, and a `### Medium` section with exactly one item -- the
+parsing-result cache, marked **declined with rationale** (see below).
+Nothing else is open in this worktree's scope.
 
 **One Medium item was declined, not silently skipped:** the audit's
 `functools.lru_cache` suggestion for parsing-result caching provides zero
@@ -91,19 +96,21 @@ Excluded here, being handled elsewhere -- do not touch:
 
 ## Next step
 
-Nothing is currently in flight. `improvements.md`'s remaining backlog --
-2 other-worktree-flagged High items, plus 1 declined and 1
-partially-done Medium item -- is unscheduled. **Ask the owner before
-starting any of it.** Every scope decision across all 3 passes
-(Critical-then-High-then-Medium ordering, domain 1/5 exclusion, the
-other-worktree exclusions, the parsing-cache decline) was the owner's
+Nothing is currently in flight, and nothing is left unscheduled inside
+this worktree's scope -- `improvements.md`'s only remaining Open items
+are the 2 explicitly deferred to another worktree. If a future session is
+asked to "continue per improvements.md/handoff.md" again and finds
+nothing left there, that is the correct, complete state -- don't invent
+new work; ask the owner what's next. Every scope decision across all
+passes (Critical-then-High-then-Medium ordering, domain 1/5 exclusion,
+the other-worktree exclusions, the parsing-cache decline) was the owner's
 explicit call or a judgment call made and explained in-session, not
 something derivable from the audit report alone.
 
 ## Verification
 
-Full suite: `python3 -m pytest tests/unit tests/integration -v` -> 452
-passed as of commit `c3ed01d` (451 on Windows, where the SIGKILL chaos
+Full suite: `python3 -m pytest tests/unit tests/integration -v` -> 465
+passed as of commit `1df6066` (464 on Windows, where the SIGKILL chaos
 test is skipped).
 
 CI now also runs a `type-check` job (`mypy --strict`) and gates the
@@ -121,11 +128,10 @@ CI now also runs a `type-check` job (`mypy --strict`) and gates the
   `.adr-toolkit.lock` (0-byte dotfile) permanently inside
   `docs/decisions/` and `docs/decisions/exceptions/` -- intentional (the
   cross-process mutex), doesn't match `*.md`/`*.json` globs.
-- `core/contracts.py` covers only `CreateResult` and `CheckResult`;
-  extending to the other 14 commands, and extending `mypy --strict`
-  beyond the fully-typed core modules into the command modules
-  themselves (blocked on typing `argparse.Namespace` args), is future
-  work.
+- `core/contracts.py` now covers all 16 commands' result shapes, but
+  extending `mypy --strict` beyond the fully-typed core modules into the
+  command modules themselves (blocked on typing `argparse.Namespace`
+  args) is still future work.
 - (carried over from the audit, still true) CHECK deliberately cannot
   prove prose, business rationale, or organizational claims.
 - (carried over, still true) GitHub branch/tag protection is unavailable
