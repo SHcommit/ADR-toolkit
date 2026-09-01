@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -50,6 +51,11 @@ def _add_diff_mode_arguments(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="adr.py")
+    parser.add_argument(
+        "--diagnostic", action="store_true",
+        help="Add an elapsed_ms timing field to the JSON result. Must "
+             "precede the operation name, e.g. `adr.py --diagnostic check`.",
+    )
     sub = parser.add_subparsers(dest="operation", required=True)
 
     p_preflight = sub.add_parser("preflight")
@@ -184,6 +190,7 @@ def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
+    started_at = time.perf_counter()
     try:
         result = HANDLERS[args.operation](args)
     except Exception as exc:  # noqa: BLE001 - last-resort safety net for the JSON-only-stdout contract
@@ -198,6 +205,8 @@ def main(argv=None) -> int:
                 "correlation_id": logger.extra["correlation_id"],
             }],
         }
+    if getattr(args, "diagnostic", False):
+        result["_diagnostics"] = {"elapsed_ms": round((time.perf_counter() - started_at) * 1000, 1)}
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result.get("ok") else 1
 
