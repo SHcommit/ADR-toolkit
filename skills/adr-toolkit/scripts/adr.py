@@ -26,6 +26,7 @@ from scripts.commands import (
 )
 from scripts.core.lifecycle import STATUSES
 from scripts.core.locale import SUPPORTED_LOCALES
+from scripts.core.telemetry import get_logger
 
 
 def _add_json_flag(parser: argparse.ArgumentParser) -> None:
@@ -186,10 +187,16 @@ def main(argv=None) -> int:
     try:
         result = HANDLERS[args.operation](args)
     except Exception as exc:  # noqa: BLE001 - last-resort safety net for the JSON-only-stdout contract
+        logger = get_logger(args.operation)
+        logger.exception("operation failed")
         result = {
             "ok": False,
             "operation": args.operation,
-            "errors": [{"code": "INTERNAL_ERROR", "detail": str(exc)}],
+            "errors": [{
+                "code": "INTERNAL_ERROR",
+                "detail": str(exc),
+                "correlation_id": logger.extra["correlation_id"],
+            }],
         }
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result.get("ok") else 1
