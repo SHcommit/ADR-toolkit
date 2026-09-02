@@ -35,3 +35,7 @@ adapters/antigravity/skills/adr-toolkit
 # docs/superpowers/specs/ (the design docs) stay tracked; only plans/ is
 # excluded. History from before this commit still has them if ever needed.
 docs/superpowers/plans/
+
+# Cross-process mutex file created by core/atomic_io.py's directory lock
+# during create/exception/supersede -- a runtime artifact, not source.
+.adr-toolkit.lock

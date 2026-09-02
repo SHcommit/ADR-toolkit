@@ -13,6 +13,11 @@
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
 
 ### Superseded
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -31,6 +36,7 @@
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
 
 ### cli
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
@@ -38,11 +44,23 @@
 ### codex
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
 
+### concurrency
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+
 ### confidence
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 
 ### configuration
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
+
+### contract
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+
+### core
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
 
 ### cross-harness
 - [ADR-0010 — Codex skill-creator's quick_validate.py incompatibility is not this project's problem](0010-codex-quick-validate-not-applicable.md)
@@ -77,6 +95,9 @@
 ### navigation
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
+### observability
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+
 ### output-contract
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 
@@ -86,6 +107,20 @@
 
 ### release
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+
+### reliability
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+
+### security
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+
+### supply-chain
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+
+### typing
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
 
 ### v0.2.0
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
@@ -93,6 +128,13 @@
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### v0.3.0
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
 
 ## By affected path
 
@@ -112,6 +154,12 @@
 ### `.github/workflows/`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
 
+### `.github/workflows/release.yml`
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+
+### `.github/workflows/test.yml`
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+
 ### `.gitignore`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
 
@@ -129,6 +177,7 @@
 
 ### `SECURITY.md`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+- [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
 
 ### `adapters/`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
@@ -182,6 +231,7 @@
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
 
 ### `skills/adr-toolkit/scripts/commands/check.py`
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
@@ -191,12 +241,14 @@
 ### `skills/adr-toolkit/scripts/commands/create.py`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
 
 ### `skills/adr-toolkit/scripts/commands/diff.py`
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
 
 ### `skills/adr-toolkit/scripts/commands/exception.py`
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
 
 ### `skills/adr-toolkit/scripts/commands/graph.py`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
@@ -210,8 +262,14 @@
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
 
+### `skills/adr-toolkit/scripts/commands/supersede.py`
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+
 ### `skills/adr-toolkit/scripts/commands/validate.py`
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
+
+### `skills/adr-toolkit/scripts/core/atomic_io.py`
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
 
 ### `skills/adr-toolkit/scripts/core/config.py`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -219,6 +277,10 @@
 
 ### `skills/adr-toolkit/scripts/core/constraints.py`
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+
+### `skills/adr-toolkit/scripts/core/contracts.py`
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
 
 ### `skills/adr-toolkit/scripts/core/exceptions.py`
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
@@ -240,12 +302,16 @@
 ### `skills/adr-toolkit/scripts/core/schema.py`
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
 
+### `skills/adr-toolkit/scripts/core/telemetry.py`
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+
 ### `skills/adr-toolkit/scripts/i18n/`
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
 - [ADR-0006 — Localize deterministic ADR generation through repository configuration](0006-localized-adr-generation.md)
 
 ### `skills/adr-toolkit/scripts/rules/conflict.py`
 - [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
 
 ### `tests/integration/test_cli.py`
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
@@ -253,8 +319,20 @@
 ### `tests/unit/test_adr_cli.py`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
+### `tests/unit/test_atomic_io.py`
+- [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+
 ### `tests/unit/test_check.py`
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
+
+### `tests/unit/test_conflict.py`
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+
+### `tests/unit/test_constraints.py`
+- [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+
+### `tests/unit/test_contracts.py`
+- [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
 
 ### `tests/unit/test_graph_command.py`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
@@ -265,8 +343,16 @@
 ### `tests/unit/test_relationships.py`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
+### `tests/unit/test_telemetry.py`
+- [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+
 ## Chronological (newest first)
 
+- 2026-09-01 — [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
+- 2026-09-01 — [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+- 2026-09-01 — [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+- 2026-09-01 — [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
+- 2026-09-01 — [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
 - 2026-08-31 — [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 - 2026-08-30 — [ADR-0001 — Record architecture decisions](0001-record-architecture-decisions.md)
 - 2026-08-30 — [ADR-0002 — Limit CHECK's conflict detection to structural evidence only](0002-limit-check-s-conflict-detection-to-structural-evidence-only.md)
@@ -292,6 +378,14 @@
 - ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0006 "Localize deterministic ADR generation through repository configuration"
 - ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0008 "Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"
 - ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts" related to: ADR-0009 "--json is a documented no-op; CLI output is always JSON"
+- ADR-0012 "Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE" related to: ADR-0006 "Localize deterministic ADR generation through repository configuration"
+- ADR-0013 "Two-stage ReDoS defense for CHECK's author-supplied constraint regexes" related to: ADR-0002 "Limit CHECK's conflict detection to structural evidence only"
+- ADR-0013 "Two-stage ReDoS defense for CHECK's author-supplied constraint regexes" related to: ADR-0007 "Promote CHECK's kind-to-confidence mapping to a stable output field"
+- ADR-0013 "Two-stage ReDoS defense for CHECK's author-supplied constraint regexes" related to: ADR-0008 "Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress"
+- ADR-0014 "Typed result contracts and a scoped mypy --strict CI gate" related to: ADR-0009 "--json is a documented no-op; CLI output is always JSON"
+- ADR-0015 "Structured JSON stderr logging with correlation IDs for uncaught errors" related to: ADR-0009 "--json is a documented no-op; CLI output is always JSON"
+- ADR-0016 "Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key" related to: ADR-0005 "Adopt Git Flow with direct-tag release automation"
+- ADR-0016 "Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key" related to: ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts"
 
 ```mermaid
 flowchart LR
@@ -306,10 +400,23 @@ flowchart LR
   ADR_0009["ADR-0009<br/>--json is a documented no-op; CLI output is always JSON"]
   ADR_0010["ADR-0010<br/>Codex skill-creator's quick_validate.py incompatibility is not this project's problem"]
   ADR_0011["ADR-0011<br/>Expose ADR relationships as Mermaid and SVG navigation artifacts"]
+  ADR_0012["ADR-0012<br/>Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE"]
+  ADR_0013["ADR-0013<br/>Two-stage ReDoS defense for CHECK's author-supplied constraint regexes"]
+  ADR_0014["ADR-0014<br/>Typed result contracts and a scoped mypy --strict CI gate"]
+  ADR_0015["ADR-0015<br/>Structured JSON stderr logging with correlation IDs for uncaught errors"]
+  ADR_0016["ADR-0016<br/>Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key"]
   ADR_0006 -.->|related| ADR_0003
   ADR_0006 -->|supersedes| ADR_0003
   ADR_0011 -.->|related| ADR_0001
   ADR_0011 -.->|related| ADR_0006
   ADR_0011 -.->|related| ADR_0008
   ADR_0011 -.->|related| ADR_0009
+  ADR_0012 -.->|related| ADR_0006
+  ADR_0013 -.->|related| ADR_0002
+  ADR_0013 -.->|related| ADR_0007
+  ADR_0013 -.->|related| ADR_0008
+  ADR_0014 -.->|related| ADR_0009
+  ADR_0015 -.->|related| ADR_0009
+  ADR_0016 -.->|related| ADR_0005
+  ADR_0016 -.->|related| ADR_0011
 ```
