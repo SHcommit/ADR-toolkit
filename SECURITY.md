@@ -29,6 +29,14 @@ signature -- no private key is held or rotated by this project -- proving
 the archive was produced by this repository's own CI, from the exact
 commit the release tag points to.
 
+**While this repository is private, attestation is not generated** --
+GitHub's attestation API rejects it for a user-owned private repository.
+The release workflow skips that step automatically and still publishes
+the archive and its checksum; attestation starts appearing on releases
+once the repository goes public, with no workflow change required. Check
+a given release's assets on the Releases page to see whether an
+attestation is available for it.
+
 To verify a downloaded archive:
 
 ```bash
@@ -36,7 +44,8 @@ To verify a downloaded archive:
 sha256sum -c adr-toolkit-skill-vX.Y.Z.tar.gz.sha256
 
 # Provenance: confirms the archive was actually built by this repo's CI,
-# not a look-alike release from a compromised account or a different repo
+# not a look-alike release from a compromised account or a different repo.
+# Only available once this repository is public -- see the note above.
 gh attestation verify adr-toolkit-skill-vX.Y.Z.tar.gz -R SHcommit/ADR-toolkit
 ```
 
