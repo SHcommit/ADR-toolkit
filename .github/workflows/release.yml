@@ -51,6 +51,14 @@ jobs:
           sha256sum "$ARCHIVE" > "${ARCHIVE}.sha256"
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
       - name: Generate build provenance attestation
+        # GitHub's attestation API rejects this for a user-owned private
+        # repository ("Feature not available for user-owned private
+        # repositories") -- discovered on the v0.3.0 tag push, since this
+        # can only be confirmed against a real tag push, not a local dry
+        # run. Skipped while private; starts running automatically once
+        # this repository goes public (see docs/decisions/0016 and the
+        # project's public-transition plan), no workflow change needed.
+        if: ${{ !github.event.repository.private }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: ${{ steps.package.outputs.archive }}

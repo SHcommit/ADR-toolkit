@@ -2,7 +2,7 @@
 name: adr-toolkit
 description: Initialize, record, and check Architecture Decision Records by inspecting the repository and existing decisions before asking questions.
 user-invocable: true
-version: 0.3.0
+version: 0.3.1
 ---
 
 # ADR Toolkit
