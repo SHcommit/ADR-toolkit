@@ -10,12 +10,6 @@ domains 1 (core/plugin architecture) and 5 (governance/FSM) — already
 scored 72/80 and mostly "no action needed" in the audit. README prose is
 another worktree's.
 
-### High
-
-None open.
-
-### Medium
-
 - [ ] ~~**파싱 결과 캐시**~~ — **결정: 하지 않음.** 이 CLI는 호출마다
   새 프로세스라 `functools.lru_cache`는 프로세스 간 재파싱을 전혀 줄이지
   못하고(원 문제였던 `validate → index → check` 연쇄 재파싱은 별도
@@ -52,3 +46,4 @@ None open.
 Normally this section stays empty between sessions (resolved items live in
 `changelog.md` + git history instead, and this session's own architectural
 decisions in `docs/decisions/ADR-0012..0016`).
+

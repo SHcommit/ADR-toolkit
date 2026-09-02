@@ -29,10 +29,10 @@ def _write_adr(adr_dir, number, title):
     (adr_dir / f"{number:04d}-decision-{number}.md").write_text(text, encoding="utf-8")
 
 
-def test_search_and_index_handle_200_adrs_without_catastrophic_slowdown(tmp_path):
+def test_search_and_index_handle_500_adrs_without_catastrophic_slowdown(tmp_path):
     adr_dir = tmp_path / "docs" / "decisions"
     adr_dir.mkdir(parents=True)
-    for i in range(1, 201):
+    for i in range(1, 501):
         _write_adr(adr_dir, i, f"Decision number {i}")
 
     started = time.monotonic()
@@ -43,7 +43,7 @@ def test_search_and_index_handle_200_adrs_without_catastrophic_slowdown(tmp_path
     elapsed = time.monotonic() - started
 
     assert search_result["ok"] is True
-    assert search_result["total"] == 200
+    assert search_result["total"] == 500
     assert index_result["ok"] is True
-    assert index_result["count"] == 200
-    assert elapsed < 5.0, f"search+index over 200 ADRs took {elapsed:.2f}s -- investigate before real repos hit this scale"
+    assert index_result["count"] == 500
+    assert elapsed < 5.0, f"search+index over 500 ADRs took {elapsed:.2f}s -- investigate before real repos hit this scale"

@@ -3,6 +3,7 @@
 Supports exactly the subset ADR Toolkit frontmatter needs: string scalars,
 booleans, and flat string lists. Not a general YAML parser.
 """
+from pathlib import Path
 import re
 
 from scripts.core.errors import AdrToolkitError
@@ -14,12 +15,27 @@ class FrontmatterError(AdrToolkitError):
     error_code = "BAD_FRONTMATTER"
 
 
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10MB limit
+
+
 def parse(text: str) -> tuple:
     match = FRONTMATTER_RE.match(text)
     if not match:
         raise FrontmatterError("No YAML frontmatter block found")
     raw_yaml, body = match.group(1), match.group(2)
     return _parse_simple_yaml(raw_yaml), body
+
+
+def parse_file(path: Path, max_bytes: int = MAX_FILE_SIZE_BYTES) -> tuple:
+    """Parse frontmatter from a file path with file size safety check."""
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        raise FrontmatterError(f"Cannot access file {path}: {exc}") from exc
+    if size > max_bytes:
+        raise FrontmatterError(f"File {path.name} size ({size} bytes) exceeds limit ({max_bytes} bytes)")
+    return parse(path.read_text(encoding="utf-8"))
+
 
 
 def serialize(data: dict, body: str, *, body_is_parsed: bool = False) -> str:

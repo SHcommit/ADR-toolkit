@@ -2,6 +2,7 @@
 """Single entrypoint for all ADR Toolkit deterministic operations."""
 import argparse
 import json
+import logging
 import os
 import sys
 import time
@@ -14,6 +15,7 @@ from scripts.commands import (
     create,
     diff,
     discover,
+    doctor,
     exception,
     graph,
     index,
@@ -57,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Add an elapsed_ms timing field to the JSON result. Must "
              "precede the operation name, e.g. `adr.py --diagnostic check`.",
     )
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    log_group.add_argument("--debug", action="store_true", help="Enable debug logging")
+    log_group.add_argument("--quiet", "-q", action="store_true", help="Suppress non-essential log output")
+
     sub = parser.add_subparsers(dest="operation", required=True)
 
     p_preflight = sub.add_parser("preflight")
@@ -87,8 +94,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_index = sub.add_parser("index")
     p_index.add_argument("--dir", default="docs/decisions")
     p_index.add_argument("--root", default=".")
-    # Constrained so a typo from the agent's own language detection fails
-    # visibly instead of silently producing English output.
     p_index.add_argument("--locale", choices=SUPPORTED_LOCALES)
     _add_json_flag(p_index)
 
@@ -164,6 +169,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--dir", default="docs/decisions")
     _add_json_flag(p_search)
 
+    p_doctor = sub.add_parser("doctor")
+    p_doctor.add_argument("--root", default=".")
+    p_doctor.add_argument("--dir", default="docs/decisions")
+    _add_json_flag(p_doctor)
+
     return parser
 
 
@@ -184,12 +194,27 @@ HANDLERS = {
     "exception": exception.run,
     "graph": graph.run,
     "search": search.run,
+    "doctor": doctor.run,
 }
+
+
+def _configure_logging(args: argparse.Namespace) -> None:
+    if getattr(args, "debug", False):
+        level = logging.DEBUG
+    elif getattr(args, "verbose", False):
+        level = logging.INFO
+    elif getattr(args, "quiet", False):
+        level = logging.ERROR
+    else:
+        level = logging.WARNING
+
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s", stream=sys.stderr)
 
 
 def main(argv=None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    _configure_logging(args)
 
     started_at = time.perf_counter()
     try:
@@ -209,10 +234,11 @@ def main(argv=None) -> int:
     if getattr(args, "diagnostic", False):
         result["_diagnostics"] = {"elapsed_ms": round((time.perf_counter() - started_at) * 1000, 1)}
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    if sys.stderr.isatty() and not os.environ.get("ADR_TOOLKIT_NO_COLOR"):
+    if sys.stderr.isatty() and not os.environ.get("ADR_TOOLKIT_NO_COLOR") and not getattr(args, "quiet", False):
         status_word = "ok" if result.get("ok") else "FAILED"
         print(f"\033[2m→ {args.operation} {status_word}\033[0m", file=sys.stderr)
     return 0 if result.get("ok") else 1
+
 
 
 if __name__ == "__main__":
