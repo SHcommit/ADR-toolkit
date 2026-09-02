@@ -20,7 +20,7 @@ Strictly audited codebase improvements completed; all 550 tests passing.
 ## Next step (for a new session picking this up cold)
 
 - All P1/P2 Production Readiness backlog items are resolved and committed.
-- Future work: Low priority tasks (Antigravity harness-parity once agy registry exists, public repo rulesets).
+- Future work: Low priority tasks (CODEOWNERS once there are 2+ qualified maintainers, organization-wide governance once there are 2+ repositories).
 
 ## Verification
 
@@ -31,5 +31,3 @@ Strictly audited codebase improvements completed; all 550 tests passing.
 
 - The ReDoS runtime timeout (`rules/conflict.py`) is POSIX-only.
 - `supersede.py` guarantees single-file atomicity, but true two-phase multi-file commit across pair updates is scoped out.
-- GitHub branch/tag protection is unavailable on the current private plan.
-
