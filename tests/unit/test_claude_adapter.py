@@ -1,8 +1,14 @@
+import importlib.util
 import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PLUGIN_DIR = REPO_ROOT / ".claude-plugin"
+
+_ADAPTER_SDK_PATH = REPO_ROOT / "scripts" / "adapter_sdk.py"
+_spec = importlib.util.spec_from_file_location("_repo_root_adapter_sdk", _ADAPTER_SDK_PATH)
+adapter_sdk = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(adapter_sdk)
 
 
 def test_plugin_manifest_has_required_keys_and_no_skills_key():
@@ -25,3 +31,8 @@ def test_marketplace_manifest_lists_the_plugin():
     marketplace = json.loads((PLUGIN_DIR / "marketplace.json").read_text(encoding="utf-8"))
     names = [p["name"] for p in marketplace["plugins"]]
     assert "adr-toolkit" in names
+
+
+def test_plugin_manifest_passes_the_shared_adapter_validator():
+    manifest = json.loads((PLUGIN_DIR / "plugin.json").read_text(encoding="utf-8"))
+    assert adapter_sdk.validate_adapter_manifest(manifest) == []

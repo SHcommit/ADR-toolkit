@@ -7,6 +7,8 @@ mechanisms here; which kind maps to which mechanism is fixed by the design
 spec, not configurable.
 """
 import re
+import signal
+import sys
 
 from scripts.core import globs
 
@@ -14,6 +16,40 @@ CONTENT_PATTERN_KINDS = {"forbidden_import", "dependency_forbidden"}
 REQUIRED_PATH_KINDS = {"required_path"}
 FORBIDDEN_PATH_KINDS = {"forbidden_path"}
 EXISTENCE_KINDS = {"file_must_exist", "test_must_exist"}
+
+_REGEX_TIMEOUT_SECONDS = 0.25
+
+
+class RegexTimeout(re.error):
+    """An author-supplied `constraints:` pattern exceeded its evaluation
+    budget (e.g. catastrophic backtracking). Subclasses re.error so
+    commands/check.py's existing `except re.error` handling downgrades it
+    to a BAD_CONSTRAINTS warning without any change there."""
+
+    def __init__(self, pattern: str):
+        super().__init__(
+            f"pattern exceeded {_REGEX_TIMEOUT_SECONDS}s evaluation budget: {pattern!r}"
+        )
+
+
+def _guarded_search(regex, line: str):
+    """Run regex.search with a wall-clock budget on POSIX. Must run on the
+    main thread -- signal handlers are process-wide and only installable
+    there. signal.SIGALRM does not exist on Windows, so this runs unguarded
+    there; the CI matrix's linux/macOS legs still cover the timeout path."""
+    if sys.platform == "win32":
+        return regex.search(line)
+
+    def _raise_timeout(signum, frame):
+        raise RegexTimeout(regex.pattern)
+
+    previous_handler = signal.signal(signal.SIGALRM, _raise_timeout)
+    signal.setitimer(signal.ITIMER_REAL, _REGEX_TIMEOUT_SECONDS)
+    try:
+        return regex.search(line)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def evaluate_rule(rule: dict, diff_files: list, existing_paths: set):
@@ -61,7 +97,7 @@ def _content_pattern(rule: dict, diff_files: list):
     for file_entry in _files_matching(diff_files, rule.get("paths", [])):
         for line in file_entry.get("added_lines", []):
             for regex in regexes:
-                if regex.search(line):
+                if _guarded_search(regex, line):
                     return _violation(rule, file=file_entry["path"], evidence={"line": line, "pattern": regex.pattern})
     return None
 

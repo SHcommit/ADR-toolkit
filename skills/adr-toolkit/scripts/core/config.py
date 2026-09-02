@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from scripts.core.errors import AdrToolkitError
 from scripts.core.locale import DEFAULT_LOCALE, SUPPORTED_LOCALES
 
 CONFIG_FILENAME = ".adr-toolkit.json"
@@ -10,8 +11,9 @@ CONFIG_SCHEMA_VERSION = 1
 ALLOWED_KEYS = {"schema_version", "locale"}
 
 
-class ConfigError(ValueError):
+class ConfigError(AdrToolkitError):
     """The repository configuration is malformed or unsupported."""
+    error_code = "CONFIG_ERROR"
 
 
 def load_repository_config(root: Path) -> dict:

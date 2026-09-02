@@ -1,13 +1,19 @@
+import importlib.util
 import json
 import re
 from pathlib import Path
 
-MANIFEST = (
-    Path(__file__).resolve().parent.parent.parent
-    / "adapters" / "antigravity" / "plugin.json"
-)
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+MANIFEST = REPO_ROOT / "adapters" / "antigravity" / "plugin.json"
 
 NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
+_ADAPTER_SDK_PATH = REPO_ROOT / "scripts" / "adapter_sdk.py"
+_spec = importlib.util.spec_from_file_location("_repo_root_adapter_sdk", _ADAPTER_SDK_PATH)
+adapter_sdk = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(adapter_sdk)
 
 
 def test_manifest_is_valid_json_with_required_fields():
@@ -25,6 +31,11 @@ def test_manifest_name_matches_antigravity_naming_rule():
 def test_manifest_schema_field_points_at_antigravity_schema():
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert data["$schema"] == "https://antigravity.google/schemas/v1/plugin.json"
+
+
+def test_manifest_passes_the_shared_adapter_validator():
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert adapter_sdk.validate_adapter_manifest(data) == []
 
 
 def test_antigravity_adapter_directory_layout_and_symlink_structure(tmp_path):
@@ -51,5 +62,3 @@ def test_antigravity_adapter_directory_layout_and_symlink_structure(tmp_path):
     assert (symlink_path / "SKILL.md").is_file()
     manifest_data = json.loads(manifest_copy.read_text(encoding="utf-8"))
     assert manifest_data["name"] == "adr-toolkit"
-
-

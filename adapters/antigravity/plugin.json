@@ -1,6 +1,6 @@
 {
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "adr-toolkit",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Initialize, record, and check Architecture Decision Records by inspecting the repository and existing decisions before asking questions."
 }

@@ -54,6 +54,19 @@ python3 skills/adr-toolkit/scripts/adr.py check --uncommitted --dir docs/decisio
 - Accepted ADRs are append-only in spirit: use supersession for changed
   decisions instead of rewriting history.
 
+## `constraints:` Block Review
+
+An ADR's `constraints:` block is enforced by `adr.py check` against every
+future diff, so a change to one is a change to the repository's policy
+surface, not just prose. Until CODEOWNERS-backed independent review is
+active (see "Public Repository Hygiene" below), a PR that adds or edits a
+`constraints:` block requires sign-off from someone with authority over
+the affected `affected_paths`, in addition to normal review. This is a
+process control, not a code sandbox -- see
+`docs/adr-toolkit-audit-report.md` §2.2 2.1 for why isolation isn't the
+right defense here (no third-party code executes; the block is
+structured policy text).
+
 ## Public Repository Hygiene
 
 Public repository branch/tag protection is expected to enforce PRs, required
