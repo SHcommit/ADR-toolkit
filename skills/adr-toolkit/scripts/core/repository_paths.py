@@ -1,4 +1,5 @@
 """Resolve repository-owned paths independently of the caller's CWD."""
+import os
 from pathlib import Path
 
 from scripts.core.errors import AdrToolkitError
@@ -19,7 +20,15 @@ def resolve_from_root(root, path) -> Path:
 
     joined = Path(root) / candidate
     root_resolved = Path(root).resolve()
-    if not joined.resolve().is_relative_to(root_resolved):
+    # `joined` (e.g. INIT scaffolding a brand new "docs/decisions") commonly
+    # doesn't exist on disk yet. Path.resolve() on a non-existent path has
+    # inconsistent cross-version behavior on Windows (observed: Python 3.9
+    # rejects a legitimate under-root path that Python 3.12 accepts
+    # identically), so the containment check is done with pure lexical
+    # normalization (os.path.normpath, no filesystem access) against the
+    # already-resolved root instead of resolving the joined path itself.
+    joined_normalized = Path(os.path.normpath(str(root_resolved / candidate)))
+    if not joined_normalized.is_relative_to(root_resolved):
         raise PathEscapesRootError(f"{str(path)!r} escapes root {str(root)!r}")
     return joined
 
