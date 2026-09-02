@@ -69,6 +69,8 @@ jobs:
       - name: Publish Python Package to PyPI
         if: ${{ !github.event.repository.private }}
         uses: pypa/gh-action-pypi-publish@release/v1
+        continue-on-error: true
         with:
           skip-existing: true
+
 
