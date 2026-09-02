@@ -4,6 +4,14 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+## v0.3.2 (2026-09-02)
+
+- Cleared completed work out of `improvements.md`'s `## Done` section
+  and `handoff.md`'s completed-task narrative, per both files' own
+  documented steady-state convention (resolved items live in this
+  changelog, git history, and `docs/decisions/` instead). No functional
+  changes.
+
 ## v0.3.1 (2026-09-02)
 
 - Fixed the release workflow: GitHub's Artifact Attestation API rejects
