@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "adr-toolkit"
-version = "1.0.0"
+version = "1.0.1"
 description = "Agent-native Architecture Decision Record toolkit with zero dependencies and deterministic precision"
 readme = "README.md"
 license = { text = "MIT" }

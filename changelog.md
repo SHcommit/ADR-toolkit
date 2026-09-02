@@ -4,13 +4,11 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
-- Applied public repository GitHub rulesets: `master`, `develop`, and
-  `release/*` now require PRs, required CI checks, conversation resolution,
-  and block deletion/non-fast-forward updates; `v*` release tags are protected
-  against deletion and non-fast-forward updates.
-- Added Antigravity CLI to `harness-parity` CI using the official installer
-  and end-to-end `agy plugin validate/install/list` plus installed ADR script
-  checks.
+## v1.0.1 (2026-09-02)
+
+- Added PyPI packaging support (`pyproject.toml`) for `pip install adr-toolkit` and `pipx install adr-toolkit`.
+- Integrated PyPI Trusted Publisher OIDC pipeline (`pypa/gh-action-pypi-publish@release/v1`) into `.github/workflows/release.yml`.
+- Synced all plugin manifests and version references across Claude, Codex, Gemini, and Antigravity adapters to v1.0.1.
 
 ## v1.0.0 (2026-09-02)
 
