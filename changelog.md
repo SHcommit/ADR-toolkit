@@ -4,6 +4,18 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+## v0.3.1 (2026-09-02)
+
+- Fixed the release workflow: GitHub's Artifact Attestation API rejects
+  attestation for a user-owned private repository, which broke the
+  `v0.3.0` tag's release run before it could publish anything (that tag
+  exists in git history but has no corresponding GitHub Release -- this
+  release supersedes it). `.github/workflows/release.yml` now skips the
+  attestation step while this repository is private and will start
+  running it automatically once the repository goes public; the
+  packaged archive and its SHA-256 checksum are unaffected and still
+  published on every release. `SECURITY.md` documents this.
+
 ## v0.3.0 (2026-09-02)
 
 - Recorded this release's architectural decisions as ADR-0012 through
