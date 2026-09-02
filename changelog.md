@@ -4,6 +4,13 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+## v0.3.0 (2026-09-02)
+
+- Recorded this release's architectural decisions as ADR-0012 through
+  ADR-0016 (atomic writes + directory locking, the two-stage ReDoS guard,
+  typed result contracts + `mypy --strict`, structured JSON logging with
+  correlation IDs, and release artifact attestation), using the ADR
+  toolkit itself.
 - `.github/workflows/release.yml` now packages `skills/adr-toolkit/` into a
   version-named tarball, SHA-256 checksums it, and generates a Sigstore-backed
   GitHub Artifact Attestation (`actions/attest-build-provenance@v2`, keyless)
