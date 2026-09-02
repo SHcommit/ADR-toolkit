@@ -4,6 +4,24 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+## v1.0.1 (2026-09-02)
+
+- Added PyPI packaging support (`pyproject.toml`) for `pip install adr-toolkit` and `pipx install adr-toolkit`.
+- Integrated PyPI Trusted Publisher OIDC pipeline (`pypa/gh-action-pypi-publish@release/v1`) into `.github/workflows/release.yml`.
+- Synced all plugin manifests and version references across Claude, Codex, Gemini, and Antigravity adapters to v1.0.1.
+
+## v1.0.0 (2026-09-02)
+
+- **First Official Major Production Release (1.0.0)**:
+  - Resolved all Production Readiness audit findings across Operability, Reliability, Observability, Maintainability, and Recoverability.
+  - **Operability (`Group A`)**: Added `.adr-toolkit.json` `adr_dir` config key support and `ADR_DIR`, `ADR_LOCALE` environment variable overrides with `resolve_adr_dir()` precedence.
+  - **Reliability (`Group B`)**: Added `SIGINT`/`SIGTERM` signal trap handling in `atomic_io.py` and PID/timestamp lock metadata with automatic stale lock detection and breaking (`is_lock_stale`, `break_stale_lock`).
+  - **Maintainability (`Group C`)**: Refactored 41KB `scripts/adoption_metrics.py` into modular `scripts/adoption_metrics/` subpackage while preserving backwards compatibility wrappers.
+  - **Recoverability (`Group D`)**: Implemented new `adr doctor` diagnostic command (`skills/adr-toolkit/scripts/commands/doctor.py`) for automated config, frontmatter, and lock health inspection.
+  - **Reliability & Performance (`Group E`)**: Added 10MB file size cap and memory-safe `parse_file()` in `frontmatter.py`. Verified 500+ synthetic ADR scale performance under 0.5s.
+  - **Observability (`Group F`)**: Added standard Python logging with `--verbose`, `--debug`, and `--quiet` CLI flags in `adr.py`, and registered the `doctor` subcommand.
+  - Full test suite passed (550 unit and integration test cases) with zero external runtime dependencies (100% Python stdlib).
+
 ## v0.3.2 (2026-09-02)
 
 - Cleared completed work out of `improvements.md`'s `## Done` section

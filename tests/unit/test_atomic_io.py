@@ -65,3 +65,36 @@ def test_adr_directory_lock_serializes_concurrent_workers(tmp_path):
         worker = lines[i].split()[1]
         assert lines[i] == f"start {worker}"
         assert lines[i + 1] == f"end {worker}"
+
+
+def test_stale_lock_detection_and_break(tmp_path):
+    directory = tmp_path / "docs" / "decisions"
+    directory.mkdir(parents=True)
+    lock_path = directory / atomic_io.LOCK_FILENAME
+
+    # Fresh lock is not stale
+    lock_path.write_text('{"pid": 1234, "timestamp": ' + str(time.time()) + "}", encoding="utf-8")
+    assert not atomic_io.is_lock_stale(lock_path, max_age_seconds=600)
+    assert not atomic_io.break_stale_lock(directory, max_age_seconds=600)
+
+    # Stale lock (timestamp in past)
+    old_time = time.time() - 1000
+    lock_path.write_text('{"pid": 1234, "timestamp": ' + str(old_time) + "}", encoding="utf-8")
+    assert atomic_io.is_lock_stale(lock_path, max_age_seconds=600)
+    assert atomic_io.break_stale_lock(directory, max_age_seconds=600)
+    assert not lock_path.exists()
+
+
+def test_adr_directory_lock_writes_metadata(tmp_path):
+    directory = tmp_path / "docs" / "decisions"
+    directory.mkdir(parents=True)
+    lock_path = directory / atomic_io.LOCK_FILENAME
+
+    with atomic_io.adr_directory_lock(directory):
+        assert lock_path.exists()
+
+    content = lock_path.read_text(encoding="utf-8")
+    assert "pid" in content
+    assert "timestamp" in content
+
+

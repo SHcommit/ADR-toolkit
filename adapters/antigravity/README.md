@@ -4,9 +4,9 @@ Antigravity plugins are a `plugin.json` marker file plus optional sibling
 directories (`skills/`, `agents/`, `rules/`), per
 `antigravity.google/docs/cli/plugins/`. This manifest includes `name`,
 `version`, `description`, and `$schema`.
-**Manually verified against Antigravity's `agy` CLI 1.1.13** (`agy
---version`): validate, install, and discovery all work — see "Verification
-status" below.
+**Verified against Antigravity's `agy` CLI**: validate, install, discovery,
+and installed script execution are covered by the `harness-parity` CI job and
+can also be run manually — see "Verification status" below.
 
 ## Install
 
@@ -40,10 +40,9 @@ committing a real symlink breaks on Windows checkouts that don't have
 
 ## Verification status
 
-Manually verified against Antigravity's `agy` CLI 1.1.13 (`agy --version`)
-in an isolated `HOME=$(mktemp -d)` so no state was written to the real
-`~/.gemini` (Antigravity's plugin CLI stores state under `.gemini/config/`
-in the active home directory).
+Verified by `.github/workflows/test.yml`'s `harness-parity` job and manually
+re-runnable in an isolated `HOME=$(mktemp -d)` so no state is written to the
+real `~/.gemini` profile.
 
 ```
 $ agy plugin validate "$(pwd)/adapters/antigravity"
