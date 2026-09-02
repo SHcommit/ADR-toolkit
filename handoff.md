@@ -1,12 +1,21 @@
 # handoff.md
 
-## Current task (2026-09-01)
+## Current task (2026-09-02)
 
-**The Critical, High-priority, and Medium-priority hardening passes are
-all done.** Every findable item from `docs/adr-toolkit-audit-report.md`
-that was in scope for this worktree is implemented, tested, and
-committed on `feature/analyzing-adr-toolkit`. Branch stays as-is per
-owner's explicit choice (not merged/PR'd yet).
+**Shipped as v0.3.1.** Every findable item from
+`docs/adr-toolkit-audit-report.md` that was in scope for this worktree is
+implemented, tested, and released. `feature/analyzing-adr-toolkit` merged
+into `develop` (PR #8, after CI caught and this session fixed a real
+Windows/Python-3.9-only path-escape bug), then `develop` → `release/0.3.0`
+→ `master` (PR #9). The `v0.3.0` tag's release run failed at the
+attestation step (GitHub rejects attestation for a private repo, only
+discoverable against a real tag push) and never published a release; a
+hotfix (PR #10) guarded that step on repo visibility and bumped to
+v0.3.1, which released successfully. `master` was merged back into
+`develop` (PR #11); both branches are identical. All short-lived branches
+were deleted after merge. This session's own decisions are recorded as
+ADR-0012..0016 (`docs/decisions/`), created via `adr.py create` itself
+rather than a separate worklog doc.
 
 **`origin/develop` was merged into this branch** after diverging
 significantly: it now includes the `v0.2.1` release (examples redesign,
@@ -204,37 +213,43 @@ code again:
 
 ## Next step (for a new session picking this up cold)
 
-**`improvements.md`'s `### High` section is now empty.** The last item
-(supply-chain attestation) landed in `18d4662`. Everything left in
-`## Open` is either precondition-gated on a real-world fact this
-worktree can't change, or belongs to the parallel Codex session (already
-done). Concretely:
+**Everything is merged, released, and cleaned up.** `develop` and
+`master` are identical (`git diff origin/develop origin/master` is
+empty); `v0.3.1` is the live GitHub Release
+(https://github.com/SHcommit/ADR-toolkit/releases/tag/v0.3.1); no
+short-lived branches remain. `improvements.md`'s `### High` and
+`### Medium` are empty. Concretely, for a new session:
 
-1. `improvements.md`'s `### Medium` and `### High` are both empty --
-   nothing there to pick up.
-2. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
-   item left (Antigravity in `harness-parity`), re-verified against
-   `adapters/antigravity/README.md` and still blocked on an external fact
-   (agy has no public package registry) -- don't start it.
-3. `improvements.md`'s `### Low` → enterprise-adoption.md sub-group has
-   3 precondition-gated items (repository going public, 2+ maintainers,
+1. There is no ready-to-start backlog item. `improvements.md`'s
+   `### Low` → audit-report sub-group has exactly 1 item left
+   (Antigravity in `harness-parity`), still blocked on `agy` having no
+   public package registry -- don't start it without re-verifying that
+   fact changed. Its enterprise-adoption.md sub-group has 3
+   precondition-gated items (repository going public, 2+ maintainers,
    2+ repositories) -- **not pure code tasks**.
-4. If the user says "continue" / "다음 작업 진행해줘" without naming a
-   task: there is no ready-to-start backlog item left -- say so and ask
-   what's next (a new audit finding, a precondition that's now met, or
-   finishing the branch) rather than inventing scope.
-5. If the user wants to finish this branch (merge to `develop` / open a
-   PR): that decision was deferred every time it came up this session
-   (owner chose "keep as-is" each time) -- ask again fresh, don't assume
-   the answer carried forward. This branch already includes the merged
-   `origin/develop` history, so a future merge/PR back to `develop`
-   should be a clean fast-forward-friendly merge. With the backlog now
-   empty of startable items, this is a reasonable point to raise it.
-6. If the user references a new audit finding or a fresh problem: that's
+2. A GitHub Wiki was considered and explicitly declined for now (owner
+   asked "위키 같은 거 만드는 게 좋을까?") -- this project's docs-as-ADRs
+   model (versioned, reviewed, tied to releases) already covers the
+   need; a wiki would fragment that. Revisit only once the repo is
+   public and community-contributed FAQ/tutorial content that doesn't
+   fit README/examples actually starts accumulating.
+3. If the user says "continue" / "다음 작업 진행해줘" without naming a
+   task: say there is no ready-to-start backlog item and ask what's
+   next (a new audit finding, a precondition that's now met, or
+   something else) rather than inventing scope.
+4. If the user references a new audit finding or a fresh problem: that's
    genuinely new work -- use the same pattern this session established
    (writing-plans -> executing-plans, TDD, one commit per task, verify
    real test/mypy output before each commit) rather than skipping
    straight to edits.
+5. This repository enforces a local `.githooks/pre-push` hook that
+   blocks direct pushes to `develop`/`master` (no GitHub branch
+   protection is configured -- the repo is private, which is a GitHub
+   Pro-only feature -- so the hook is the *only* enforcement). Any future
+   merge into either branch needs a short-lived branch + `gh pr create`
+   + `gh pr merge`, not a direct push. A release still follows Git Flow:
+   tag from `master` only, after a `release/*` (or `hotfix/*` for a
+   post-release bug) branch merges in via PR.
 
 Every scope decision across all passes (Critical-then-High-then-Medium
 ordering, domain 1/5 exclusion, the other-worktree exclusions, the
