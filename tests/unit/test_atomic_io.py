@@ -92,7 +92,9 @@ def test_adr_directory_lock_writes_metadata(tmp_path):
 
     with atomic_io.adr_directory_lock(directory):
         assert lock_path.exists()
-        content = lock_path.read_text(encoding="utf-8")
-        assert "pid" in content
-        assert "timestamp" in content
+
+    content = lock_path.read_text(encoding="utf-8")
+    assert "pid" in content
+    assert "timestamp" in content
+
 
