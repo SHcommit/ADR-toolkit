@@ -105,3 +105,44 @@ def test_valid_transition_preserves_parsed_body_whitespace(tmp_path):
     assert result["ok"] is True
     after_body = fm.parse(target.read_text(encoding="utf-8"))[1]
     assert after_body == before_body
+
+
+def test_status_warns_on_malformed_constraints_when_accepting(tmp_path):
+    adr = ACCEPTED_ADR.replace(
+        "# Use Kafka\n",
+        "# Use Kafka\n\n```yaml\nconstraints:\n  - id: r\n    kind: bogus\n```\n",
+    )
+    (tmp_path / "0001-use-kafka.md").write_text(adr, encoding="utf-8")
+
+    result = status.run(
+        SimpleNamespace(adr_number=1, to="accepted", dir=str(tmp_path), dry_run=False)
+    )
+
+    assert result["ok"] is True
+    assert result["warnings"][0]["code"] == "BAD_CONSTRAINTS"
+
+
+def test_status_does_not_lint_constraints_for_a_non_accepted_transition(tmp_path):
+    adr = ACCEPTED_ADR.replace(
+        "# Use Kafka\n",
+        "# Use Kafka\n\n```yaml\nconstraints:\n  - id: r\n    kind: bogus\n```\n",
+    )
+    (tmp_path / "0001-use-kafka.md").write_text(adr, encoding="utf-8")
+
+    result = status.run(
+        SimpleNamespace(adr_number=1, to="rejected", dir=str(tmp_path), dry_run=False)
+    )
+
+    assert result["ok"] is True
+    assert result["warnings"] == []
+
+
+def test_status_has_no_warnings_for_a_clean_body_when_accepting(tmp_path):
+    (tmp_path / "0001-use-kafka.md").write_text(ACCEPTED_ADR, encoding="utf-8")
+
+    result = status.run(
+        SimpleNamespace(adr_number=1, to="accepted", dir=str(tmp_path), dry_run=False)
+    )
+
+    assert result["ok"] is True
+    assert result["warnings"] == []

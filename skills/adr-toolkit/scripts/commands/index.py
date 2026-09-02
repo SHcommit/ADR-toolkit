@@ -6,7 +6,8 @@ from scripts.core.adr_directory import iter_adr_files
 from scripts.core.config import ConfigError, resolve_locale
 from scripts.core.locale import load_locale
 from scripts.core.relationships import render_mermaid, resolve
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.rendering import safe_md_link_text
+from scripts.core.repository_paths import resolve_from_root_or_error
 
 # Last-resort English headers, used when even the English locale file is
 # unavailable — e.g. a copy-based install (permitted by
@@ -28,7 +29,9 @@ FALLBACK_STRINGS = {
 
 def run(args) -> dict:
     root = Path(getattr(args, "root", "."))
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="index")
+    if error:
+        return error
     try:
         locale = resolve_locale(
             cli_locale=getattr(args, "locale", None),
@@ -94,7 +97,7 @@ def _render(entries: list, strings: dict) -> str:
         label = strings.get(f"status.{status}", status.capitalize())
         lines.append(f"### {label}")
         for entry in sorted(by_status[status], key=lambda e: e["filename"]):
-            lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
+            lines.append(f"- [{entry['id']} — {safe_md_link_text(entry['title'])}]({entry['filename']})")
         lines.append("")
 
     lines.append(f"## {_s(strings, 'by_tag')}")
@@ -106,7 +109,7 @@ def _render(entries: list, strings: dict) -> str:
     for tag in sorted(by_tag):
         lines.append(f"### {tag}")
         for entry in sorted(by_tag[tag], key=lambda e: e["filename"]):
-            lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
+            lines.append(f"- [{entry['id']} — {safe_md_link_text(entry['title'])}]({entry['filename']})")
         lines.append("")
 
     lines.append(f"## {_s(strings, 'by_affected_path')}")
@@ -118,13 +121,13 @@ def _render(entries: list, strings: dict) -> str:
     for path in sorted(by_path):
         lines.append(f"### `{path}`")
         for entry in sorted(by_path[path], key=lambda e: e["filename"]):
-            lines.append(f"- [{entry['id']} — {entry['title']}]({entry['filename']})")
+            lines.append(f"- [{entry['id']} — {safe_md_link_text(entry['title'])}]({entry['filename']})")
         lines.append("")
 
     lines.append(f"## {_s(strings, 'chronological')}")
     lines.append("")
     for entry in sorted(entries, key=lambda e: e["date"], reverse=True):
-        lines.append(f"- {entry['date']} — [{entry['id']} — {entry['title']}]({entry['filename']})")
+        lines.append(f"- {entry['date']} — [{entry['id']} — {safe_md_link_text(entry['title'])}]({entry['filename']})")
 
     by_id = {entry["id"]: entry for entry in entries}
     edges = resolve(entries)

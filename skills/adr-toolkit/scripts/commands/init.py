@@ -10,12 +10,14 @@ from scripts.core.config import (
     resolve_locale,
 )
 from scripts.core.rendering import render_initial_adr, render_template
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import resolve_from_root_or_error
 
 
 def run(args) -> dict:
     root = Path(getattr(args, "root", "."))
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="init")
+    if error:
+        return error
     dry_run = getattr(args, "dry_run", False)
 
     if adr_dir.exists() and any(adr_dir.iterdir()):

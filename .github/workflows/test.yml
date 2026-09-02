@@ -29,9 +29,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install pytest
+        run: pip install pytest pytest-cov
       - name: Run tests
-        run: python -m pytest tests/unit tests/integration -v
+        run: python -m pytest tests/unit tests/integration -v --cov=skills/adr-toolkit/scripts --cov-branch --cov-report=term-missing --cov-fail-under=85
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install mypy
+        run: pip install mypy
+      - name: Type-check the fully-typed core modules
+        run: >-
+          mypy
+          skills/adr-toolkit/scripts/core/atomic_io.py
+          skills/adr-toolkit/scripts/core/telemetry.py
+          skills/adr-toolkit/scripts/core/contracts.py
+          --strict
 
   version-drift:
     runs-on: ubuntu-latest
@@ -42,6 +59,32 @@ jobs:
           python-version: "3.12"
       - name: Check manifest versions and descriptions are in sync
         run: python scripts/sync_version.py --check
+
+  examples-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify examples workflows execution and parity
+        run: python scripts/verify_examples.py --check
+
+  pr-title-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR Title Conventional Commits Format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "Checking PR Title: $TITLE"
+          REGEX="^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\([a-z0-9-]+\))?!?: .+"
+          if [[ ! "$TITLE" =~ $REGEX ]]; then
+            echo "❌ PR Title does not match Conventional Commits format."
+            echo "Expected format: type(scope): description (e.g. feat(cli): add discover command)"
+            exit 1
+          fi
+          echo "✓ PR Title matches Conventional Commits format."
 
   harness-parity:
     # Installs the real Codex CLI and Gemini CLI and drives their own plugin

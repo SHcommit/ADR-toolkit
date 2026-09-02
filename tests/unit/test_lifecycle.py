@@ -11,6 +11,12 @@ def test_proposed_can_become_rejected():
     lifecycle.validate_transition("proposed", "rejected")  # must not raise
 
 
+def test_proposed_can_become_deprecated():
+    # Withdrawing a proposal without going through accepted first (e.g. no
+    # consensus was ever reached) -- docs/adr-toolkit-audit-report.md §2.5 5.1.
+    lifecycle.validate_transition("proposed", "deprecated")  # must not raise
+
+
 def test_accepted_cannot_go_back_to_proposed():
     with pytest.raises(lifecycle.InvalidTransitionError):
         lifecycle.validate_transition("accepted", "proposed")

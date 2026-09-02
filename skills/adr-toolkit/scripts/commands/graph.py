@@ -4,12 +4,14 @@ from pathlib import Path
 from scripts.core import frontmatter as fm
 from scripts.core.adr_directory import iter_adr_files
 from scripts.core.relationships import render_mermaid, render_svg, resolve
-from scripts.core.repository_paths import resolve_from_root
+from scripts.core.repository_paths import PathEscapesRootError, resolve_from_root, resolve_from_root_or_error
 
 
 def run(args) -> dict:
     root = Path(getattr(args, "root", "."))
-    adr_dir = resolve_from_root(root, args.dir)
+    adr_dir, error = resolve_from_root_or_error(root, args.dir, operation="graph")
+    if error:
+        return error
     entries = []
     warnings = []
 
@@ -33,16 +35,19 @@ def run(args) -> dict:
     output = getattr(args, "output", None)
     format_ = getattr(args, "format", "both")
     outputs = []
-    if format_ in {"mermaid", "both"}:
-        path = _output_path(root, adr_dir, output, format_, "mermaid")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(render_mermaid(entries), encoding="utf-8")
-        outputs.append(str(path))
-    if format_ in {"svg", "both"}:
-        path = _output_path(root, adr_dir, output, format_, "svg")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(render_svg(entries), encoding="utf-8")
-        outputs.append(str(path))
+    try:
+        if format_ in {"mermaid", "both"}:
+            path = _output_path(root, adr_dir, output, format_, "mermaid")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(render_mermaid(entries), encoding="utf-8")
+            outputs.append(str(path))
+        if format_ in {"svg", "both"}:
+            path = _output_path(root, adr_dir, output, format_, "svg")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(render_svg(entries), encoding="utf-8")
+            outputs.append(str(path))
+    except PathEscapesRootError as exc:
+        return {"ok": False, "operation": "graph", "errors": [{"code": exc.error_code, "detail": str(exc)}]}
 
     rendered_edges = [edge for edge in resolve(entries) if edge.type in {"related", "supersedes"}]
     return {

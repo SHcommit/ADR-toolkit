@@ -26,3 +26,10 @@ def test_readme_scopes_check_confidence():
     assert "CHECK does not certify the entire architecture" in text
     for label in ["VERIFIED", "VIOLATED", "UNVERIFIABLE", "NOT_APPLICABLE"]:
         assert label in text
+
+
+def test_readme_documents_harness_adapters_including_antigravity():
+    text = README.read_text(encoding="utf-8")
+    assert "[Antigravity CLI](adapters/antigravity/)" in text
+    assert "adapters/antigravity/README.md" in text
+

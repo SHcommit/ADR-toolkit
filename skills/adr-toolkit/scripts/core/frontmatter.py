@@ -5,11 +5,13 @@ booleans, and flat string lists. Not a general YAML parser.
 """
 import re
 
+from scripts.core.errors import AdrToolkitError
+
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
 
 
-class FrontmatterError(ValueError):
-    pass
+class FrontmatterError(AdrToolkitError):
+    error_code = "BAD_FRONTMATTER"
 
 
 def parse(text: str) -> tuple:

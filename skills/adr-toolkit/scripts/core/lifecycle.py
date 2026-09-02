@@ -1,9 +1,10 @@
 """ADR status lifecycle rules."""
+from scripts.core.errors import AdrToolkitError
 
 STATUSES = {"proposed", "accepted", "rejected", "deprecated", "superseded"}
 
 ALLOWED_TRANSITIONS = {
-    "proposed": {"accepted", "rejected"},
+    "proposed": {"accepted", "rejected", "deprecated"},
     "accepted": {"deprecated", "superseded"},
     "rejected": set(),
     "deprecated": set(),
@@ -11,8 +12,8 @@ ALLOWED_TRANSITIONS = {
 }
 
 
-class InvalidTransitionError(ValueError):
-    pass
+class InvalidTransitionError(AdrToolkitError):
+    error_code = "INVALID_TRANSITION"
 
 
 def validate_transition(current: str, target: str) -> None:

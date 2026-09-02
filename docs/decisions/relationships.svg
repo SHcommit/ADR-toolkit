@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1190" viewBox="0 0 960 1190" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1824" viewBox="0 0 960 1824" role="img" aria-labelledby="title desc">
 <title>ADR relationship graph</title>
 <desc>Vector export of ADR supersession and related-decision links.</desc>
 <rect width="100%" height="100%" fill="#ffffff"/>
@@ -37,16 +37,47 @@
 <rect x="32" y="892" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
 <text x="48" y="914" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0011</text>
 <text x="48" y="934" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Expose ADR relationships as Merma...</text>
+<rect x="32" y="974" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
+<text x="48" y="996" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0012</text>
+<text x="48" y="1016" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Atomic writes and cross-platform ...</text>
+<rect x="32" y="1056" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
+<text x="48" y="1078" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0013</text>
+<text x="48" y="1098" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Two-stage ReDoS defense for CHECK...</text>
+<rect x="32" y="1138" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
+<text x="48" y="1160" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0014</text>
+<text x="48" y="1180" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Typed result contracts and a scop...</text>
+<rect x="32" y="1220" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
+<text x="48" y="1242" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0015</text>
+<text x="48" y="1262" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Structured JSON stderr logging wi...</text>
+<rect x="32" y="1302" width="292" height="52" rx="6" fill="#f8fafc" stroke="#9fb3c8"/>
+<text x="48" y="1324" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#102a43">ADR-0016</text>
+<text x="48" y="1344" font-family="Arial, sans-serif" font-size="13" fill="#334e68">Sign release artifacts with GitHu...</text>
 <path d="M 324 501.0 C 520 501.0, 520 255.0, 324 255.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
-<text x="640" y="974" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0006 related ADR-0003</text>
+<text x="640" y="1384" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0006 related ADR-0003</text>
 <path d="M 324 515.0 C 520 515.0, 520 269.0, 324 269.0" fill="none" stroke="#52616f" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="640" y="1002" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0006 supersedes ADR-0003</text>
+<text x="640" y="1412" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0006 supersedes ADR-0003</text>
 <path d="M 324 918.0 C 520 918.0, 520 98.0, 324 98.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
-<text x="640" y="1030" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0001</text>
+<text x="640" y="1440" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0001</text>
 <path d="M 324 918.0 C 520 918.0, 520 508.0, 324 508.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
-<text x="640" y="1058" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0006</text>
+<text x="640" y="1468" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0006</text>
 <path d="M 324 918.0 C 520 918.0, 520 672.0, 324 672.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
-<text x="640" y="1086" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0008</text>
+<text x="640" y="1496" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0008</text>
 <path d="M 324 918.0 C 520 918.0, 520 754.0, 324 754.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
-<text x="640" y="1114" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0009</text>
+<text x="640" y="1524" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0011 related ADR-0009</text>
+<path d="M 324 1000.0 C 520 1000.0, 520 508.0, 324 508.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1552" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0012 related ADR-0006</text>
+<path d="M 324 1082.0 C 520 1082.0, 520 180.0, 324 180.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1580" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0013 related ADR-0002</text>
+<path d="M 324 1082.0 C 520 1082.0, 520 590.0, 324 590.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1608" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0013 related ADR-0007</text>
+<path d="M 324 1082.0 C 520 1082.0, 520 672.0, 324 672.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1636" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0013 related ADR-0008</text>
+<path d="M 324 1164.0 C 520 1164.0, 520 754.0, 324 754.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1664" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0014 related ADR-0009</text>
+<path d="M 324 1246.0 C 520 1246.0, 520 754.0, 324 754.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1692" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0015 related ADR-0009</text>
+<path d="M 324 1328.0 C 520 1328.0, 520 426.0, 324 426.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1720" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0016 related ADR-0005</text>
+<path d="M 324 1328.0 C 520 1328.0, 520 918.0, 324 918.0" fill="none" stroke="#52616f" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+<text x="640" y="1748" font-family="Arial, sans-serif" font-size="13" fill="#334e68">ADR-0016 related ADR-0011</text>
 </svg>

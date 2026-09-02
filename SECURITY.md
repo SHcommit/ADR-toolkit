@@ -18,6 +18,35 @@ public issue. Include:
 Do not include exploit details in a public issue until a fix or mitigation is
 available.
 
+## Verifying a Release
+
+Every `v*` release is built by `.github/workflows/release.yml` from a
+tagged commit, and the workflow publishes a [GitHub Artifact
+Attestation](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds)
+for the packaged skill archive it attaches to the release
+(`adr-toolkit-skill-vX.Y.Z.tar.gz`). This is a Sigstore-backed, keyless
+signature -- no private key is held or rotated by this project -- proving
+the archive was produced by this repository's own CI, from the exact
+commit the release tag points to.
+
+To verify a downloaded archive:
+
+```bash
+# Checksum: confirms the file wasn't corrupted/tampered with in transit
+sha256sum -c adr-toolkit-skill-vX.Y.Z.tar.gz.sha256
+
+# Provenance: confirms the archive was actually built by this repo's CI,
+# not a look-alike release from a compromised account or a different repo
+gh attestation verify adr-toolkit-skill-vX.Y.Z.tar.gz -R SHcommit/ADR-toolkit
+```
+
+Anyone consuming this repository directly (`git clone`, or an adapter's
+`marketplace add`/`plugin add` pointing at the repo, which is how every
+adapter installs this skill today) is verifying via Git/GitHub's own
+commit and tag history rather than this archive -- the attestation is
+primarily for the one path where a bare checkout doesn't happen: someone
+who downloads the release archive off the GitHub Releases page directly.
+
 ## Scope
 
 In scope:
