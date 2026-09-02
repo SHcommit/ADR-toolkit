@@ -8,9 +8,12 @@ directly. This closes the TOCTOU window between "compute next ID" and
 mid-write leaves the previous valid file in place rather than a truncated
 one.
 """
+import json
 import os
+import signal
 import sys
 import tempfile
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -36,6 +39,41 @@ else:
         fcntl.flock(fd, fcntl.LOCK_UN)
 
 
+LOCK_FILENAME = ".adr-toolkit.lock"
+STALE_LOCK_TIMEOUT_SECONDS = 600.0
+
+
+def is_lock_stale(lock_path: Path, max_age_seconds: float = STALE_LOCK_TIMEOUT_SECONDS) -> bool:
+    """Check whether a lock file is stale based on file modification time or lock timestamp metadata."""
+    if not lock_path.exists():
+        return False
+    try:
+        mtime = lock_path.stat().st_mtime
+        if time.time() - mtime > max_age_seconds:
+            return True
+        content = lock_path.read_text(encoding="utf-8").strip()
+        if content:
+            data = json.loads(content)
+            ts = data.get("timestamp")
+            if isinstance(ts, (int, float)) and time.time() - ts > max_age_seconds:
+                return True
+    except (OSError, json.JSONDecodeError, ValueError):
+        pass
+    return False
+
+
+def break_stale_lock(directory: Path, max_age_seconds: float = STALE_LOCK_TIMEOUT_SECONDS) -> bool:
+    """Check and remove a stale lock file or stale lock directory in `directory`."""
+    lock_path = Path(directory) / LOCK_FILENAME
+    if is_lock_stale(lock_path, max_age_seconds):
+        try:
+            lock_path.unlink(missing_ok=True)
+            return True
+        except OSError:
+            pass
+    return False
+
+
 def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
@@ -52,16 +90,67 @@ def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> N
 
 
 @contextmanager
-def adr_directory_lock(directory: Path) -> Iterator[None]:
-    """Serialize ID allocation + writes for one ADR/exceptions directory
-    across processes. The lock file lives inside `directory` itself so a
-    fresh clone or a brand-new `docs/decisions/` needs no extra setup."""
-    directory.mkdir(parents=True, exist_ok=True)
-    lock_path = directory / ".adr-toolkit.lock"
-    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+def _trap_signals() -> Iterator[None]:
+    """Register temporary SIGINT and SIGTERM signal traps to ensure cleanup runs on interrupts."""
+    old_sigint = None
+    old_sigterm = None
+
+    def _on_signal(signum, frame):
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt("Interrupted by SIGINT")
+        raise SystemExit(128 + signum)
+
     try:
-        _lock(fd)
+        if threading_is_main_thread():
+            try:
+                old_sigint = signal.signal(signal.SIGINT, _on_signal)
+                old_sigterm = signal.signal(signal.SIGTERM, _on_signal)
+            except (ValueError, OSError):
+                pass
         yield
     finally:
-        _unlock(fd)
-        os.close(fd)
+        if threading_is_main_thread():
+            if old_sigint is not None:
+                try:
+                    signal.signal(signal.SIGINT, old_sigint)
+                except (ValueError, OSError):
+                    pass
+            if old_sigterm is not None:
+                try:
+                    signal.signal(signal.SIGTERM, old_sigterm)
+                except (ValueError, OSError):
+                    pass
+
+
+def threading_is_main_thread() -> bool:
+    import threading
+    return threading.current_thread() is threading.main_thread()
+
+
+@contextmanager
+def adr_directory_lock(directory: Path) -> Iterator[None]:
+    """Serialize ID allocation + writes for one ADR/exceptions directory
+    across processes. Automatically breaks stale locks if held longer than STALE_LOCK_TIMEOUT_SECONDS."""
+    directory.mkdir(parents=True, exist_ok=True)
+    lock_path = directory / LOCK_FILENAME
+
+    # Clean up stale locks before acquiring
+    break_stale_lock(directory)
+
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+    with _trap_signals():
+        try:
+            _lock(fd)
+            # Write timestamp and PID metadata
+            try:
+                os.ftruncate(fd, 0)
+                os.lseek(fd, 0, os.SEEK_SET)
+                metadata = json.dumps({"pid": os.getpid(), "timestamp": time.time()})
+                os.write(fd, metadata.encode("utf-8"))
+            except OSError:
+                pass
+            yield
+        finally:
+            _unlock(fd)
+            os.close(fd)
+
