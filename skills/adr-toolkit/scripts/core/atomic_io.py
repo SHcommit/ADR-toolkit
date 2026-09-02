@@ -16,7 +16,8 @@ import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
+from types import FrameType
 
 if sys.platform == "win32":
     import msvcrt
@@ -95,10 +96,11 @@ def _trap_signals() -> Iterator[None]:
     old_sigint = None
     old_sigterm = None
 
-    def _on_signal(signum, frame):
+    def _on_signal(signum: int, frame: Any) -> None:
         if signum == signal.SIGINT:
             raise KeyboardInterrupt("Interrupted by SIGINT")
         raise SystemExit(128 + signum)
+
 
     try:
         if threading_is_main_thread():
