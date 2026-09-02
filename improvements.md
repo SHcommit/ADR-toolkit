@@ -61,12 +61,15 @@ Normally this section stays empty between sessions (resolved items live in
 cross-session handoff summary at the owner's explicit request — clear this
 back out next time a session does routine cleanup, per the usual rule.
 
-All of it is on branch `feature/analyzing-adr-toolkit`, not merged/PR'd
-into `develop` yet (owner's explicit choice: keep as-is). `origin/develop`
-was merged **into** this branch (not the other way around) to pick up its
-`v0.2.1` release, Antigravity plugin work, and CI additions — see
-`handoff.md` for the 3-file conflict resolution. Full detail, code, and
-rationale for every hardening item lives in
+All of this shipped: `feature/analyzing-adr-toolkit` merged into `develop`
+(PR #8), then `develop` → `release/0.3.0` → `master` (PR #9), tagged and
+released as **v0.3.1** (`v0.3.0`'s tag exists but has no published
+release — see the release-history note at the end of this section).
+`master` was merged back into `develop` (PR #11) so both branches are
+identical. This session's own hardening decisions are recorded as
+ADR-0012 through ADR-0016 under `docs/decisions/`, using the ADR toolkit
+itself rather than a separate worklog doc. Full detail, code, and
+rationale for every hardening item also lives in
 `docs/adr-toolkit-audit-report.md` and the 3 (gitignored) plan files under
 `docs/superpowers/plans/2026-09-01-*`.
 
@@ -89,8 +92,8 @@ supply-chain build provenance attestation on the release pipeline
 and generates a Sigstore-backed GitHub Artifact Attestation
 (`actions/attest-build-provenance@v2`, keyless/OIDC) for it; `SECURITY.md`
 gained a "Verifying a Release" section. This was the last item in
-`### High`; see `docs/worklogs/2026-09-01-supply-chain-attestation.md`
-for the full option analysis and rationale.
+`### High`; see ADR-0016 (`docs/decisions/0016-*.md`) for the full option
+analysis and rationale.
 
 **Medium** — common `AdrToolkitError` base class for all 6 domain
 exceptions (also closed a gap: `PathEscapesRootError` was raised but never
@@ -148,4 +151,23 @@ work; 518 as of this note (includes a parallel Codex session's own
 adoption-metrics commits landing in this same branch -- see `handoff.md`,
 not itemized here since that work isn't this session's to describe). CI
 gained a `type-check` job and an 85% coverage gate (this branch), plus
-`examples-drift` and `pr-title-check` jobs (from `origin/develop`).
+`examples-drift` and `pr-title-check` jobs (from `origin/develop`). 541
+passing as of the final release PRs.
+
+**Release history (v0.3.0 → v0.3.1):** PR #8 (`develop`)'s own CI caught
+a real, session-introduced bug that no local run on this dev machine
+could reproduce: `core/repository_paths.py`'s path-escape guard rejected
+a plainly-under-root path (e.g. `docs/decisions`, which doesn't exist yet
+when INIT scaffolds it) only on `windows-latest` + Python 3.9, not 3.12,
+because `Path.resolve()`'s handling of a non-existent path differs across
+Python versions on Windows. Fixed by checking containment via
+`os.path.normpath` (pure lexical normalization, no filesystem access)
+instead of resolving the possibly-nonexistent joined path. Separately,
+the `v0.3.0` tag's release run failed at the "Generate build provenance
+attestation" step -- GitHub's attestation API rejects attestation for a
+user-owned private repository, which could only be discovered against a
+real tag push. `release.yml` now guards that step on
+`!github.event.repository.private` so it skips cleanly now and starts
+running automatically once the repository goes public. `v0.3.0`'s tag
+exists in git history but was never published as a release; `v0.3.1`
+supersedes it and is the actual first release of this session's work.
