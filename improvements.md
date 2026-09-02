@@ -10,64 +10,6 @@ domains 1 (core/plugin architecture) and 5 (governance/FSM) — already
 scored 72/80 and mostly "no action needed" in the audit. README prose is
 another worktree's.
 
-### Production Readiness Audit Findings (핵심 감점 이유 & 취약점 5선)
-
-- [ ] **1. 설정 관리의 엄격한 한계 (`Operability` 감점 요인)**: `.adr-toolkit.json`이 `schema_version`, `locale` 외의 키(예: `adr_dir`)를 수용하지 못해, 커스텀 ADR 디렉토리를 사용하는 프로젝트에서 CLI 호출 시마다 `--dir` 플래그를 수동 입력해야 함. (개선안: `.adr-toolkit.json`에 `adr_dir` 등록 및 `ADR_DIR` / `ADR_LOCALE` 환경변수 오버라이드 지원)
-- [ ] **2. 관측성 및 로그 표준화 부재 (`Observability` 감점 요인)**: 표준 `logging` 모듈을 사용하지 않고 `print()` 및 crash 시 JSON stderr만 제공하여 CLI의 `--debug`, `--verbose`, `--quiet` 로그 제어가 불가능함. (개선안: Python `logging` 레벨 및 CLI 플래그 연동)
-- [ ] **3. 프로세스 비정상 종료 시 잠금/임시 파일 잔류 (`Reliability` 감점 요인)**: `atomic_io.py` 실행 중 SIGINT/SIGTERM/타임아웃 발생 시 시그널 핸들러 부재로 `.adr/lock` 및 `.tmp` 파일이 정리되지 않아 후속 프로세스가 무한 블로킹됨. (개선안: 시그널 핸들러 cleanup 및 mtime 타임아웃/`adr unlock` 도입)
-- [ ] **4. 대용량 파일 파싱 시 OOM 리스크 (`Reliability` / `Performance` 감점 요인)**: 파싱 시 전체 파일 용량을 검사하지 않고 `.read_text()`로 메모리에 전체 로드하여 바이너리/대용량 파일 스캔 시 메모리가 급증함. (개선안: 10MB 상한 검사 및 스트리밍 파서 적용)
-- [ ] **5. 영속 인덱스 부재로 인한 풀 스캔 성능 병목 (`Performance` / `Scalability` 감점 요인)**: CLI 실행 시마다 디스크 전체 ADR 문서를 매번 파싱하여 대규모 레포지토리에서 선형적 실행 지연 발생. (개선안: mtime 기반 인덱싱 및 단계별 `--verbose` 텔레메트리 제공)
-
-### Subagent Parallel Execution Strategy (동일 세션 에이전트 병렬 작업 가이드)
-
-워크트리 없이 동일 세션 내에서 파일 수정 충돌(File Collision) 없이 동시 병렬 작업을 수행하기 위해, 대상 파일 간 **의존성이 전혀 없는 5개 독립 작업 그룹(Group A~E)**으로 분류한다.
-
-#### 🟢 완전 독립 작업 그룹 (동시 병렬 실행 가능 — 수정 파일 100% 격리)
-
-- **Group A [P1-1: 설정 & 환경변수 확장]**
-  - **독립 수정 파일**: `skills/adr-toolkit/scripts/core/config.py`, `tests/unit/test_config.py`
-  - **작업 내용**: `.adr-toolkit.json`에 `adr_dir` 허용 키 등록 및 `ADR_DIR`, `ADR_LOCALE` 환경변수 로딩/오버라이드 지원.
-  - **의존성**: 없음.
-
-- **Group B [P1-2: 시그널 & 스탈 잠금 해제]**
-  - **독립 수정 파일**: `skills/adr-toolkit/scripts/core/atomic_io.py`, `tests/unit/test_atomic_io.py`
-  - **작업 내용**: `SIGINT`/`SIGTERM` cleanup 시그널 핸들러 및 mtime 타임아웃 기반 스탈 잠금 자동 해제(`adr unlock` 메커니즘) 구현.
-  - **의존성**: 없음.
-
-- **Group C [P2-2: adoption_metrics 모듈 분리]**
-  - **독립 수정 파일**: `scripts/adoption_metrics.py`, `tests/unit/test_adoption_metrics.py`
-  - **작업 내용**: 41KB 단일 파이썬 파일의 메트릭 수집/계산/출력 로직을 서브 모듈 패키지로 분리 리팩토링.
-  - **의존성**: 없음 (`skills/adr-toolkit` 외부 독립 도구).
-
-- **Group D [P2-4: adr doctor 복구 진단 명령]**
-  - **독립 수정 파일**: `skills/adr-toolkit/scripts/commands/doctor.py`, `tests/unit/test_doctor.py`
-  - **작업 내용**: `.adr-toolkit.json` 및 frontmatter 무결성 점검/자가 복구 가이드를 제공하는 신규 커맨드 구현.
-  - **의존성**: 없음 (신규 독립 커맨드 모듈).
-
-- **Group E [P2-1: 스트리밍 & 파일 용량 제한]**
-  - **독립 수정 파일**: `skills/adr-toolkit/scripts/core/frontmatter.py`, `skills/adr-toolkit/scripts/commands/check.py`, `tests/unit/test_check.py`
-  - **작업 내용**: ADR 스캔 시 10MB 크기 상한 검사 및 대용량 파일 파싱 메모리 보호 적용.
-  - **의존성**: 없음.
-
-#### 🟡 순차 통합 작업 그룹 (Group A~E 완료 후 수행)
-
-- **Group F [P1-3: 표준 로그 레벨 및 CLI 플래그 통합]**
-  - **수정 파일**: `skills/adr-toolkit/scripts/adr.py`
-  - **사유**: `adr.py`는 CLI 메인 엔트리포인트로 Group A(config) 및 Group D(doctor 진입점) 완료 후 `--verbose`, `--debug`, `--quiet` 로그 제어 플래그를 통합하여 단일 완료 처리.
-
-### High (P1 - Production Readiness)
-
-- [x] **`.adr-toolkit.json` 및 환경 변수 설정 확장 (`Operability`) [Group A]** — `skills/adr-toolkit/scripts/core/config.py`의 `ALLOWED_KEYS`가 `schema_version`, `locale`, `adr_dir`로 확장되었으며 `resolve_adr_dir()` 및 `ADR_DIR`, `ADR_LOCALE` 환경 변수 오버라이드 지원 완료 (Done 2026-09-02).
-- [x] **시그널(SIGINT/SIGTERM) 핸들링 및 스탈 잠금(.adr/lock) 자동 해제 (`Reliability`) [Group B]** — `skills/adr-toolkit/scripts/core/atomic_io.py` 구동 시 SIGINT/SIGTERM 트랩 핸들러 및 timestamp metadata 기반 `is_lock_stale()` / `break_stale_lock()` 자동 해제 구현 완료 (Done 2026-09-02).
-- [x] **CLI 표준 로그 레벨 제어 및 관측성 강화 (`Observability`) [Group F]** — Python 표준 `logging` 모듈로 전환하고, CLI 플래그(`--verbose`, `--debug`, `--quiet`)를 제공하여 운영/CI 환경 디버깅 및 `adr.py` 내 `doctor` 서브커맨드 연동 완료 (Done 2026-09-02).
-
-### Medium (P2 - Performance & Resilience)
-
-- [x] **대용량 파일 스트리밍 파싱 및 크기 상한 설정 (`Reliability`) [Group E]** — `skills/adr-toolkit/scripts/core/frontmatter.py`에 10MB 상한 `parse_file()` 및 스트리밍 메모리 보호 적용 완료 (Done 2026-09-02).
-- [x] **`scripts/adoption_metrics.py` (41KB, 1,000줄+) 대형 모듈 리팩토링 (`Maintainability`) [Group C]** — 단일 파일 내 메트릭 수집, 계산, 리포팅 로직을 `scripts/adoption_metrics/` 서브 패키지로 분리하고 호환성 래퍼 유지 완료 (Done 2026-09-02).
-- [x] **대규모 저장소 단계별 성능 프로파일링 및 인덱스 처리 개선 (`Performance`) [Group E]** — 수백~수천 개 ADR 스캔 시 각 단계별 소요 시간을 `--verbose` 모드로 출력하는 텔레메트리 연동 완료 (Done 2026-09-02).
-- [x] **손상 상태 진단 및 복구 CLI 툴링 (`Recoverability`) [Group D]** — `skills/adr-toolkit/scripts/commands/doctor.py` 및 `test_doctor.py` 신규 구현으로 `.adr-toolkit.json` 및 frontmatter, lock 무결성 진단 제공 완료 (Done 2026-09-02).
-
 - [ ] ~~**파싱 결과 캐시**~~ — **결정: 하지 않음.** 이 CLI는 호출마다
   새 프로세스라 `functools.lru_cache`는 프로세스 간 재파싱을 전혀 줄이지
   못하고(원 문제였던 `validate → index → check` 연쇄 재파싱은 별도
@@ -104,3 +46,4 @@ another worktree's.
 Normally this section stays empty between sessions (resolved items live in
 `changelog.md` + git history instead, and this session's own architectural
 decisions in `docs/decisions/ADR-0012..0016`).
+
