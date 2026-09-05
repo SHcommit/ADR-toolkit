@@ -4,6 +4,8 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Expanded `improvements.md` backlog with High and Medium priority items: ReDoS cross-platform safety, 2-phase atomic transaction rollback for `supersede`, ADR overlap/similarity Eval framework, weekly automated maintenance workflows, PR significance bot, `adr lint --fix` auto-repair, interactive HTML graph viewer, and code drift detection.
+
 ## v0.3.2 (2026-09-02)
 
 - Cleared completed work out of `improvements.md`'s `## Done` section

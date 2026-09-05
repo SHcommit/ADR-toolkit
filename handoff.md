@@ -2,12 +2,7 @@
 
 ## Current task
 
-None active. The audit-driven Critical/High/Medium hardening pass
-(`docs/adr-toolkit-audit-report.md`) is complete and released as
-**v0.3.1**. What shipped and why: `changelog.md` for the summary,
-`docs/decisions/0012-*.md` through `0016-*.md` for the architectural
-decisions (written via the ADR toolkit itself), and git history for
-everything else.
+Expanded `improvements.md` with High and Medium backlog items covering ReDoS cross-platform safety, 2-phase atomic transaction rollback, ADR overlap/similarity Eval infrastructure, weekly maintenance automation, PR significance bot, frontmatter auto-linter, interactive graph visualization, and code drift detection.
 
 ## Scope
 
@@ -22,7 +17,8 @@ everything else.
 
 ## Next step (for a new session picking this up cold)
 
-There is no ready-to-start backlog item in `improvements.md`. Concretely:
+Review the newly expanded `improvements.md` High/Medium items and pick an implementation candidate (e.g. `adr lint --fix` or ReDoS cross-platform guard).
+
 
 1. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
    item left (Antigravity in `harness-parity`), blocked on `agy` having
