@@ -19,6 +19,9 @@
 - name: "type:test"
   color: "bfdadc"
   description: "Test-only change"
+- name: "type:epic"
+  color: "3fb950"
+  description: "Umbrella/tracking issue that groups related work"
 
 # --- area: which part of the repo ---
 - name: "area:core"
