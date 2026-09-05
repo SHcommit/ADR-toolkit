@@ -15,11 +15,7 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 
 ## Harness parity
 
-- ~~Automate the Codex CLI and Gemini CLI adapters' install-and-run
-  verification.~~ **Done (2026-08-31).** `.github/workflows/test.yml`'s
-  `harness-parity` job installs the real Codex CLI and Gemini CLI and runs
-  `preflight`/`init`/`validate` from each one's installed snapshot on every
-  push and pull request.
+- **Automate the Codex CLI and Gemini CLI adapters' install-and-run verification** — **Done (2026-08-31).** `.github/workflows/test.yml`'s `harness-parity` job installs the real Codex CLI and Gemini CLI and runs `preflight`/`init`/`validate` from each one's installed snapshot on every push and pull request.
 - Extend `harness-parity` coverage beyond `preflight`/`init`/`validate` to
   `check`, `search`, `graph`, and `create` once a real regression in one of
   those commands under a specific harness demonstrates the gap matters.
@@ -27,27 +23,11 @@ before implementation. Concrete selected work belongs in `improvements.md`.
   package-registry distribution a CI runner can install non-interactively;
   today it has none, so `adapters/antigravity/README.md`'s manual
   verification is the only signal.
-- ~~Harness-specific hook support beyond Claude Code SessionStart when
-  equivalent stable extension points exist.~~ **Evaluated, not pursued
-  (2026-08-31).** The precondition is now true: Codex CLI has a config-driven
-  `SessionStart`/`UserPromptSubmit` hook system (`~/.codex/hooks.json`), and
-  Gemini CLI ships `gemini hooks migrate` specifically to port Claude Code
-  hooks over. But ADR Toolkit doesn't use a hook even on Claude Code today
-  (it relies entirely on skill auto-discovery), and a hook that fires on
-  every session regardless of relevance cuts against this project's own
-  restraint principle (max 3 questions, judge what's significant, minimize
-  interruption). The plausible use cases (nudge about an unfinished draft
-  ADR, warn about a governed path) are already covered by deliberately
-  invoking `discover` and `check` rather than an always-on hook. Revisit
-  only if real usage shows people miss something that `discover`/`check`
-  can't catch without a session-start nudge -- not just because the
-  extension points now exist.
+- **Harness-specific hook support beyond Claude Code SessionStart when equivalent stable extension points exist** — **Evaluated, not pursued (2026-08-31).** The precondition is now true: Codex CLI has a config-driven `SessionStart`/`UserPromptSubmit` hook system (`~/.codex/hooks.json`), and Gemini CLI ships `gemini hooks migrate` specifically to port Claude Code hooks over. But ADR Toolkit doesn't use a hook even on Claude Code today (it relies entirely on skill auto-discovery), and a hook that fires on every session regardless of relevance cuts against this project's own restraint principle (max 3 questions, judge what's significant, minimize interruption). The plausible use cases (nudge about an unfinished draft ADR, warn about a governed path) are already covered by deliberately invoking `discover` and `check` rather than an always-on hook. Revisit only if real usage shows people miss something that `discover`/`check` can't catch without a session-start nudge -- not just because the extension points now exist.
 
 ## ADR navigation and scale
 
-- Test whether 500+ decisions require sharding, alternate indexes, or a
-  real search index (this repo has 11 ADRs; substring/tag/path matching is
-  untested at that scale).
+- **Test bulk performance of search and index under 500+ ADRs** — **Done (2026-09-02).** `tests/integration/test_bulk_adr_performance.py` verifies `search` and `index` run in <0.5s over 500 synthetic ADRs without sharding or index breakdown.
 - Improve related-decision discovery beyond path/tag/keyword/body-substring
   only after real misses demonstrate the need for semantic retrieval.
 
