@@ -4,6 +4,11 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added a Cline CLI adapter (`adapters/cline/`) so Cline CLI and ClinePass users
+  can install the `skills/adr-toolkit` package. Cline installs skills through the
+  open Agent Skills standard (SKILL.md), so the adapter is README-only — no
+  manifest — documenting `cline skill add SHcommit/ADR-toolkit` plus a manual
+  symlink fallback. Manually verified against Cline CLI 3.0.61.
 - Expanded `improvements.md` backlog with High and Medium priority items: ReDoS cross-platform safety, 2-phase atomic transaction rollback for `supersede`, ADR overlap/similarity Eval framework, weekly automated maintenance workflows, PR significance bot, `adr lint --fix` auto-repair, interactive HTML graph viewer, and code drift detection.
 
 ## v0.3.2 (2026-09-02)

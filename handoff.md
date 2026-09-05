@@ -2,7 +2,12 @@
 
 ## Current task
 
-Expanded `improvements.md` with High and Medium backlog items covering ReDoS cross-platform safety, 2-phase atomic transaction rollback, ADR overlap/similarity Eval infrastructure, weekly maintenance automation, PR significance bot, frontmatter auto-linter, interactive graph visualization, and code drift detection.
+Added a Cline CLI adapter (`adapters/cline/`) so Cline CLI and ClinePass users
+can install the `skills/adr-toolkit` package. Cline installs skills through the
+open Agent Skills standard (SKILL.md), so the adapter is README-only — no
+manifest. Discovery, install, and the installed script layer were manually
+verified against Cline CLI 3.0.61. Tracked in GitHub issue #19; work is on the
+`feature/cline-cli-adapter` branch.
 
 ## Scope
 
@@ -17,7 +22,13 @@ Expanded `improvements.md` with High and Medium backlog items covering ReDoS cro
 
 ## Next step (for a new session picking this up cold)
 
-Review the newly expanded `improvements.md` High/Medium items and pick an implementation candidate (e.g. `adr lint --fix` or ReDoS cross-platform guard).
+The Cline adapter work is implemented but not yet committed. Run
+`python3 -m pytest tests/unit tests/integration -q` and
+`python3 scripts/sync_version.py --check`, then commit on
+`feature/cline-cli-adapter`, push, open a PR into `develop`, and merge via the
+Git Flow process (then delete the short-lived branch). CI's `harness-parity` job
+still covers only Codex/Gemini; extending it to Cline CLI is a deferred
+follow-up (non-interactive `npx skills` verification needs design).
 
 
 1. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
