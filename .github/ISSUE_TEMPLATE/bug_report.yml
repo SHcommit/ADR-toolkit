@@ -1,0 +1,79 @@
+name: Bug Report
+description: Report something that isn't working as expected
+title: "[Bug]: "
+labels: ["needs-triage", "type:bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Output of `adr --version` or the release tag you're on"
+      placeholder: "v1.0.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (specify in Additional context)
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: How you're running ADR Toolkit
+      options:
+        - Claude Code
+        - Codex CLI
+        - Gemini CLI
+        - Antigravity CLI
+        - Direct CLI (pip install / python script)
+        - Other (specify in Additional context)
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Affected component / adapter
+      description: "e.g. `adr.py check`, `adapters/codex`, ADR index generation"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Exact commands, in order
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Output of the failing command with `--verbose` or `--debug` if available"
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+    validations:
+      required: false
