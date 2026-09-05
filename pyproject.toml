@@ -27,6 +27,21 @@ dependencies = []
 [project.scripts]
 adr = "scripts.adr:main"
 
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+    "pytest-cov==7.1.0",
+    "mypy==1.19.1",
+    "ruff==0.16.6",
+]
+
+[tool.ruff]
+target-version = "py39"
+extend-exclude = ["docs/decisions"]
+
+[tool.ruff.lint]
+select = ["E9", "F"]
+
 [tool.setuptools]
 packages = ["scripts", "scripts.core", "scripts.commands", "scripts.rules"]
 package-dir = {"scripts" = "skills/adr-toolkit/scripts"}
