@@ -26,15 +26,11 @@ GitHub assumptions and closed additional supply-chain/configuration gaps.
 
 ## Next step
 
-1. Push `feature/oss-governance-hardening` and open a PR to `develop`. This
-   branch already merged `origin/develop` (Cline adapter + improvements
-   backlog) and carries the v1.0.1 sync from PR #17.
-2. Close PR #17 (`chore/sync-develop-with-v1.0.1`) as superseded — its head
-   `508b860` is already an ancestor of this branch.
-3. After the PR's new Python 3.10/lint/audit checks run green, merge and then
-   update ruleset `22101891`: remove the two Python 3.9 contexts; add all three
-   Python 3.10 contexts plus `lint` and `dependency-audit`; query effective
-   rules again.
+1. Merge PR #34 (`feat(github): add OSS repository governance & supply-chain
+   hardening`) into `develop` after its CI checks pass.
+2. After merge, update ruleset `22101891`: remove the two Python 3.9 contexts;
+   add all three Python 3.10 contexts plus `lint` and `dependency-audit`; query
+   effective rules again.
 
 ## Verification
 
