@@ -19,10 +19,10 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 - Extend `harness-parity` coverage beyond `preflight`/`init`/`validate` to
   `check`, `search`, `graph`, and `create` once a real regression in one of
   those commands under a specific harness demonstrates the gap matters.
-- Automate the Antigravity CLI (`agy`) adapter the same way once it has a
-  package-registry distribution a CI runner can install non-interactively;
-  today it has none, so `adapters/antigravity/README.md`'s manual
-  verification is the only signal.
+- **Automate the Antigravity CLI (`agy`) adapter install-and-run verification**
+  — **Done (2026-09-05).** `harness-parity` downloads a versioned Linux release
+  artifact, verifies its official SHA-512 digest, and exercises the adapter.
+  The mutable `curl | bash` bootstrapper is intentionally not executed in CI.
 - **Harness-specific hook support beyond Claude Code SessionStart when equivalent stable extension points exist** — **Evaluated, not pursued (2026-08-31).** The precondition is now true: Codex CLI has a config-driven `SessionStart`/`UserPromptSubmit` hook system (`~/.codex/hooks.json`), and Gemini CLI ships `gemini hooks migrate` specifically to port Claude Code hooks over. But ADR Toolkit doesn't use a hook even on Claude Code today (it relies entirely on skill auto-discovery), and a hook that fires on every session regardless of relevance cuts against this project's own restraint principle (max 3 questions, judge what's significant, minimize interruption). The plausible use cases (nudge about an unfinished draft ADR, warn about a governed path) are already covered by deliberately invoking `discover` and `check` rather than an always-on hook. Revisit only if real usage shows people miss something that `discover`/`check` can't catch without a session-start nudge -- not just because the extension points now exist.
 
 ## ADR navigation and scale
@@ -43,9 +43,10 @@ before implementation. Concrete selected work belongs in `improvements.md`.
 
 ## Public and enterprise governance
 
-- After the repository becomes public, apply and API-verify branch/tag
-  protections, required checks, conversation resolution, force-push/deletion
-  controls, and a documented bypass policy.
+- **Apply and API-verify repository branch/tag rulesets** — **Done
+  (2026-09-02; re-verified 2026-09-06).** Active rulesets protect
+  `master`/`develop`/`release/*` and `v*`; required-check names must be updated
+  whenever the CI matrix changes.
 - Add CODEOWNERS and mandatory independent review when the contributor model can
   actually satisfy it.
 - Organization-level rulesets, reusable workflows, RBAC, audit export,

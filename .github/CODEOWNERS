@@ -1,0 +1,13 @@
+# This file has NO effect on required reviews today -- "Require review from
+# Code Owners" is intentionally left OFF in branch protection (see
+# docs/superpowers/specs/2026-09-05-oss-repo-governance-hardening-design.md,
+# "Out of Scope": a single-maintainer repo can't satisfy independent
+# code-owner review, so enabling this would either block merges or produce
+# meaningless self-review).
+#
+# This file exists so that turning required review on later (once a second
+# qualified maintainer exists, per project-roadmap.md's "Public and
+# enterprise governance" section) is a one-line branch-protection change,
+# not a design task done under time pressure.
+
+* @SHcommit

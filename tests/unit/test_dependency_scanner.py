@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from scripts.evidence import dependency_scanner
 

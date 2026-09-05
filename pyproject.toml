@@ -14,18 +14,35 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Documentation",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
 adr = "scripts.adr:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "mypy==1.19.1",
+    "ruff==0.16.6",
+    "PyYAML==6.0.3",
+    "tomli==2.4.0; python_version < '3.11'",
+    "build==1.4.4",
+]
+
+[tool.ruff]
+target-version = "py310"
+extend-exclude = ["docs/decisions"]
+
+[tool.ruff.lint]
+select = ["E9", "F"]
 
 [tool.setuptools]
 packages = ["scripts", "scripts.core", "scripts.commands", "scripts.rules"]

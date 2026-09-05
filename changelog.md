@@ -4,6 +4,22 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added scalable GitHub governance: structured Issue Forms, source-controlled
+  label taxonomy, path-based PR labels, new-issue triage, weekly grouped
+  Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
+- Added ruff and strict dependency-audit CI gates, upgraded the supported
+  Python floor to 3.10, and added regression tests for repository governance
+  configuration.
+- Hardened CI supply chain behavior: replaced the Antigravity `curl | bash`
+  installer with a versioned SHA-512-verified artifact, pinned release Actions
+  to commit SHAs, pinned release build tooling, and removed PR-title shell
+  expression injection.
+- Corrected the governance audit to recognize the already-active repository
+  branch/tag rulesets through the ruleset APIs rather than treating a classic
+  branch-protection 404 as proof of no protection.
+- Enabled live Discussions, dependency security updates and alerts, secret
+  scanning with push protection, private vulnerability reporting, and
+  automatic deletion of merged branches.
 - Added a Cline CLI adapter (`adapters/cline/`) so Cline CLI and ClinePass users
   can install the `skills/adr-toolkit` package. Cline installs skills through the
   open Agent Skills standard (SKILL.md), so the adapter is README-only — no
