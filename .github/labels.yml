@@ -29,7 +29,7 @@
   description: "adr.py entrypoint and command wiring"
 - name: "area:adapter"
   color: "5319e7"
-  description: "adapters/** harness adapters (Claude, Codex, Gemini, Antigravity)"
+  description: "adapters/** and .claude-plugin/** harness integrations"
 - name: "area:github"
   color: "5319e7"
   description: ".github/** workflows, templates, and repo automation"

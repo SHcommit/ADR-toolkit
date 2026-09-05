@@ -12,21 +12,28 @@ product code, CLI behavior, or `docs/decisions/` governance model.
 
 ## Context — audit findings as of 2026-09-05
 
+> **2026-09-06 review correction:** the original audit queried only the
+> classic branch-protection endpoint. A 404 from that endpoint does not prove
+> repository rulesets are absent. Ruleset and effective-rules APIs show that
+> active branch/tag rulesets have existed since 2026-09-02 (IDs `22101891`
+> and `22102322`). The original audit also incorrectly described the
+> Antigravity adapter as manual-only even though `harness-parity` executed its
+> remote bootstrapper. The decisions below are corrected accordingly.
+
 Re-verified against the live repository (`gh api`/`gh repo view`), not just
-file presence, because `docs/enterprise-adoption.md` §4/§8 and
-`improvements.md`'s "Low" backlog describe this repo as still private with a
-single precondition ("저장소 public 전환") blocking the public-readiness gate.
-That precondition has already been met and those documents are now stale:
+file presence, because `docs/enterprise-adoption.md` §4/§8 described this repo
+as still private with a single precondition ("저장소 public 전환") blocking the
+public-readiness gate. That precondition had already been met and the document
+was stale:
 
 - The repository has been **public since 2026-08-29**, and `master` has
   already shipped `v1.0.0` and `v1.0.1` (PyPI publishing pipeline, antigravity
   harness-parity CI, a Windows lock-metadata fix, mypy `--strict` fix).
-- Despite being public, `master` has **zero branch protection**
-  (`gh api repos/.../branches/master/protection` → `404 Branch not
-  protected`). `develop` is unprotected too. `docs/enterprise-adoption.md`
-  §9's "Public" stage completion condition ("ruleset API 검증") is therefore
-  **not actually satisfied**, even though the PR template, `CONTRIBUTING.md`,
-  and `SECURITY.md` pieces of that same stage are done.
+- Active repository rulesets protect `master`, `develop`, `release/*`, and
+  `v*` tags. They require PRs, status checks, conversation resolution, and
+  prohibit deletion/non-fast-forward updates without a bypass actor. The
+  remaining rollout concern is keeping required-check contexts synchronized
+  with CI matrix changes (this branch replaces Python 3.9 with 3.10).
 - `develop` was frozen at the `v0.3.2` sync point while `master` advanced
   through the `v1.0.0`/`v1.0.1` releases — the git-flow-mandated
   release-branch back-merge into `develop` never happened. **Fixed as a
@@ -49,9 +56,8 @@ That precondition has already been met and those documents are now stale:
   scan step.
 - `harness-parity` contains one remote-installer pattern the request asked to
   scrutinize: `curl -fsSL https://antigravity.google/cli/install.sh | bash`.
-  (Antigravity itself is manually verified only, per
-  `adapters/antigravity/README.md` — this curl step doesn't currently run in
-  CI for that adapter.)
+  This does run in CI before the Antigravity end-to-end adapter verification,
+  so it must be replaced with a versioned artifact plus checksum verification.
 - GitHub Actions are pinned to major-version tags from verified publishers
   (`actions/*@v4/@v5`, `softprops/action-gh-release@v2`,
   `pypa/gh-action-pypi-publish@release/v1`) — not full commit-SHA pinning, but
@@ -60,9 +66,9 @@ That precondition has already been met and those documents are now stale:
   `test.yml` sets repo-wide `permissions: contents: read`; least-privilege is
   already largely in place, not a gap.
 - Dependency ecosystems actually in use: Python (`pyproject.toml`) and GitHub
-  Actions. No `package.json` anywhere — the `npm install -g` calls in
-  `harness-parity` install pinned global CLIs for testing, not a project
-  dependency Dependabot should manage. No Docker.
+  Actions. The only `package.json` is a test fixture; the `npm install -g`
+  calls in `harness-parity` install pinned global CLIs for testing, not a
+  project dependency Dependabot should manage. No Docker.
 - `project-roadmap.md`'s "Public and enterprise governance" section and
   `docs/enterprise-adoption.md` §8 already correctly defer **mandatory**
   CODEOWNERS review and organization-wide ruleset/reusable-workflow work
@@ -72,22 +78,20 @@ That precondition has already been met and those documents are now stale:
 
 ## Problem Statement
 
-The repository's day-to-day contributor mechanics (label triage, dependency
-freshness, PR gating, branch protection) were never built out because the
+The repository's day-to-day contributor mechanics (label triage and dependency
+freshness) were never built out because the
 project was small and private. It is now public with two releases shipped,
-but none of the operational scaffolding that keeps a growing issue/PR queue
-navigable for a single maintainer exists yet, and the one piece of the
-public-readiness plan that mattered most for actually protecting the release
-history — branch protection — silently never got applied when the repo went
-public. Left as-is, the first sign of trouble will be either an unreviewed
-force-push/deletion incident on `master`, or a backlog of unlabeled,
-untriaged issues and PRs once external contributors show up.
+but the operational scaffolding that keeps a growing issue/PR queue navigable
+for a single maintainer does not exist yet. Existing rulesets protect release
+history, but their required status-check names can drift when CI changes.
+Left as-is, the first sign of trouble will be either a permanently blocked PR
+after a matrix rename, or a backlog of unlabeled, untriaged work.
 
 ## Solution
 
 Add the minimum GitHub-native automation that lets issues and PRs
 self-organize (path-based labels, a label taxonomy, Dependabot, Issue Forms)
-and close the branch-protection gap that public status already requires,
+and verify/update the already-active rulesets alongside CI changes,
 while explicitly deferring anything that assumes a maintainer team or an
 issue volume this repository doesn't have yet (mandatory CODEOWNERS review,
 stale-bot, org-wide rulesets). Every "not now" gets a written trigger
@@ -103,9 +107,9 @@ condition instead of a vague "later," matching how `project-roadmap.md` and
 3. As a first-time contributor, I want a structured bug/feature form instead
    of a blank Markdown template, so I give the maintainer what's needed on
    the first pass.
-4. As the sole maintainer, I want `master`/`develop`/`v*` tags protected from
-   force-push and deletion now that the repo is public, without being forced
-   into mandatory independent code-owner review I can't actually staff.
+4. As the sole maintainer, I want `master`/`develop`/`v*` protection verified
+   through the correct ruleset APIs and required checks kept in sync, without
+   mandatory independent code-owner review I can't actually staff.
 5. As a future contributor, I want a small set of well-labeled "good first
    issue" candidates to exist so I know where to start.
 6. As the sole maintainer, I want CI to catch missing lint/security-scan
@@ -146,9 +150,10 @@ condition instead of a vague "later," matching how `project-roadmap.md` and
 - **Dependency/security scan**: add a lightweight `pip-audit`-style check for
   the Python dependency surface as a fast-gate job.
 - **Branch protection / ruleset** (GitHub UI/API, not a file in this repo —
-  see the UI section below): require PR + passing required checks,
-  block force-push and branch deletion on `master` and `develop`, restrict
-  `v*` tag creation/deletion, require conversation resolution. Do **not**
+  see the UI section below): verify the existing active rulesets, then update
+  required status-check contexts after CI job/matrix changes. They already
+  require PR + passing checks, block force-push/deletion on protected branches
+  and `v*`, and require conversation resolution. Do **not**
   require code-owner review or signed commits yet — no second qualified
   maintainer exists to review against, and no CODEOWNERS file exists to
   reference.
@@ -203,12 +208,9 @@ condition instead of a vague "later," matching how `project-roadmap.md` and
 - New CI jobs (lint, dependency/security scan): must pass on this branch's
   own diff and not regress the existing 515 unit tests or `sync_version.py
   --check` / `verify_examples.py --check` drift gates.
-- Branch protection: after applying via UI/API, re-query
-  `gh api repos/SHcommit/ADR-toolkit/branches/<branch>/protection` and paste
-  the actual response into the audit doc — this spec's own investigation
-  showed a prior "done" claim (docs saying the public gate was satisfied)
-  was false, so the closing step here is re-verification, not another
-  written claim.
+- Branch protection: query `repos/SHcommit/ADR-toolkit/rulesets/<id>` and
+  `repos/SHcommit/ADR-toolkit/rules/branches/<branch>`. Do not use the classic
+  `branches/<branch>/protection` endpoint alone as evidence of ruleset absence.
 
 ## Out of Scope
 
@@ -222,13 +224,6 @@ condition instead of a vague "later," matching how `project-roadmap.md` and
 - Signed-commit requirements.
 - Any change to ADR Toolkit's product code, CLI, or `docs/decisions/`
   governance model.
-- Converting the Antigravity `curl | bash` install step into an
-  artifact+checksum flow — that step doesn't currently run for the
-  Antigravity adapter in CI (manual-only per
-  `adapters/antigravity/README.md`); if/when Antigravity CI verification is
-  added (tracked in `improvements.md`, blocked on Antigravity publishing to a
-  package registry), that installer should be revisited then, not
-  speculatively hardened now for a path nothing currently executes.
 - Full commit-SHA pinning for all third-party Actions (current major-version
   tag pinning from verified publishers is a reasonable middle ground for this
   repo's risk level; revisit only if a specific tag-mutation incident in one
@@ -248,17 +243,15 @@ condition instead of a vague "later," matching how `project-roadmap.md` and
 
 ## Further Notes
 
-- Rollout order: branch-protection/ruleset (GitHub UI/API, highest
-  risk-reduction per unit effort) → Dependabot + auto-labeler (lowest
+- Rollout order: ruleset verification/check-context sync (GitHub UI/API) →
+  Dependabot + auto-labeler (lowest
   maintenance cost) → Issue Forms → new CI jobs (lint, dependency scan) →
   stale-docs correction, so the highest-value, lowest-risk items land first
   and the doc correction reflects the final state rather than needing a
   second pass.
-- The public-transition gap found here (public since 2026-08-29, but branch
-  protection never applied, and `docs/enterprise-adoption.md`/`improvements.md`
-  both still describing the repo as private) should be treated as the
-  headline finding when this work is reported back — it's a real exposure
-  window on a public repo with release tags, not a paperwork gap.
+- The headline review correction is methodological: classic branch protection
+  and repository rulesets use different APIs. Operational audits must inspect
+  both, then query effective rules for concrete refs before declaring a gap.
 - This spec intentionally does not propose a `.github/labeler.yml` /
   `dependabot.yml` schema inline — implementation will write those files
   directly against this repo's actual directory names, which is faster to

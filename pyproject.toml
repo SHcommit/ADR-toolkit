@@ -32,6 +32,9 @@ dev = [
     "pytest-cov==7.1.0",
     "mypy==1.19.1",
     "ruff==0.16.6",
+    "PyYAML==6.0.3",
+    "tomli==2.4.0; python_version < '3.11'",
+    "build==1.4.4",
 ]
 
 [tool.ruff]

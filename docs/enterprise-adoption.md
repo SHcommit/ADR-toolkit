@@ -23,10 +23,12 @@ ADR Toolkit의 강점은 AI가 초안과 언어 표현을 돕더라도 repositor
 
 ### 확인된 사실
 
-- 저장소는 2026-08-29부터 public이며, `master`/`develop` 보호 규칙과 repository
-  ruleset은 2026-09-05 API 재확인 기준으로 여전히 없다.
-- 이는 plan 제약이 아니라 public 전환 이후 아직 적용하지 않은 설정 작업이다
-  (§4 공개 저장소 전환 Gate, §9 단계별 완료 조건 참고).
+- 저장소는 2026-08-29부터 public이며, repository ruleset API 재확인 결과
+  `master`/`develop`/`release/*` branch와 `v*` tag 보호 규칙이 2026-09-02부터
+  active다 (ruleset IDs `22101891`, `22102322`).
+- classic branch-protection API의 404는 ruleset 부재를 의미하지 않는다. 실제
+  적용 여부는 `repos/SHcommit/ADR-toolkit/rules/branches/<branch>`와
+  `repos/SHcommit/ADR-toolkit/rulesets/<id>`로 검증한다.
 - CI는 Ubuntu, macOS, Windows와 지원 Python 조합에서 동작한다.
 - 첫 PR은 모든 CI를 통과했지만 독립 review 없이 병합됐다.
 - PR template은 있지만, CODEOWNERS는 활성화되지 않은 dormant draft뿐이다
@@ -65,10 +67,12 @@ CI 통과는 구조화된 정책의 증거일 뿐, 결정의 사업적 타당성
 
 ## 4. 공개 저장소 전환 Gate
 
-저장소는 2026-08-29부터 public이다. 아래 repository ruleset은 이미 적용
-대상이며, 적용 후 API로 실제 상태를 재조회해 확인한다 (2026-09-05 확인 결과
-`master`/`develop` 모두 branch protection이 없는 상태 -- 이 문서 §9 "Public"
-단계 완료 조건이 아직 충족되지 않았다).
+저장소는 2026-08-29부터 public이다. 아래 repository ruleset은 2026-09-02에
+적용됐고 2026-09-06에 ruleset API와 effective-rules API로 재검증했다. Branch
+ruleset `22101891`은 PR, required checks, conversation resolution,
+force-push/deletion 차단을 적용하며 tag ruleset `22102322`는 `v*` 수정·삭제를
+차단한다. 단, CI matrix가 Python 3.9에서 3.10으로 바뀌므로 이 변경을 merge한
+직후 required-check context도 함께 갱신해야 한다.
 
 | 대상 | 권장 통제 | 도입 이유 |
 | --- | --- | --- |
@@ -172,13 +176,11 @@ Toolkit 자체에 계정 시스템을 서둘러 넣기보다 GitHub의 인증·�
 1. ~~ADR directory 로딩을 공통 iterator로 통합해~~ **완료 (2026-08-30).**
    `core.adr_directory.iter_adr_files`로 validate/index/related/CHECK를 통합했고
    각 명령의 warning 의미는 그대로 유지했다.
-2. PR template과 CONTRIBUTING/SECURITY 문서를 만들고 ruleset 적용을 자동
-   검증한다. **전제조건 충족 (2026-08-29 public 전환, v1.0.0/v1.0.1 릴리스
-   완료). PR template/CONTRIBUTING/SECURITY는 이미 존재하며, 남은 것은
-   ruleset 적용과 API 재검증뿐이다 -- 코드 작업이 아니라 GitHub Settings/API
-   작업이므로
-   `docs/superpowers/specs/2026-09-05-oss-repo-governance-hardening-design.md`의
-   GitHub UI/API 설정 안내를 따른다.**
+2. ~~PR template과 CONTRIBUTING/SECURITY 문서를 만들고 ruleset 적용을 자동
+   검증한다.~~ **완료 (2026-09-06 재검증).** PR template,
+   CONTRIBUTING/SECURITY가 존재하고 branch/tag ruleset의 effective rules를 API로
+   확인했다. CI job 이름이 바뀌면 required-check context도 같은 변경의 rollout
+   절차에서 갱신한다.
 3. ~~CHECK 결과를 `VERIFIED`, `VIOLATED`, `NOT_APPLICABLE`, `UNVERIFIABLE`의
    안정된 machine-readable contract로 승격한다.~~ **완료 (2026-08-30).** 모든
    finding이 기존 `kind` 값과 별개로 `confidence` 필드를 직접 갖는다
@@ -212,7 +214,7 @@ Toolkit 자체에 계정 시스템을 서둘러 넣기보다 GitHub의 인증·�
 | 단계 | 완료 조건 |
 | --- | --- |
 | v0.2.0 | P0 전체 통과, 최종 PR CI, 승인된 version bump와 release 절차 |
-| Public | `master`/`develop`/`v*` ruleset API 검증 (미완료, 2026-09-05 기준 branch protection 없음), PR template (완료), CONTRIBUTING (완료), SECURITY (완료) |
+| Public | `master`/`develop`/`release/*`/`v*` ruleset API 검증 (완료, 2026-09-06), PR template (완료), CONTRIBUTING (완료), SECURITY 및 private vulnerability reporting (완료) |
 | Team | 2명 이상 qualified maintainer, CODEOWNERS 독립 승인, 예외 owner/expiry |
 | Enterprise | 조직 ruleset·reusable workflow, audit export, taxonomy, 정의된 adoption metrics |
 | Multi-repo | 반복된 탐색 실패와 운영 요구를 근거로 registry/portal 도입 |

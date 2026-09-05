@@ -32,6 +32,7 @@ body:
         - Codex CLI
         - Gemini CLI
         - Antigravity CLI
+        - Cline CLI
         - Direct CLI (pip install / python script)
         - Other (specify in Additional context)
     validations:
