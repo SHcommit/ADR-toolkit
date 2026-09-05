@@ -5,16 +5,22 @@ Concrete implementation backlog. Unscheduled product bets belong in
 
 ## Open
 
-Backlog derived from `docs/adr-toolkit-audit-report.md`. Scope excludes
-domains 1 (core/plugin architecture) and 5 (governance/FSM) — already
-scored 72/80 and mostly "no action needed" in the audit. README prose is
-another worktree's.
+Backlog derived from `docs/adr-toolkit-audit-report.md`, operational experiences, and developer friction analysis.
 
 ### High
 
-None open.
+- [ ] **ReDoS 크로스 플랫폼 Guard (Windows 비-POSIX 타임아웃)** — `rules/conflict.py`의 정규식 ReDoS 타임아웃 구동 방식이 `signal.SIGALRM` 기반이라 POSIX 전용 환경으로 제한됨. Static constraint checker (`core/constraints.py`) 외 교차 정규식 타임아웃을 Windows에서도 안전하게 처리할 수 있도록 스레드/프로세스 타임아웃 워커 도입. (`handoff.md` Open Risk 대응)
+- [ ] **ADR `supersede` 2단계 원자적 트랜잭션 롤백 보장** — `supersede` 커맨드가 기존 ADR 상태 변경(Superseded)과 신규 ADR 생성/수정(Superseding)을 연쇄 실행할 때, 프로세스 중간 강제 종료 시 발생할 수 있는 '반쪽짜리 업데이트' 방지를 위한 트랜잭션 백업/롤백 안전장치 구축.
 
 ### Medium
+
+- [ ] **ADR 중첩/유사도 감지 및 파편화 방지 Eval 시스템** — 작성하려 하거나 기존에 존재하는 ADR 간 내용/주제/영향 범위의 중첩(overlap) 및 파편화를 사전 감지하는 로직과, ADR 집합의 중복·충돌·일관성을 지속해서 평가/검증하는 Evaluation 프레임워크 구축. (유사도 기반 `supersede` 권장, 중복 작성 방지)
+- [ ] **개발용 플러그인 메인 저장소 Symlink 자동화 스크립트** — local development 시 `~/.gemini/config/plugins/adr-toolkit`이 임시 워크트리가 아닌 메인 저장소를 항상 바라보도록 하고, 버전 갱신 시 symlink 유효성을 체크하는 도구/가이드 정립.
+- [ ] **주간 자동 ADR 헬스체크 및 무효화/깨진 링크 점검 오토메이션** — 주 1회(GitHub Actions Scheduled Workflow 등) 실행되어 오래 방치된 `PROPOSED` ADR, 리팩터링으로 깨진 `affected_paths` 경로, 버전 드리프트를 자동 점검하고 이슈/알림을 생성하는 주간 유지보수 시스템.
+- [ ] **PR 시 아키텍처 영향도 자동 판별 및 ADR 작성 유도 (Significance Bot)** — 중요 경계 코드 수정 시 ADR 누락을 PR 체크 단계에서 감지하고 관련 ADR 템플릿과 초안 생성을 자동 가이드하는 CI 봇 연동.
+- [ ] **Frontmatter 자동 교정 및 린터 (`adr lint --fix`)** — 사용자가 손으로 수정하며 발생하는 프론트매터 오탈자, 필수 태그/날짜 누락, 들여쓰기 오류 등을 안전하게 자동 보정하는 UX 개선 기능.
+- [ ] **대화형 의존성 시각화 뷰어 (`adr graph --format=html`)** — 현 mermaid/json 출력 외에도 단일 HTML/SVG 파일로 ADR 간의 이행/대체/참조 그래프를 브라우저에서 인터랙티브하게 탐색할 수 있는 뷰어 기능.
+- [ ] **코드 드리프트 자동 탐지 (`adr drift`)** — ADR 작성 날짜 및 `affected_paths`의 실제 `git log` 변경 이력을 교차 분석하여, ADR 합의 시점 이후 지침과 다르게 변경된 코드 영역을 추적·리포팅하는 서브커맨드.
 
 - [ ] ~~**파싱 결과 캐시**~~ — **결정: 하지 않음.** 이 CLI는 호출마다
   새 프로세스라 `functools.lru_cache`는 프로세스 간 재파싱을 전혀 줄이지
