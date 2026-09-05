@@ -69,6 +69,9 @@ jobs:
       - name: Upgrade pip (fixes known pip CVEs before auditing anything else)
         run: python -m pip install --upgrade pip
       - name: Install pinned dev tools (not the project itself)
+        # KEEP IN SYNC with pyproject.toml's [project.optional-dependencies].dev --
+        # this job can't use `pip install -e ".[dev]"` (see below), so these
+        # versions are a manual copy Dependabot won't update here.
         # Deliberately skips `pip install -e .`: adr-toolkit isn't
         # published to PyPI (confirmed 404 on pypi.org/pypi/adr-toolkit/json),
         # so pip-audit can never resolve it there, and --skip-editable
