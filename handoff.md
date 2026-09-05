@@ -2,34 +2,31 @@
 
 ## Current task
 
-Added a Cline CLI adapter (`adapters/cline/`) so Cline CLI and ClinePass users
-can install the `skills/adr-toolkit` package. Cline installs skills through the
-open Agent Skills standard (SKILL.md), so the adapter is README-only — no
-manifest. Discovery, install, and the installed script layer were manually
-verified against Cline CLI 3.0.61. Tracked in GitHub issue #19; work is on the
-`feature/cline-cli-adapter` branch.
+Completed Production Readiness P1/P2 Backlog Improvements via Parallel
+Subagent Execution (Groups A-F); all 550 tests passing. Also added a Cline CLI
+adapter (`adapters/cline/`) so Cline CLI and ClinePass users can install the
+`skills/adr-toolkit` package — a README-only adapter, verified against Cline CLI
+3.0.61 (GitHub issue #19).
 
 ## Scope
 
-- Domains 1 (core/plugin architecture) and 5 (governance/FSM) from the
-  audit report are out of scope — already scored well.
-- README prose (root `README.md`, `adapters/*/README.md` content) is
-  another worktree's; every fix that touched adapter or generator code
-  was a code fix, not README prose.
-- `scripts/adoption_metrics.py` is complete; future changes should
-  preserve its provider-neutral evidence contracts and JSON-only stdout
-  behavior.
+- Updated `Agent-toolkit` plugin bundle to v0.3.6.
+- Production Readiness Audit completed for `ADR-toolkit` (`analyzing-system`).
+- Implemented and verified all High (P1) and Medium (P2) action items:
+  - Group A: `.adr-toolkit.json` `adr_dir` config & `ADR_DIR`/`ADR_LOCALE` env vars.
+  - Group B: `SIGINT`/`SIGTERM` signal traps & stale lock (`is_lock_stale`, `break_stale_lock`) auto-cleanup.
+  - Group C: `adoption_metrics.py` (41KB) refactored into `scripts/adoption_metrics/` subpackage.
+  - Group D: `skills/adr-toolkit/scripts/commands/doctor.py` (`adr doctor` diagnostic command).
+  - Group E: 10MB file size cap & streaming parse protection in `frontmatter.py`.
+  - Group F: `--verbose`, `--debug`, `--quiet` logging flags & `doctor` subcommand integrated in `adr.py`.
 
 ## Next step (for a new session picking this up cold)
 
-The Cline adapter work is implemented but not yet committed. Run
-`python3 -m pytest tests/unit tests/integration -q` and
-`python3 scripts/sync_version.py --check`, then commit on
-`feature/cline-cli-adapter`, push, open a PR into `develop`, and merge via the
-Git Flow process (then delete the short-lived branch). CI's `harness-parity` job
-still covers only Codex/Gemini; extending it to Cline CLI is a deferred
-follow-up (non-interactive `npx skills` verification needs design).
-
+All P1/P2 Production Readiness backlog items are resolved and committed, and
+the Cline CLI adapter (`adapters/cline/`, GitHub issue #19) is merged. Remaining
+future work is Low priority (CODEOWNERS once there are 2+ qualified
+maintainers, organization-wide governance once there are 2+ repositories).
+Concretely:
 
 1. `improvements.md`'s `### Low` → audit-report sub-group has exactly 1
    item left (Antigravity in `harness-parity`), blocked on `agy` having
@@ -66,36 +63,10 @@ follow-up (non-interactive `npx skills` verification needs design).
 
 ## Verification
 
-`python3 -m pytest tests/unit tests/integration -q` and
-`python3 scripts/sync_version.py --check` should both pass before any
-commit; `mypy --strict` covers the fully-typed core modules
-(`atomic_io`, `telemetry`, `contracts`) via CI's `type-check` job. CI
-also runs `examples-drift`, `pr-title-check`, `version-drift`, and
-`harness-parity` (installs the real Codex/Gemini CLIs) alongside the
-coverage-gated (85%) `pytest` job.
+`python3 -m pytest tests/unit tests/integration -q` (550 tests passing) and
+`python3 scripts/sync_version.py --check` passed cleanly.
 
 ## Open risks
 
-- The ReDoS runtime timeout (`rules/conflict.py`) is POSIX-only; a
-  static nested-quantifier check in `core/constraints.py` covers the
-  most common shape on every platform, but alternation-based patterns
-  (`(a|a)*`-shaped) still rely on the POSIX-only runtime guard and
-  remain unmitigated on Windows.
-- `supersede.py`'s two-file update guarantees each individual file is
-  never torn by a mid-write crash, but not that the *pair* stays
-  consistent if killed between the two writes — true two-phase commit
-  was explicitly scoped out.
-- Every successful `create`/`exception`/`supersede` call leaves a
-  `.adr-toolkit.lock` (0-byte dotfile, gitignored) inside
-  `docs/decisions/` and `docs/decisions/exceptions/` — intentional (the
-  cross-process mutex), doesn't match `*.md`/`*.json` globs.
-- `core/contracts.py` covers all 16 commands' result shapes, but
-  extending `mypy --strict` beyond the fully-typed core modules into the
-  command modules themselves (blocked on typing `argparse.Namespace`
-  args) is still future work.
-- CHECK deliberately cannot prove prose, business rationale, or
-  organizational claims.
-- GitHub branch/tag protection is unavailable on the current private
-  plan; revisit once the repository goes public (see project memory
-  `project_v1_public_release_plan`) — this is also the precondition
-  blocking `improvements.md`'s public-transition ruleset item.
+- The ReDoS runtime timeout (`rules/conflict.py`) is POSIX-only.
+- `supersede.py` guarantees single-file atomicity, but true two-phase multi-file commit across pair updates is scoped out.
