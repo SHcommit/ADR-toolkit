@@ -18,6 +18,7 @@
 - [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
 - [ADR-0015 — Structured JSON stderr logging with correlation IDs for uncaught errors](0015-structured-json-stderr-logging-with-correlation-ids-for-uncaught-errors.md)
 - [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### Superseded
 - [ADR-0003 — Localize only index.py's generated strings, not agent-composed text](0003-localize-only-index-py-s-generated-strings-not-agent-composed-text.md)
@@ -37,6 +38,9 @@
 - [ADR-0007 — Promote CHECK's kind-to-confidence mapping to a stable output field](0007-check-confidence-field.md)
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
+
+### ci
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### cli
 - [ADR-0009 — --json is a documented no-op; CLI output is always JSON](0009-json-flag-always-json-contract.md)
@@ -75,9 +79,13 @@
 ### git-flow
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
 
+### github
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
 ### governance
 - [ADR-0008 — Deterministic CHECK policy exceptions: schema-validated, annotate-only, never suppress](0008-check-exceptions-annotate-only.md)
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### graph
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
@@ -115,9 +123,11 @@
 ### security
 - [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
 - [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### supply-chain
 - [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### typing
 - [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
@@ -148,17 +158,34 @@
 ### `.claude-plugin/plugin.json`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
 
+### `.github/CODEOWNERS`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
+### `.github/ISSUE_TEMPLATE/`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
 ### `.github/PULL_REQUEST_TEMPLATE.md`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `.github/dependabot.yml`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
+### `.github/labeler.yml`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
+### `.github/labels.yml`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### `.github/workflows/`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
 
 ### `.github/workflows/release.yml`
 - [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### `.github/workflows/test.yml`
 - [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### `.gitignore`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
@@ -178,6 +205,7 @@
 ### `SECURITY.md`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 - [ADR-0016 — Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key](0016-sign-release-artifacts-with-github-artifact-attestation-instead-of-a-managed-signing-key.md)
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### `adapters/`
 - [ADR-0004 — Adapter packaging: manifest-only directories, install-time symlinks, verified formats](0004-adapter-packaging-manifest-only-directories-install-time-symlinks-verified-formats.md)
@@ -199,6 +227,12 @@
 
 ### `project-roadmap.md`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
+
+### `pyproject.toml`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
+### `scripts/export_dev_requirements.py`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 
 ### `scripts/sync_version.py`
 - [ADR-0005 — Adopt Git Flow with direct-tag release automation](0005-adopt-git-flow-with-direct-tag-release-automation.md)
@@ -334,6 +368,9 @@
 ### `tests/unit/test_contracts.py`
 - [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
 
+### `tests/unit/test_github_governance.py`
+- [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
+
 ### `tests/unit/test_graph_command.py`
 - [ADR-0011 — Expose ADR relationships as Mermaid and SVG navigation artifacts](0011-adr-relationship-graph-public-readiness.md)
 
@@ -348,6 +385,7 @@
 
 ## Chronological (newest first)
 
+- 2026-09-06 — [ADR-0017 — Adopt source-controlled GitHub governance and CI supply-chain hardening](0017-adopt-source-controlled-github-governance-and-ci-supply-chain-hardening.md)
 - 2026-09-01 — [ADR-0012 — Atomic writes and cross-platform directory locking for CREATE, EXCEPTION, and SUPERSEDE](0012-atomic-writes-and-cross-platform-directory-locking-for-create-exception-and-supersede.md)
 - 2026-09-01 — [ADR-0013 — Two-stage ReDoS defense for CHECK's author-supplied constraint regexes](0013-two-stage-redos-defense-for-check-s-author-supplied-constraint-regexes.md)
 - 2026-09-01 — [ADR-0014 — Typed result contracts and a scoped mypy --strict CI gate](0014-typed-result-contracts-and-a-scoped-mypy-strict-ci-gate.md)
@@ -386,6 +424,8 @@
 - ADR-0015 "Structured JSON stderr logging with correlation IDs for uncaught errors" related to: ADR-0009 "--json is a documented no-op; CLI output is always JSON"
 - ADR-0016 "Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key" related to: ADR-0005 "Adopt Git Flow with direct-tag release automation"
 - ADR-0016 "Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key" related to: ADR-0011 "Expose ADR relationships as Mermaid and SVG navigation artifacts"
+- ADR-0017 "Adopt source-controlled GitHub governance and CI supply-chain hardening" related to: ADR-0005 "Adopt Git Flow with direct-tag release automation"
+- ADR-0017 "Adopt source-controlled GitHub governance and CI supply-chain hardening" related to: ADR-0016 "Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key"
 
 ```mermaid
 flowchart LR
@@ -405,6 +445,7 @@ flowchart LR
   ADR_0014["ADR-0014<br/>Typed result contracts and a scoped mypy --strict CI gate"]
   ADR_0015["ADR-0015<br/>Structured JSON stderr logging with correlation IDs for uncaught errors"]
   ADR_0016["ADR-0016<br/>Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key"]
+  ADR_0017["ADR-0017<br/>Adopt source-controlled GitHub governance and CI supply-chain hardening"]
   ADR_0006 -.->|related| ADR_0003
   ADR_0006 -->|supersedes| ADR_0003
   ADR_0011 -.->|related| ADR_0001
@@ -419,4 +460,6 @@ flowchart LR
   ADR_0015 -.->|related| ADR_0009
   ADR_0016 -.->|related| ADR_0005
   ADR_0016 -.->|related| ADR_0011
+  ADR_0017 -.->|related| ADR_0005
+  ADR_0017 -.->|related| ADR_0016
 ```
