@@ -39,6 +39,7 @@ of these adapters at it:
 | [Codex CLI](adapters/codex/) | Agent Plugins 1.0.0 manifest | [`adapters/codex/README.md`](adapters/codex/README.md) |
 | [Gemini CLI](adapters/gemini-cli/) | Extension manifest | [`adapters/gemini-cli/README.md`](adapters/gemini-cli/README.md) |
 | [Antigravity CLI](adapters/antigravity/) | Plugin manifest | [`adapters/antigravity/README.md`](adapters/antigravity/README.md) |
+| [Cline CLI](adapters/cline/) | Open Agent Skills (no manifest) | [`adapters/cline/README.md`](adapters/cline/README.md) |
 | Anything else | Generic fallback | [`adapters/generic/README.md`](adapters/generic/README.md) — needs only markdown-reading and shell |
 
 **No AI harness at all?** `create --interactive` runs the same interview
