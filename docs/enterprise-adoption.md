@@ -23,11 +23,14 @@ ADR Toolkit의 강점은 AI가 초안과 언어 표현을 돕더라도 repositor
 
 ### 확인된 사실
 
-- 저장소는 private이며 `master`와 `develop` 보호 규칙 및 repository ruleset이 없다.
-- 현재 플랜에서는 private 저장소 protection API가 활성화되지 않는다.
+- 저장소는 2026-08-29부터 public이며, `master`/`develop` 보호 규칙과 repository
+  ruleset은 2026-09-05 API 재확인 기준으로 여전히 없다.
+- 이는 plan 제약이 아니라 public 전환 이후 아직 적용하지 않은 설정 작업이다
+  (§4 공개 저장소 전환 Gate, §9 단계별 완료 조건 참고).
 - CI는 Ubuntu, macOS, Windows와 지원 Python 조합에서 동작한다.
 - 첫 PR은 모든 CI를 통과했지만 독립 review 없이 병합됐다.
-- CODEOWNERS와 PR template이 없다.
+- PR template은 있지만, CODEOWNERS는 활성화되지 않은 dormant draft뿐이다
+  (독립 승인 가능한 qualified maintainer가 2명 이상이 되기 전까지 미활성).
 - 코어는 locale, ID, lifecycle, schema, relationship, index, CHECK의 repository
   state를 결정론적으로 검증한다.
 - 중앙 서비스, 사용자 계정, 조직 RBAC, audit export, telemetry는 없다.
