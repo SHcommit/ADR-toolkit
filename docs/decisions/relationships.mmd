@@ -15,6 +15,7 @@ flowchart LR
   ADR_0014["ADR-0014<br/>Typed result contracts and a scoped mypy --strict CI gate"]
   ADR_0015["ADR-0015<br/>Structured JSON stderr logging with correlation IDs for uncaught errors"]
   ADR_0016["ADR-0016<br/>Sign release artifacts with GitHub Artifact Attestation instead of a managed signing key"]
+  ADR_0017["ADR-0017<br/>Adopt source-controlled GitHub governance and CI supply-chain hardening"]
   ADR_0006 -.->|related| ADR_0003
   ADR_0006 -->|supersedes| ADR_0003
   ADR_0011 -.->|related| ADR_0001
@@ -29,3 +30,5 @@ flowchart LR
   ADR_0015 -.->|related| ADR_0009
   ADR_0016 -.->|related| ADR_0005
   ADR_0016 -.->|related| ADR_0011
+  ADR_0017 -.->|related| ADR_0005
+  ADR_0017 -.->|related| ADR_0016
