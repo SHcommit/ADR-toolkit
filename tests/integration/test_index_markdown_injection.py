@@ -1,7 +1,6 @@
 """Proves INDEX's generated README cannot be split into a second,
 attacker-controlled link via an ADR title (docs/adr-toolkit-audit-report.md,
 Top-3 #2)."""
-from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.commands import index

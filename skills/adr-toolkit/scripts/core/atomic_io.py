@@ -17,7 +17,6 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
-from types import FrameType
 
 if sys.platform == "win32":
     import msvcrt

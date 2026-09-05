@@ -1,6 +1,5 @@
 """Tests for resolve_from_root's boundary enforcement
 (docs/adr-toolkit-audit-report.md §2.2 2.3)."""
-from pathlib import Path
 
 import pytest
 
