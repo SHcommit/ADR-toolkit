@@ -19,22 +19,22 @@ GitHub assumptions and closed additional supply-chain/configuration gaps.
 
 ## Live GitHub changes applied
 
-- Synced 25 labels without deleting unrelated labels.
+- Synced labels without deleting unrelated labels; added `type:epic` this session.
 - Enabled Discussions, Dependabot security updates/alerts, secret scanning and
   push protection, private vulnerability reporting, and delete-branch-on-merge.
 - Re-verified active branch ruleset `22101891` and tag ruleset `22102322`.
 
 ## Next step
 
-1. Merge PR #17 (`chore/sync-develop-with-v1.0.1`) first because this branch is
-   based on it.
-2. Fetch the updated `develop` and merge it into `feature/oss-governance-hardening`
-   before opening the governance PR, because `origin/develop` also contains
-   newer adapter work.
-3. Push `feature/oss-governance-hardening` and open a PR to `develop`.
-4. After its new Python 3.10/lint/audit checks have run, update ruleset
-   `22101891`: remove the two Python 3.9 contexts; add all three Python 3.10
-   contexts plus `lint` and `dependency-audit`; query effective rules again.
+1. Push `feature/oss-governance-hardening` and open a PR to `develop`. This
+   branch already merged `origin/develop` (Cline adapter + improvements
+   backlog) and carries the v1.0.1 sync from PR #17.
+2. Close PR #17 (`chore/sync-develop-with-v1.0.1`) as superseded — its head
+   `508b860` is already an ancestor of this branch.
+3. After the PR's new Python 3.10/lint/audit checks run green, merge and then
+   update ruleset `22101891`: remove the two Python 3.9 contexts; add all three
+   Python 3.10 contexts plus `lint` and `dependency-audit`; query effective
+   rules again.
 
 ## Verification
 
