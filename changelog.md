@@ -29,6 +29,52 @@ Lightweight human-readable summary of meaningful repository changes.
 - Logged a Medium-priority backlog item to fold the Cline CLI adapter into the `harness-parity` CI job (currently manually verified against Cline CLI 3.0.61 only), so Cline/ClinePass version drift is caught automatically like the Codex, Gemini, and Antigravity adapters.
 - Added `CLINE.md` as a thin harness entry pointer (matching `CODEX.md`/`CLAUDE.md`/`GEMINI.md`) and updated `AGENTS.md` to list Cline alongside the other harnesses, plus an explicit note that per-model files (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md`) are intentionally not created — those are model providers routed through a harness, not harnesses themselves. Verified that Cline (CLI 3.0.61 with `cline-pass/glm-5.2`) auto-injects the repo-root `AGENTS.md` into workspace context at session start, so the shared operating document reaches every model routed through ClinePass without a per-model entry file.
 
+## v1.1.0 (2026-09-06)
+
+Minor release: new features, governance hardening, and a new harness adapter.
+
+- Added a Cline CLI adapter (`adapters/cline/`) so Cline CLI and ClinePass users
+  can install the `skills/adr-toolkit` package. Cline installs skills through the
+  open Agent Skills standard (SKILL.md), so the adapter is README-only — no
+  manifest — documenting `cline skill add SHcommit/ADR-toolkit` plus a manual
+  symlink fallback. Manually verified against Cline CLI 3.0.61.
+- Added `CLINE.md` as a thin harness entry pointer (matching
+  `CODEX.md`/`CLAUDE.md`/`GEMINI.md`) and updated `AGENTS.md` to list Cline
+  alongside the other harnesses, plus an explicit note that per-model files
+  (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md`) are intentionally not created —
+  those are model providers routed through a harness, not harnesses themselves.
+  Verified that Cline (CLI 3.0.61 with `cline-pass/glm-5.2`) auto-injects the
+  repo-root `AGENTS.md` into workspace context at session start, so the shared
+  operating document reaches every model routed through ClinePass without a
+  per-model entry file.
+- Scalable GitHub governance: structured Issue Forms, source-controlled label
+  taxonomy, path-based PR labels, new-issue triage, weekly grouped Dependabot
+  updates targeting `develop`, and a dormant CODEOWNERS draft.
+- Ruff and strict dependency-audit CI gates, upgraded the supported Python floor
+  to 3.10, and added regression tests for repository governance configuration.
+- Hardened CI supply chain: replaced the Antigravity `curl | bash` installer with
+  a versioned SHA-512-verified artifact, pinned release Actions to commit SHAs,
+  pinned release build tooling, and removed PR-title shell expression injection.
+- Corrected the governance audit to recognize the already-active repository
+  branch/tag rulesets through the ruleset APIs rather than treating a classic
+  branch-protection 404 as proof of no protection.
+- Enabled live Discussions, dependency security updates and alerts, secret
+  scanning with push protection, private vulnerability reporting, and automatic
+  deletion of merged branches.
+- Recorded ADR-0017 (OSS repository governance & supply-chain hardening
+  decision).
+- Logged a Medium-priority backlog item to fold the Cline CLI adapter into the
+  `harness-parity` CI job (currently manually verified against Cline CLI 3.0.61
+  only), so Cline/ClinePass version drift is caught automatically like the Codex,
+  Gemini, and Antigravity adapters.
+- Expanded `improvements.md` backlog with High and Medium priority items: ReDoS
+  cross-platform safety, 2-phase atomic transaction rollback for `supersede`,
+  ADR overlap/similarity Eval framework, weekly automated maintenance workflows,
+  PR significance bot, `adr lint --fix` auto-repair, interactive HTML graph
+  viewer, and code drift detection.
+- Synced `skills/adr-toolkit/VERSION`, `SKILL.md` frontmatter, and the Claude /
+  Gemini / Antigravity / Codex manifests to 1.1.0 via `scripts/sync_version.py`.
+
 ## v1.0.1 (2026-09-02)
 
 - Added PyPI packaging support (`pyproject.toml`) for `pip install adr-toolkit` and `pipx install adr-toolkit`.
