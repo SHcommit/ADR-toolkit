@@ -58,3 +58,11 @@ release.
 - Cline adapter still manually verified; `harness-parity` not covering Cline yet
   (Medium backlog item from PR #36).
 - Inherits prior Open risks (ruleset context sync, deferred automation).
+
+## PR #43 pr-title-check stale re-trigger
+
+The first PR #43 title `fix(v1.1.1): ...` did not match the
+pr-title-check regex (scope `v1.1.1` contains dots, but the regex allows
+only `[a-z0-9-]+`). PR title was retitled to `fix(release): ... for v1.1.1`,
+and this follow-up commit re-triggers the workflow so the refresh catches
+the new title.
