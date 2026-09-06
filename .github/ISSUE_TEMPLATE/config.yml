@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/SHcommit/ADR-toolkit/security/policy
+    about: Please report vulnerabilities privately per SECURITY.md, not as a public issue.
+  - name: Question / discussion
+    url: https://github.com/SHcommit/ADR-toolkit/discussions
+    about: For open-ended questions that aren't a bug or a concrete feature proposal.

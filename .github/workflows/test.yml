@@ -19,17 +19,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.9", "3.12"]
-        exclude:
-          - os: macos-latest
-            python-version: "3.9"
+        python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install pytest pytest-cov
+        run: pip install -e ".[dev]"
       - name: Run tests
         run: python -m pytest tests/unit tests/integration -v --cov=skills/adr-toolkit/scripts --cov-branch --cov-report=term-missing --cov-fail-under=85
 
@@ -41,7 +38,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install mypy
-        run: pip install mypy
+        run: pip install -e ".[dev]"
       - name: Type-check the fully-typed core modules
         run: >-
           mypy
@@ -49,6 +46,43 @@ jobs:
           skills/adr-toolkit/scripts/core/telemetry.py
           skills/adr-toolkit/scripts/core/contracts.py
           --strict
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install -e ".[dev]"
+      - name: Lint (E9 + F -- syntax errors and pyflakes only for now)
+        run: ruff check .
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Upgrade pip (fixes known pip CVEs before auditing anything else)
+        run: python -m pip install --upgrade pip
+      - name: Export pinned dev requirements
+        run: python scripts/export_dev_requirements.py > "$RUNNER_TEMP/adr-dev-requirements.txt"
+      - name: Install pinned dev tools (not the project itself)
+        # Deliberately skips `pip install -e .`: adr-toolkit isn't
+        # audited as a third-party dependency,
+        # so pip-audit can never resolve it there, and --skip-editable
+        # can't be combined with --strict (pip-audit treats every skipped
+        # dependency as fatal under --strict, unconditionally -- see
+        # pip_audit/_cli.py). This job audits the pinned dev toolchain,
+        # not this project's own unpublished package.
+        run: pip install -r "$RUNNER_TEMP/adr-dev-requirements.txt"
+      - name: Install pip-audit
+        run: pip install pip-audit==2.9.0
+      - name: Audit installed dev dependencies for known vulnerabilities
+        run: pip-audit --strict
 
   version-drift:
     runs-on: ubuntu-latest
@@ -75,8 +109,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR Title Conventional Commits Format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          TITLE="${{ github.event.pull_request.title }}"
+          TITLE="$PR_TITLE"
           echo "Checking PR Title: $TITLE"
           REGEX="^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\([a-z0-9-]+\))?!?: .+"
           if [[ ! "$TITLE" =~ $REGEX ]]; then
@@ -107,8 +143,18 @@ jobs:
         run: npm install -g @openai/codex@0.151.0
       - name: Install Gemini CLI
         run: npm install -g @google/gemini-cli@0.46.0
-      - name: Install Antigravity CLI
-        run: curl -fsSL https://antigravity.google/cli/install.sh | bash
+      - name: Install pinned Antigravity CLI artifact
+        run: |
+          set -euo pipefail
+          ARCHIVE="$RUNNER_TEMP/antigravity-cli-1.1.27-linux-x64.tar.gz"
+          curl --proto '=https' --tlsv1.2 -fsSL \
+            https://storage.googleapis.com/antigravity-public/antigravity-cli/1.1.27-5211191891591168/linux-x64/cli_linux_x64.tar.gz \
+            -o "$ARCHIVE"
+          printf '%s  %s\n' \
+            '793d4b9ea2c08d9a7e50bafa02cfc8c19424bd60d6e83f91408d45f9c6d4ce79a5d576fede5bef164d823abf84f81359a14b4ca665952c47b0a7cfd743bb69c0' \
+            "$ARCHIVE" | sha512sum --check -
+          tar -xzf "$ARCHIVE" -C "$RUNNER_TEMP" antigravity
+          install -D -m 0755 "$RUNNER_TEMP/antigravity" "$HOME/.local/bin/agy"
       - name: Verify Codex CLI adapter end to end
         run: |
           set -euo pipefail

@@ -33,3 +33,9 @@ def test_readme_documents_harness_adapters_including_antigravity():
     assert "[Antigravity CLI](adapters/antigravity/)" in text
     assert "adapters/antigravity/README.md" in text
 
+
+def test_readme_documents_cline_cli_adapter():
+    text = README.read_text(encoding="utf-8")
+    assert "[Cline CLI](adapters/cline/)" in text
+    assert "adapters/cline/README.md" in text
+

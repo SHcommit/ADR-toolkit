@@ -1,9 +1,10 @@
 # AGENTS.md
 
 This is the shared operating document for every agent harness working in this
-repository (Codex, Claude Code, Gemini, or any other). Harness-specific entry
-files (`CODEX.md`, `CLAUDE.md`, `GEMINI.md`) are thin pointers back to this
-file — read this one first, regardless of which harness started the session.
+repository (Codex, Claude Code, Gemini, Cline, or any other). Harness-specific
+entry files (`CODEX.md`, `CLAUDE.md`, `GEMINI.md`, `CLINE.md`) are thin pointers
+back to this file — read this one first, regardless of which harness started
+the session.
 
 ## Source of truth
 
@@ -65,9 +66,13 @@ without reading commit-by-commit history.
 
 ## Harness entry files
 
-`CODEX.md`, `CLAUDE.md`, and `GEMINI.md` stay thin. They point back to this
-file and hold only notes specific to that harness (e.g. a tool quirk). Do not
-duplicate rules from this file into them.
+`CODEX.md`, `CLAUDE.md`, `GEMINI.md`, and `CLINE.md` stay thin. They point
+back to this file and hold only notes specific to that harness (e.g. a tool
+quirk). Do not duplicate rules from this file into them. Per-model entry
+files (e.g. `DEEPSEEK.md`, `GLM.md`, `KIMI.md`, `QWEN.md`) are not created:
+those are model/API providers reached through a harness (Cline, Cursor,
+Aider, …), not harnesses themselves, so the harness's entry file already
+covers them.
 
 ## Safety
 

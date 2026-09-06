@@ -13,8 +13,6 @@ Usage:
 
 import argparse
 import json
-import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -250,7 +248,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Verify and sync examples/*.md with adr.py")
     parser.add_argument("--check", action="store_true", help="Check that examples are executable and valid")
     parser.add_argument("--update", action="store_true", help="Auto-update examples if needed")
-    args = parser.parse_args(argv)
+    parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")

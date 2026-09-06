@@ -1,0 +1,54 @@
+name: Feature Request
+description: Propose a new capability or improvement
+title: "[Feature]: "
+labels: ["needs-triage", "type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you do today, or what's needlessly painful?
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: The concrete scenario where this problem shows up
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Core / CLI (scripts, adr.py)
+        - Adapter (Claude / Codex / Gemini / Antigravity)
+        - GitHub automation (.github/**)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Contribution willingness
+      description: Would you be willing to open a PR for this yourself?
+      options:
+        - "Yes, I'd like to implement this"
+        - "Maybe, with guidance"
+        - "No, just proposing the idea"
+    validations:
+      required: true

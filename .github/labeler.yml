@@ -1,0 +1,41 @@
+"area:core":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "skills/adr-toolkit/scripts/core/**"
+          - "skills/adr-toolkit/scripts/evidence/**"
+          - "skills/adr-toolkit/scripts/rules/**"
+          - "scripts/**"
+
+"area:cli":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "skills/adr-toolkit/scripts/adr.py"
+          - "skills/adr-toolkit/scripts/commands/**"
+
+"area:adapter":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "adapters/**"
+          - ".claude-plugin/**"
+
+"area:github":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+
+"area:docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "*.md"
+
+"type:test":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "tests/**"
+
+"type:docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "*.md"

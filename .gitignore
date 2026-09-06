@@ -29,6 +29,7 @@ env/
 adapters/codex/skills/adr-toolkit
 adapters/gemini-cli/skills/adr-toolkit
 adapters/antigravity/skills/adr-toolkit
+.cline/skills/adr-toolkit
 
 # Task-by-task implementation plans (superpowers subagent-driven-development
 # artifacts) — kept locally for reference, not part of the public tree.
