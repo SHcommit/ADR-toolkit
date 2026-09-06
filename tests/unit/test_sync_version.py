@@ -310,3 +310,98 @@ def test_discover_untracked_manifests_finds_no_untracked_files_in_clean_repo():
     untracked = _sync_version.discover_untracked_manifests()
     assert untracked == [], f"untracked plugin manifests found: {untracked}"
 
+
+# --- TOML version sync (pyproject.toml) ------------------------------------
+
+import re as _re  # local to this section to avoid shadowing the top-level helper
+
+sync_toml_version = _sync_version.sync_toml_version
+TOML_VERSION_LINE_RE = _sync_version.TOML_VERSION_LINE_RE
+
+
+def _write_pyproject(tmp_path, body):
+    path = tmp_path / "pyproject.toml"
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def test_sync_toml_version_updates_version_under_project_table(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    pyproject = _write_pyproject(
+        tmp_path,
+        '[project]\nname = "x"\nversion = "0.0.0"\n\n[tool.something]\nversion = "do-not-touch"\n',
+    )
+
+    changed = sync_toml_version(version_file, [(pyproject, "project")], check_only=False)
+
+    text = pyproject.read_text(encoding="utf-8")
+    assert 'version = "1.2.3"' in text
+    assert 'version = "do-not-touch"' in text  # other section untouched
+    assert changed == [pyproject]
+
+
+def test_sync_toml_version_is_idempotent_when_already_synced(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    pyproject = _write_pyproject(tmp_path, '[project]\nversion = "1.2.3"\n')
+
+    changed = sync_toml_version(version_file, [(pyproject, "project")], check_only=False)
+
+    assert changed == []
+
+
+def test_sync_toml_version_check_only_reports_drift_without_writing(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    pyproject = _write_pyproject(tmp_path, '[project]\nversion = "0.0.0"\n')
+
+    changed = sync_toml_version(version_file, [(pyproject, "project")], check_only=True)
+
+    assert changed == [pyproject]
+    assert 'version = "0.0.0"' in pyproject.read_text(encoding="utf-8")
+
+
+def test_sync_toml_version_skips_when_section_missing(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    # No [project] table at all → nothing to sync, no error, no write.
+    pyproject = _write_pyproject(tmp_path, '[tool.other]\nversion = "0.0.0"\n')
+
+    changed = sync_toml_version(version_file, [(pyproject, "project")], check_only=False)
+
+    assert changed == []
+    assert 'version = "0.0.0"' in pyproject.read_text(encoding="utf-8")
+
+
+def test_sync_toml_version_does_not_touch_version_under_other_section(tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.2.3\n", encoding="utf-8")
+    # `version` only under [tool.something], not under [project] → untouched
+    pyproject = _write_pyproject(tmp_path, '[tool.something]\nversion = "0.0.0"\n')
+
+    changed = sync_toml_version(version_file, [(pyproject, "project")], check_only=False)
+
+    assert changed == []
+    assert 'version = "0.0.0"' in pyproject.read_text(encoding="utf-8")
+
+
+def test_real_pyproject_version_matches_skill_version():
+    """Guard against a repeat of the v1.1.0 release bug, where pyproject.toml's
+    version drifted out of sync with skills/adr-toolkit/VERSION because pyproject
+    was not in the sync surface. This test stays green only as long as
+    scripts/sync_version.py propagates the VERSION bump into pyproject.toml."""
+    skill_version = _sync_version.read_version(REAL_VERSION_FILE)
+    pyproject = REAL_SKILL_MD_PATH.parent.parent.parent / "pyproject.toml"
+    text = pyproject.read_text(encoding="utf-8")
+    header = _sync_version._section_header_re("project").search(text)
+    assert header is not None, "[project] table missing from pyproject.toml"
+    after = text[header.end():]
+    next_header = _re.search(r"^\[[^\]]+\]\s*$", after, _re.MULTILINE)
+    window = after if next_header is None else after[: next_header.start()]
+    match = TOML_VERSION_LINE_RE.search(window)
+    assert match is not None, 'version = "..." line missing under [project]'
+    assert match.group(1) == skill_version, (
+        f"pyproject.toml version {match.group(1)!r} != skill VERSION {skill_version!r}"
+    )
+

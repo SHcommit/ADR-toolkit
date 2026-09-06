@@ -23,6 +23,17 @@ MANIFEST_SPECS = [
     (REPO_ROOT / "adapters" / "antigravity" / "plugin.json", ["version"]),
 ]
 
+# TOML manifests whose `version = "..."` line under [project] we sync from
+# VERSION. The Python stdlib has no TOML writer on 3.10, and `tomli` /
+# `tomllib` are read-only, so we edit the single `version = "..."` line
+# in-place by regex instead of round-tripping through a TOML parser. Each
+# entry is (path, section_name) where section_name is the table header the
+# `version` line must live under (so we never accidentally rewrite a
+# `version = "..."` that appears in some other table).
+TOML_VERSION_SPECS = [
+    (REPO_ROOT / "pyproject.toml", "project"),
+]
+
 # SKILL.md's frontmatter `description:` is the single canonical source; every
 # manifest below duplicates it for its own harness's format and is synced
 # from it the same way MANIFEST_SPECS entries are synced from VERSION.
@@ -36,6 +47,11 @@ DESCRIPTION_MANIFEST_SPECS = [
 VERSION_LINE_RE = re.compile(r"^version:\s*\S+$", re.MULTILINE)
 VERSION_FORMAT_RE = re.compile(r"\d+\.\d+\.\d+(-[\w.]+)?")
 DESCRIPTION_LINE_RE = re.compile(r"^description:[ \t]*(.+)$", re.MULTILINE)
+
+# Matches a TOML `version = "..."` line. We anchor on the line start and
+# require the value to be a double-quoted string so this never matches
+# `version = 1.0.1` (bare) or a commented-out `# version = "..."`.
+TOML_VERSION_LINE_RE = re.compile(r'^version\s*=\s*"([^"]*)"\s*$', re.MULTILINE)
 
 
 def read_version(version_file: Path) -> str:
@@ -118,6 +134,50 @@ def sync_skill_md(version_file: Path, skill_md_path: Path, check_only: bool) -> 
     return True
 
 
+def _section_header_re(section: str) -> "re.Pattern[str]":
+    """Match a TOML table header like `[project]` on its own line."""
+    return re.compile(rf"^\[{re.escape(section)}\]\s*$", re.MULTILINE)
+
+
+def sync_toml_version(version_file: Path, specs: list, check_only: bool) -> list:
+    """Sync the `version = "..."` line under each TOML section named in `specs`.
+
+    Unlike JSON manifests, TOML has no stdlib writer on 3.10, so we edit the
+    single `version = "..."` line in-place by regex. The section anchor
+    (e.g. `[project]`) keeps us from touching a `version = "..."` that lives
+    under some other table (e.g. `[tool.something]`).
+    """
+    version = read_version(version_file)
+    changed: list = []
+    for path, section in specs:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        header = _section_header_re(section).search(text)
+        if header is None:
+            continue
+        after = text[header.end():]
+        # Stop at the next top-level table header so we only consider
+        # `version = "..."` that actually lives under `section`.
+        next_header = re.search(r"^\[[^\]]+\]\s*$", after, re.MULTILINE)
+        window = after if next_header is None else after[: next_header.start()]
+        match = TOML_VERSION_LINE_RE.search(window)
+        if match is None:
+            continue
+        if match.group(1) == version:
+            continue
+        changed.append(path)
+        if not check_only:
+            new_line = f'version = "{version}"'
+            absolute_start = header.end() + match.start()
+            absolute_end = header.end() + match.end()
+            path.write_text(
+                text[:absolute_start] + new_line + text[absolute_end:],
+                encoding="utf-8",
+            )
+    return changed
+
+
 def require_known_paths() -> None:
     """Fail loudly if a manifest this repo is supposed to track has vanished.
 
@@ -128,6 +188,7 @@ def require_known_paths() -> None:
     """
     all_specs = MANIFEST_SPECS + DESCRIPTION_MANIFEST_SPECS
     tracked_paths = {p for p, _ in all_specs}
+    tracked_paths.update(p for p, _ in TOML_VERSION_SPECS)
     missing = [p for p in tracked_paths if not p.is_file()]
     if not VERSION_FILE.is_file():
         missing.append(VERSION_FILE)
@@ -148,6 +209,16 @@ def require_known_paths() -> None:
     if keyless:
         names = ", ".join(f"{_display_path(p)} ({key})" for p, key in keyless)
         raise SystemExit(f"tracked manifest(s) lost a tracked key: {names}")
+
+    # pyproject.toml: assert `[project]` table exists so a structural change
+    # (e.g. deleting the [project] table) fails loudly instead of silently
+    # dropping pyproject out of the drift check.
+    for path, section in TOML_VERSION_SPECS:
+        if _section_header_re(section).search(path.read_text(encoding="utf-8")) is None:
+            raise SystemExit(
+                f"tracked TOML manifest lost its [{section}] table: "
+                f"{_display_path(path)}"
+            )
 
     untracked = discover_untracked_manifests()
     if untracked:
@@ -187,6 +258,7 @@ def main(argv=None) -> int:
     require_known_paths()
     changed = sync(VERSION_FILE, MANIFEST_SPECS, check_only=args.check)
     changed += sync_descriptions(SKILL_MD_PATH, DESCRIPTION_MANIFEST_SPECS, check_only=args.check)
+    changed += sync_toml_version(VERSION_FILE, TOML_VERSION_SPECS, check_only=args.check)
     if sync_skill_md(VERSION_FILE, SKILL_MD_PATH, check_only=args.check):
         changed.append(SKILL_MD_PATH)
 
