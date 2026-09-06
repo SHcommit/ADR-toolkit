@@ -18,6 +18,30 @@ def test_cline_adapter_documents_skill_discovery_locations():
     assert "~/.agents/skills" in text
 
 
+def test_cline_entry_file_is_thin_pointer_to_agents_md():
+    # Cline joins Codex/Claude/Gemini as a harness with a thin entry file that
+    # delegates to AGENTS.md. Per-model entry files (DEEPSEEK/GLM/KIMI/QWEN) are
+    # intentionally not created — those are models routed through a harness,
+    # not harnesses themselves.
+    cline_entry = REPO_ROOT / "CLINE.md"
+    text = cline_entry.read_text(encoding="utf-8")
+    assert "AGENTS.md" in text
+    assert "Follow the shared project rules" in text
+    # Harness entry files must stay thin — no duplication of AGENTS.md rules.
+    assert "Git Flow" not in text
+    assert "Release tags" not in text
+
+
+def test_agents_md_lists_cline_among_harnesses():
+    text = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    # Cline must be listed both in the harness enumeration and the entry-file
+    # paragraph, alongside Codex/Claude/Gemini.
+    assert "Cline" in text
+    assert "CLINE.md" in text
+    # And the per-model-file non-creation policy must be stated.
+    assert "model/API providers" in text
+
+
 def test_skill_frontmatter_satisfies_cline_requirements():
     # Cline requires `name` to match its directory and `description` (< 1024
     # chars). The canonical package already carries both, so no adapter-local
