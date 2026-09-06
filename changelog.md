@@ -29,6 +29,37 @@ Lightweight human-readable summary of meaningful repository changes.
 - Logged a Medium-priority backlog item to fold the Cline CLI adapter into the `harness-parity` CI job (currently manually verified against Cline CLI 3.0.61 only), so Cline/ClinePass version drift is caught automatically like the Codex, Gemini, and Antigravity adapters.
 - Added `CLINE.md` as a thin harness entry pointer (matching `CODEX.md`/`CLAUDE.md`/`GEMINI.md`) and updated `AGENTS.md` to list Cline alongside the other harnesses, plus an explicit note that per-model files (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md`) are intentionally not created — those are model providers routed through a harness, not harnesses themselves. Verified that Cline (CLI 3.0.61 with `cline-pass/glm-5.2`) auto-injects the repo-root `AGENTS.md` into workspace context at session start, so the shared operating document reaches every model routed through ClinePass without a per-model entry file.
 
+## v1.1.1 (2026-09-06)
+
+Hotfix release to close two gaps discovered while deploying v1.1.0:
+
+- Fixed `.claude-plugin/marketplace.json` to conform to the Claude Code v2.1.263
+  marketplace schema by adding the required `owner` field plus `$schema` and a
+  top-level `description`. `claude plugin marketplace add <repo>` previously
+  failed with `Invalid schema: ... owner: Invalid input`, blocking fresh
+  installs even though the shipped `plugin.json` was already correct. Mirrors
+  the working `Agent-toolkit/.claude-plugin/marketplace.json` shape.
+- Extended `scripts/sync_version.py` to also sync the `version = "..."` field
+  under `pyproject.toml`'s `[project]` table. The v1.1.0 release shipped a GitHub
+  Release whose skill tarball was `v1.1.0` but whose Python wheel/sdist were
+  `1.0.1`, because `pyproject.toml`'s `version` was not in the sync surface and
+  `release.yml` only verified the skill VERSION against the tag. The new
+  `TOML_VERSION_SPECS` list + `sync_toml_version()` rewrite the `version = "..."`
+  line in-place by regex (Python 3.10 stdlib has no TOML writer, `tomli` is
+  read-only). `require_known_paths()` now also checks the `[project]` table is
+  present, so a future structural edit that deletes the table fails loudly
+  instead of silently dropping `pyproject.toml` out of the drift check.
+- Added regression tests in `tests/unit/test_sync_version.py` that pin the new
+  behavior: writes version under `[project]`, leaves `version` under other
+  tables untouched, is idempotent, supports `--check`, skips when the section is
+  missing — plus a real-repo guard (`test_real_pyproject_version_matches_skill_version`)
+  that fails the moment `pyproject.toml` drifts from `skills/adr-toolkit/VERSION`
+  again.
+- Bumped `skills/adr-toolkit/VERSION`, `SKILL.md` frontmatter, and every adapter
+  manifest (`.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`,
+  `adapters/antigravity/plugin.json`, plus `pyproject.toml`) to **1.1.1** via
+  `scripts/sync_version.py`.
+
 ## v1.1.0 (2026-09-06)
 
 Minor release: new features, governance hardening, and a new harness adapter.
