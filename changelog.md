@@ -27,6 +27,7 @@ Lightweight human-readable summary of meaningful repository changes.
   symlink fallback. Manually verified against Cline CLI 3.0.61.
 - Expanded `improvements.md` backlog with High and Medium priority items: ReDoS cross-platform safety, 2-phase atomic transaction rollback for `supersede`, ADR overlap/similarity Eval framework, weekly automated maintenance workflows, PR significance bot, `adr lint --fix` auto-repair, interactive HTML graph viewer, and code drift detection.
 - Logged a Medium-priority backlog item to fold the Cline CLI adapter into the `harness-parity` CI job (currently manually verified against Cline CLI 3.0.61 only), so Cline/ClinePass version drift is caught automatically like the Codex, Gemini, and Antigravity adapters.
+- Added `CLINE.md` as a thin harness entry pointer (matching `CODEX.md`/`CLAUDE.md`/`GEMINI.md`) and updated `AGENTS.md` to list Cline alongside the other harnesses, plus an explicit note that per-model files (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md`) are intentionally not created — those are model providers routed through a harness, not harnesses themselves. Verified that Cline (CLI 3.0.61 with `cline-pass/glm-5.2`) auto-injects the repo-root `AGENTS.md` into workspace context at session start, so the shared operating document reaches every model routed through ClinePass without a per-model entry file.
 
 ## v1.0.1 (2026-09-02)
 

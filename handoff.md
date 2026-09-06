@@ -2,51 +2,63 @@
 
 ## Current task
 
-Cline CLI adapter harness-parity CI coverage gap — logged as a Medium backlog
-item. The Cline adapter is currently "Manually verified against Cline CLI 3.0.61"
-only; the `harness-parity` CI job does not yet install Cline and exercise it on
-push/PR. Codex, Gemini, and Antigravity adapters are already automated.
+Cline harness entry file (`CLINE.md`) added and `AGENTS.md` updated to list
+Cline alongside Codex/Claude/Gemini, plus an explicit per-model non-creation
+policy (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md` are not created — those are
+model/API providers routed through a harness such as Cline, not harnesses).
 
 ## Touched files
 
-- `improvements.md` — added Medium item "harness-parity CI에 Cline CLI 편입"
-  with prerequisites (npm package name/version pin, install-path verification,
-  `preflight`/`init`/`validate` `ok:true` checks).
-- `project-roadmap.md` — added "Automate the Cline CLI adapter install-and-run
-  verification — Backlog." entry under "Harness parity".
-- `changelog.md` — one Unreleased line recording the backlog item.
-- `handoff.md` — this file (current task + next step).
+- `CLINE.md` — new thin harness entry pointer (matches `CODEX.md`/`CLAUDE.md`/
+  `GEMINI.md` shape) with Cline-specific notes: open Agent Skills discovery,
+  no adapter-local manifest, and the verified AGENTS.md auto-injection
+  behavior.
+- `AGENTS.md` — added `Cline` to the harness enumeration (line 4) and added
+  `CLINE.md` to the harness entry-files list (line 69), plus a paragraph
+  stating per-model entry files are intentionally not created.
+- `tests/unit/test_cline_adapter.py` — added
+  `test_cline_entry_file_is_thin_pointer_to_agents_md` and
+  `test_agents_md_lists_cline_among_harnesses`.
+- `changelog.md` — one Unreleased line.
+- `handoff.md` — this file.
 
-## Diagnosis (for the next session)
+## Diagnosis / empirical verification
 
-Cline CLI 3.0.61 is installed at `/Users/yangseunghyeon/.npm-global/bin/cline`.
-`cline skill list` from the repo root shows `adr-toolkit` as a **Project Skill**
-(source: local, from `~/Development/ADR-toolkit/skills/adr-toolkit`) — i.e. the
-repo's own `skills/` directory is auto-detected, NOT a global install.
-`cline plugin list` is empty and `~/.agents/skills/` is empty, confirming the
-adapter is README-only (no Cline TS plugin) and nothing was globally installed.
+Confirmed via an isolated Cline run that Cline auto-injects the repo-root
+`AGENTS.md` into workspace context at session start:
+
+```
+cline --data-dir <mktemp -d> --json 'Output ONLY the literal first line of
+this repository AGENTS.md file. Do not run any tools...'
+→ reasoning: "Looking at the Workspace Configuration, I see the full content
+   of the AGENTS.md file was provided in the workspace context."
+→ text: "# AGENTS.md"
+→ model: cline-pass/glm-5.2
+```
+
+So `AGENTS.md` already reaches every model routed through ClinePass
+(DeepSeek, GLM, Kimi, Qwen, …). Per-model entry files would be redundant
+because the harness (Cline) is the layer that owns project-context injection.
 
 ## Next step
 
-1. (Optional, for personal use) `cline skill add SHcommit/ADR-toolkit --global -y`
-   to make the skill available outside this repo.
-2. (Future PR) Implement the Medium backlog item: confirm `cline`'s npm package
-   name/version-pin, add a Cline step to `.github/workflows/test.yml`
-   `harness-parity` job, verify `cline skill add ... --global --yes`, and run
-   `preflight`/`init`/`validate` from the installed snapshot on each push/PR.
-   Open a `feature/*` branch per the git flow and merge into `develop` via PR.
+1. (This PR) `docs/cline-harness-entry` → `develop` via PR #37; wait for CI
+   (13 checks, same matrix as PR #36).
+2. (Future, already logged in PR #36) Implement the Medium backlog item to
+   fold Cline into the `harness-parity` CI job.
 
 ## Verification
 
-- `tests/unit/test_cline_adapter.py`: pass (doc-only change, code unaffected).
-- `ruff check .`: to be confirmed below.
+- `tests/unit/test_cline_adapter.py`: 5 cases (3 original + 2 new) — re-run
+  with Python 3.13 standalone.
+- `git diff --stat`: 5 files, all markdown + test — ruff/mypy scope:
+  `test_cline_adapter.py`.
 
 ## Open risks
 
-- Until the Cline harness-parity step lands, Cline CLI/ClinePass version drift
-  (e.g. `cline skill add` path or `~/.agents/skills/` location changing) will
-  not be caught by CI. The `adapters/cline/README.md` verification block stays
-  pinned to 3.0.61 until automated.
-- Inherits the prior Open risks from the OSS governance hardening handoff
-  (ruleset context sync, `continue-on-error` PyPI publish, deferred
-  issue/PR automation).
+- Cline auto-injection of `AGENTS.md` was verified on Cline CLI 3.0.61 with
+  `cline-pass/glm-5.2`; behavior may differ on other Cline versions or
+  providers. The Medium harness-parity CI backlog item (PR #36) covers
+  ongoing regression detection once implemented.
+- Inherits Open risks from the prior handoff (ruleset context sync,
+  `continue-on-error` PyPI publish, deferred issue/PR automation).
