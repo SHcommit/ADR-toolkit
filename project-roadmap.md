@@ -23,6 +23,13 @@ before implementation. Concrete selected work belongs in `improvements.md`.
   — **Done (2026-09-05).** `harness-parity` downloads a versioned Linux release
   artifact, verifies its official SHA-512 digest, and exercises the adapter.
   The mutable `curl | bash` bootstrapper is intentionally not executed in CI.
+- **Automate the Cline CLI adapter install-and-run verification** — Backlog.
+  `adapters/cline/` is manually verified against Cline CLI 3.0.61 only; the
+  `harness-parity` job does not yet install Cline and exercise `cline skill add`
+  + `preflight`/`init`/`validate`. Cline CLI is npm-installable, so the
+  precondition (public package registry) is met — tracked as a Medium item in
+  `improvements.md`. Revisit once the npm package name/version-pin and the
+  install-path verification steps are confirmed.
 - **Harness-specific hook support beyond Claude Code SessionStart when equivalent stable extension points exist** — **Evaluated, not pursued (2026-08-31).** The precondition is now true: Codex CLI has a config-driven `SessionStart`/`UserPromptSubmit` hook system (`~/.codex/hooks.json`), and Gemini CLI ships `gemini hooks migrate` specifically to port Claude Code hooks over. But ADR Toolkit doesn't use a hook even on Claude Code today (it relies entirely on skill auto-discovery), and a hook that fires on every session regardless of relevance cuts against this project's own restraint principle (max 3 questions, judge what's significant, minimize interruption). The plausible use cases (nudge about an unfinished draft ADR, warn about a governed path) are already covered by deliberately invoking `discover` and `check` rather than an always-on hook. Revisit only if real usage shows people miss something that `discover`/`check` can't catch without a session-start nudge -- not just because the extension points now exist.
 
 ## ADR navigation and scale

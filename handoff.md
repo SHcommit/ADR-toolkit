@@ -2,55 +2,51 @@
 
 ## Current task
 
-OSS repository governance hardening implementation and independent review.
-Original SDD Tasks 1–9 are complete; the follow-up review corrected false live
-GitHub assumptions and closed additional supply-chain/configuration gaps.
+Cline CLI adapter harness-parity CI coverage gap — logged as a Medium backlog
+item. The Cline adapter is currently "Manually verified against Cline CLI 3.0.61"
+only; the `harness-parity` CI job does not yet install Cline and exercise it on
+push/PR. Codex, Gemini, and Antigravity adapters are already automated.
 
 ## Touched files
 
-- Governance config: `.github/CODEOWNERS`, `.github/dependabot.yml`,
-  `.github/labeler.yml`, `.github/labels.yml`, `.github/ISSUE_TEMPLATE/**`,
-  `.github/workflows/{labeler,labels,test,release}.yml`.
-- Tooling/tests: `pyproject.toml`, `scripts/export_dev_requirements.py`,
-  `tests/unit/test_github_governance.py`, pre-existing ruff cleanup files.
-- Docs: `SECURITY.md`, `project-roadmap.md`, `docs/enterprise-adoption.md`,
-  `docs/oss-repository-governance-audit.md`, governance design spec,
-  `changelog.md`, `improvements.md`.
+- `improvements.md` — added Medium item "harness-parity CI에 Cline CLI 편입"
+  with prerequisites (npm package name/version pin, install-path verification,
+  `preflight`/`init`/`validate` `ok:true` checks).
+- `project-roadmap.md` — added "Automate the Cline CLI adapter install-and-run
+  verification — Backlog." entry under "Harness parity".
+- `changelog.md` — one Unreleased line recording the backlog item.
+- `handoff.md` — this file (current task + next step).
 
-## Live GitHub changes applied
+## Diagnosis (for the next session)
 
-- Synced labels without deleting unrelated labels; added `type:epic` this session.
-- Enabled Discussions, Dependabot security updates/alerts, secret scanning and
-  push protection, private vulnerability reporting, and delete-branch-on-merge.
-- Re-verified active branch ruleset `22101891` and tag ruleset `22102322`.
+Cline CLI 3.0.61 is installed at `/Users/yangseunghyeon/.npm-global/bin/cline`.
+`cline skill list` from the repo root shows `adr-toolkit` as a **Project Skill**
+(source: local, from `~/Development/ADR-toolkit/skills/adr-toolkit`) — i.e. the
+repo's own `skills/` directory is auto-detected, NOT a global install.
+`cline plugin list` is empty and `~/.agents/skills/` is empty, confirming the
+adapter is README-only (no Cline TS plugin) and nothing was globally installed.
 
 ## Next step
 
-1. Merge PR #34 (`feat(github): add OSS repository governance & supply-chain
-   hardening`) into `develop` after its CI checks pass.
-2. After merge, update ruleset `22101891`: remove the two Python 3.9 contexts;
-   add all three Python 3.10 contexts plus `lint` and `dependency-audit`; query
-   effective rules again.
+1. (Optional, for personal use) `cline skill add SHcommit/ADR-toolkit --global -y`
+   to make the skill available outside this repo.
+2. (Future PR) Implement the Medium backlog item: confirm `cline`'s npm package
+   name/version-pin, add a Cline step to `.github/workflows/test.yml`
+   `harness-parity` job, verify `cline skill add ... --global --yes`, and run
+   `preflight`/`init`/`validate` from the installed snapshot on each push/PR.
+   Open a `feature/*` branch per the git flow and merge into `develop` via PR.
 
 ## Verification
 
-- CI-equivalent pytest + branch coverage: 558 passed, 92.74% coverage.
-- `ruff check .`: passed.
-- scoped `mypy --strict`: passed.
-- `sync_version.py --check` and `verify_examples.py --check`: passed.
-- `pip-audit --strict` in a clean dev-tool environment: no known vulnerabilities.
-- actionlint v1.7.12: passed after fixing PR-title expression injection.
-- Python package build: wheel and sdist built successfully; emitted only the
-  tracked PyPA license-metadata deprecation warning.
-- Antigravity 1.1.27 artifact: official SHA-512 matched and archive contained
-  the expected `antigravity` binary.
+- `tests/unit/test_cline_adapter.py`: pass (doc-only change, code unaffected).
+- `ruff check .`: to be confirmed below.
 
 ## Open risks
 
-- Until the governance PR is merged and ruleset contexts are updated, the live
-  ruleset still names removed Python 3.9 checks and does not require the new
-  `lint`/`dependency-audit` jobs.
-- `pypa/gh-action-pypi-publish` remains `continue-on-error: true`, so a release
-  can partially succeed; tracked in `improvements.md`.
-- Project/milestone/stale automation is deliberately deferred until issue/PR
-  volume meets the triggers in the audit report.
+- Until the Cline harness-parity step lands, Cline CLI/ClinePass version drift
+  (e.g. `cline skill add` path or `~/.agents/skills/` location changing) will
+  not be caught by CI. The `adapters/cline/README.md` verification block stays
+  pinned to 3.0.61 until automated.
+- Inherits the prior Open risks from the OSS governance hardening handoff
+  (ruleset context sync, `continue-on-error` PyPI publish, deferred
+  issue/PR automation).
