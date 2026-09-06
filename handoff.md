@@ -2,63 +2,58 @@
 
 ## Current task
 
-Cline harness entry file (`CLINE.md`) added and `AGENTS.md` updated to list
-Cline alongside Codex/Claude/Gemini, plus an explicit per-model non-creation
-policy (`DEEPSEEK.md`/`GLM.md`/`KIMI.md`/`QWEN.md` are not created — those are
-model/API providers routed through a harness such as Cline, not harnesses).
+Release v1.1.0: VERSION bumped 1.0.1 → 1.1.0, manifests synced via
+`scripts/sync_version.py`, `changelog.md` v1.1.0 section added. Release branch
+`release/v1.1.0` off `develop` ready to merge into `master`; after merge, tag
+`v1.1.0` will be pushed from `master` to trigger `.github/workflows/release.yml`.
 
 ## Touched files
 
-- `CLINE.md` — new thin harness entry pointer (matches `CODEX.md`/`CLAUDE.md`/
-  `GEMINI.md` shape) with Cline-specific notes: open Agent Skills discovery,
-  no adapter-local manifest, and the verified AGENTS.md auto-injection
-  behavior.
-- `AGENTS.md` — added `Cline` to the harness enumeration (line 4) and added
-  `CLINE.md` to the harness entry-files list (line 69), plus a paragraph
-  stating per-model entry files are intentionally not created.
-- `tests/unit/test_cline_adapter.py` — added
-  `test_cline_entry_file_is_thin_pointer_to_agents_md` and
-  `test_agents_md_lists_cline_among_harnesses`.
-- `changelog.md` — one Unreleased line.
+- `skills/adr-toolkit/VERSION` — bumped to `1.1.0`.
+- `skills/adr-toolkit/SKILL.md` — frontmatter `version: 1.1.0`.
+- `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`,
+  `adapters/antigravity/plugin.json` — `version` synced to `1.1.0`.
+- `changelog.md` — moved the Unreleased block under a new `## v1.1.0 (2026-09-06)`
+  heading summarizing the 31 commits accumulated since v1.0.1 (Cline adapter,
+  CLINE.md/AGENTS.md harness entry, GitHub governance hardening, CI supply-chain
+  hardening, ADR-0017, backlog items).
 - `handoff.md` — this file.
 
-## Diagnosis / empirical verification
+## Why 1.1.0 (MINOR, not PATCH)
 
-Confirmed via an isolated Cline run that Cline auto-injects the repo-root
-`AGENTS.md` into workspace context at session start:
-
-```
-cline --data-dir <mktemp -d> --json 'Output ONLY the literal first line of
-this repository AGENTS.md file. Do not run any tools...'
-→ reasoning: "Looking at the Workspace Configuration, I see the full content
-   of the AGENTS.md file was provided in the workspace context."
-→ text: "# AGENTS.md"
-→ model: cline-pass/glm-5.2
-```
-
-So `AGENTS.md` already reaches every model routed through ClinePass
-(DeepSeek, GLM, Kimi, Qwen, …). Per-model entry files would be redundant
-because the harness (Cline) is the layer that owns project-context injection.
+The 31 commits between v1.0.1 and this release include six `feat:` commits
+(Cline CLI adapter, GitHub label taxonomy / labeler / dependabot / Issue Forms /
+auto-triage). SemVer requires a MINOR bump for new backward-compatible
+features; no breaking changes were identified, so MAJOR is not warranted and
+PATCH would understate the surface change.
 
 ## Next step
 
-1. (This PR) `docs/cline-harness-entry` → `develop` via PR #37; wait for CI
-   (13 checks, same matrix as PR #36).
-2. (Future, already logged in PR #36) Implement the Medium backlog item to
-   fold Cline into the `harness-parity` CI job.
+1. Open PR `release/v1.1.0` → `master` (AGENTS.md: "Release branches merge
+   into `master` and back into `develop`").
+2. After CI passes (release.yml runs pytest + sync_version --check + tag ==
+   VERSION), merge into `master`.
+3. Back-merge `master` → `develop` (PR), per the git flow.
+4. Tag `v1.1.0` from `master` and push — `release.yml` runs the full suite,
+   verifies manifest versions against the tag, and publishes a GitHub
+   Release (plus PyPI publish via Trusted Publisher, `continue-on-error`).
+5. Delete the short-lived `release/v1.1.0` branch after merge.
 
 ## Verification
 
-- `tests/unit/test_cline_adapter.py`: 5 cases (3 original + 2 new) — re-run
-  with Python 3.13 standalone.
-- `git diff --stat`: 5 files, all markdown + test — ruff/mypy scope:
-  `test_cline_adapter.py`.
+- `scripts/sync_version.py --check`: passes (VERSION, SKILL.md, and all
+  4 manifests agree on 1.1.0; no untracked manifests).
+- `changelog.md` reflects all 31 v1.0.1..develop commits.
+- Working-tree state on `release/v1.1.0`: clean except for the version-sync +
+  changelog/handoff commits.
 
 ## Open risks
 
-- Cline auto-injection of `AGENTS.md` was verified on Cline CLI 3.0.61 with
-  `cline-pass/glm-5.2`; behavior may differ on other Cline versions or
-  providers. The Medium harness-parity CI backlog item (PR #36) covers
-  ongoing regression detection once implemented.
-- Inherits Open risks from the prior handoff (ruleset context sync,
-  `continue-on-error` PyPI publish, deferred issue/PR automation).
+- `pypa/gh-action-pypi-publish` remains `continue-on-error: true`, so the
+  PyPI publish step can partially fail without failing the release job —
+  tracked in `improvements.md`.
+- Cline adapter is still "Manually verified against 3.0.61" only; the
+  `harness-parity` CI job does not yet cover Cline — PR #36 logged this as a
+  Medium backlog item to implement after v1.1.0 ships.
+- Inherits prior Open risks (ruleset context sync post-merge, deferred
+  project/milestone/stale automation).
