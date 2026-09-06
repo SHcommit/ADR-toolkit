@@ -14,6 +14,17 @@ Backlog derived from `docs/adr-toolkit-audit-report.md`, operational experiences
 
 ### Medium
 
+- [ ] **harness-parity CI에 Cline CLI 편입** — `adapters/cline/README.md` 기준
+  여전히 "Manually verified against Cline CLI 3.0.61"뿐, push/PR마다 자동
+  검증이 없어 Cline CLI/ClinePass 버전업 시 회귀를 CI가 못 잡음. Codex/Gemini
+  어댑터는 이미 harness-parity job에서 자동 검증 중(`project-roadmap.md`
+  "Harness parity" 참조). Cline CLI는 npm 글로벌 설치가 가능하므로
+  Antigravity(공개 패키지 레지스트리 미지원)와 달리 전제조건은 이미 충족.
+  선행 검증 항목: (1) `cline` npm 패키지명/배포 채널/안정 버전 핀 값 확인,
+  (2) CI runner에서 `cline skill add SHcommit/ADR-toolkit --global --yes` 후
+  `~/.agents/skills/adr-toolkit` 설치 경로 검증, (3) `preflight`/`init`/
+  `validate` 전 단계 `ok:true` 검증 구간 추가. (`project-roadmap.md` "Harness
+  parity", `adapters/cline/README.md` "Verification status")
 - [ ] **ADR 중첩/유사도 감지 및 파편화 방지 Eval 시스템** — 작성하려 하거나 기존에 존재하는 ADR 간 내용/주제/영향 범위의 중첩(overlap) 및 파편화를 사전 감지하는 로직과, ADR 집합의 중복·충돌·일관성을 지속해서 평가/검증하는 Evaluation 프레임워크 구축. (유사도 기반 `supersede` 권장, 중복 작성 방지)
 - [ ] **개발용 플러그인 메인 저장소 Symlink 자동화 스크립트** — local development 시 `~/.gemini/config/plugins/adr-toolkit`이 임시 워크트리가 아닌 메인 저장소를 항상 바라보도록 하고, 버전 갱신 시 symlink 유효성을 체크하는 도구/가이드 정립.
 - [ ] **주간 자동 ADR 헬스체크 및 무효화/깨진 링크 점검 오토메이션** — 주 1회(GitHub Actions Scheduled Workflow 등) 실행되어 오래 방치된 `PROPOSED` ADR, 리팩터링으로 깨진 `affected_paths` 경로, 버전 드리프트를 자동 점검하고 이슈/알림을 생성하는 주간 유지보수 시스템.
