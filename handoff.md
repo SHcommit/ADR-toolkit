@@ -2,58 +2,59 @@
 
 ## Current task
 
-Release v1.1.0: VERSION bumped 1.0.1 → 1.1.0, manifests synced via
-`scripts/sync_version.py`, `changelog.md` v1.1.0 section added. Release branch
-`release/v1.1.0` off `develop` ready to merge into `master`; after merge, tag
-`v1.1.0` will be pushed from `master` to trigger `.github/workflows/release.yml`.
+Hotfix v1.1.1: closed two gaps discovered while deploying v1.1.0 —
+`.claude-plugin/marketplace.json` missing the `owner` field (blocked
+`claude plugin marketplace add` on Claude Code v2.1.263) and `pyproject.toml`
+not in `scripts/sync_version.py`'s sync surface (v1.1.0 GitHub Release shipped a
+1.0.1 wheel/sdist). Both fixes are landed on `fix/v1.1.1-hotfix`; ready to cut a
+release.
 
 ## Touched files
 
-- `skills/adr-toolkit/VERSION` — bumped to `1.1.0`.
-- `skills/adr-toolkit/SKILL.md` — frontmatter `version: 1.1.0`.
-- `.claude-plugin/plugin.json`, `adapters/gemini-cli/gemini-extension.json`,
-  `adapters/antigravity/plugin.json` — `version` synced to `1.1.0`.
-- `changelog.md` — moved the Unreleased block under a new `## v1.1.0 (2026-09-06)`
-  heading summarizing the 31 commits accumulated since v1.0.1 (Cline adapter,
-  CLINE.md/AGENTS.md harness entry, GitHub governance hardening, CI supply-chain
-  hardening, ADR-0017, backlog items).
+- `.claude-plugin/marketplace.json` — added `$schema`, top-level `description`,
+  `owner.name` (mirrors the working `Agent-toolkit/.claude-plugin/marketplace.json`).
+- `scripts/sync_version.py` — added `TOML_VERSION_SPECS` (`pyproject.toml`
+  `[project]` table), `TOML_VERSION_LINE_RE`, `_section_header_re()`,
+  `sync_toml_version()`. `require_known_paths()` now asserts the `[project]`
+  table is present. `main()` calls `sync_toml_version()`.
+- `tests/unit/test_sync_version.py` — added 6 regression tests for TOML sync
+  (writes, idempotent, check-only, missing-section, other-table-untouched,
+  real-pyproject-drift guard).
+- `skills/adr-toolkit/VERSION`, `SKILL.md` frontmatter, `.claude-plugin/plugin.json`,
+  `adapters/gemini-cli/gemini-extension.json`, `adapters/antigravity/plugin.json`,
+  `pyproject.toml` — all synced to 1.1.1 via `scripts/sync_version.py`.
+- `changelog.md` — new `## v1.1.1 (2026-09-06)` section.
 - `handoff.md` — this file.
 
-## Why 1.1.0 (MINOR, not PATCH)
+## Verification (local, Python 3.13 standalone — pytest not installed user-scope)
 
-The 31 commits between v1.0.1 and this release include six `feat:` commits
-(Cline CLI adapter, GitHub label taxonomy / labeler / dependabot / Issue Forms /
-auto-triage). SemVer requires a MINOR bump for new backward-compatible
-features; no breaking changes were identified, so MAJOR is not warranted and
-PATCH would understate the surface change.
+- `scripts/sync_version.py --check`: **exit 0** (no drift, including pyproject.toml).
+- 6 new TOML sync tests re-run as standalone assertions: **all pass**.
+- `script/sync_version.py` and `tests/unit/test_sync_version.py` parse with
+  `ast.parse`: OK.
+- Real-repo guard: `pyproject.toml` `[project] version` reports `1.1.1`, matches
+  `skills/adr-toolkit/VERSION`.
 
 ## Next step
 
-1. Open PR `release/v1.1.0` → `master` (AGENTS.md: "Release branches merge
-   into `master` and back into `develop`").
-2. After CI passes (release.yml runs pytest + sync_version --check + tag ==
-   VERSION), merge into `master`.
-3. Back-merge `master` → `develop` (PR), per the git flow.
-4. Tag `v1.1.0` from `master` and push — `release.yml` runs the full suite,
-   verifies manifest versions against the tag, and publishes a GitHub
-   Release (plus PyPI publish via Trusted Publisher, `continue-on-error`).
-5. Delete the short-lived `release/v1.1.0` branch after merge.
-
-## Verification
-
-- `scripts/sync_version.py --check`: passes (VERSION, SKILL.md, and all
-  4 manifests agree on 1.1.0; no untracked manifests).
-- `changelog.md` reflects all 31 v1.0.1..develop commits.
-- Working-tree state on `release/v1.1.0`: clean except for the version-sync +
-  changelog/handoff commits.
+1. Merge `fix/v1.1.1-hotfix` → `develop` (PR, CI must pass — including the
+   version-drift job, which now also checks pyproject.toml).
+2. Open `release/v1.1.1` → `master` PR; after CI passes (release.yml runs the
+   full suite + tag == VERSION check), merge.
+3. Back-merge `master` → `develop`.
+4. Tag `v1.1.1` from `master` and push — `release.yml` runs pytest +
+   sync_version --check + tag == VERSION, then publishes a GitHub Release with
+   the skill tarball + sha256 + Python wheel/sdist, and publishes to PyPI via
+   Trusted Publisher (`continue-on-error: true`, tracked in improvements.md).
+5. After release, refresh the local installs on the four harnesses
+   (Claude Code `~/.claude/skills/` symlink, Codex `~/.codex/skills/`,
+   Antigravity `~/.gemini/config/plugins/adr-toolkit/skills/adr-toolkit/`,
+   Cline `~/.agents/skills/`) to v1.1.1 — the same flow used to bring them to
+   v1.1.0 in the previous session.
 
 ## Open risks
 
-- `pypa/gh-action-pypi-publish` remains `continue-on-error: true`, so the
-  PyPI publish step can partially fail without failing the release job —
-  tracked in `improvements.md`.
-- Cline adapter is still "Manually verified against 3.0.61" only; the
-  `harness-parity` CI job does not yet cover Cline — PR #36 logged this as a
-  Medium backlog item to implement after v1.1.0 ships.
-- Inherits prior Open risks (ruleset context sync post-merge, deferred
-  project/milestone/stale automation).
+- PyPI Trusted Publisher still `continue-on-error: true` — known, tracked.
+- Cline adapter still manually verified; `harness-parity` not covering Cline yet
+  (Medium backlog item from PR #36).
+- Inherits prior Open risks (ruleset context sync, deferred automation).

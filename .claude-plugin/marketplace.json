@@ -1,10 +1,16 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "adr-toolkit-marketplace",
+  "description": "Local marketplace for the ADR Toolkit Claude Code plugin.",
+  "owner": {
+    "name": "Local developer"
+  },
   "plugins": [
     {
       "name": "adr-toolkit",
-      "source": "./",
-      "description": "Agent-native ADR toolkit: inspect the repo, ask only what code can't answer, record and check architecture decisions."
+      "description": "Agent-native ADR toolkit: inspect the repo, ask only what code can't answer, record and check architecture decisions.",
+      "category": "productivity",
+      "source": "./"
     }
   ]
 }
