@@ -1,5 +1,25 @@
 # ADR Toolkit
 
+<p align="center">
+
+[English](README.md) &nbsp;&nbsp;
+[한국어](docs/readme/README.ko.md) &nbsp;&nbsp;
+[日本語](docs/readme/README.ja.md) &nbsp;&nbsp;
+[简体中文](docs/readme/README.zh.md) &nbsp;&nbsp;
+[Français](docs/readme/README.fr.md) &nbsp;&nbsp;
+[Español](docs/readme/README.es.md) &nbsp;&nbsp;
+[Deutsch](docs/readme/README.de.md)
+
+</p>
+
+<p align="center">
+  <a href="https://github.com/SHcommit/ADR-toolkit/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/release-v1.1.1-0b8fd3?style=flat" alt="Release: v1.1.1" /></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat" alt="Python: 3.10+" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-55aa00?style=flat" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/ADR_locales-8-7a2cb8?style=flat" alt="ADR locales: 8" />
+  <img src="https://img.shields.io/badge/README_languages-7-0b8f3a?style=flat" alt="README languages: 7" />
+</p>
+
 An agent-native Architecture Decision Record toolkit: it inspects your
 repository and existing decisions before asking questions, records new
 decisions with a human-approved MADR, and checks a diff against Accepted
