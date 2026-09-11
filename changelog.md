@@ -4,6 +4,9 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added a GitHub-friendly README language switcher with release/status badges
+  and moved translated README variants under `docs/readme/` to keep the
+  repository root uncluttered.
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
