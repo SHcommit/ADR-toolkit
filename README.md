@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/SHcommit/ADR-toolkit/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/release-v1.1.1-0b8fd3?style=flat" alt="Release: v1.1.1" /></a>
+  <a href="https://github.com/SHcommit/ADR-toolkit/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/release-v1.1.2-0b8fd3?style=flat" alt="Release: v1.1.2" /></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat" alt="Python: 3.10+" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-55aa00?style=flat" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/ADR_locales-8-7a2cb8?style=flat" alt="ADR locales: 8" />
