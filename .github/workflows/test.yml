@@ -167,7 +167,7 @@ jobs:
           cd "$SCRATCH" && git init -q
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" preflight --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" init --dir docs/decisions --json | jq -e '.ok == true'
-          echo '{"title":"Parity Test ADR","status":"PROPOSED","body":"Testing harness parity expansion."}' > draft.json
+          echo '{"title":"Parity Test ADR","status":"proposed","body":"Testing harness parity expansion."}' > draft.json
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" create --input draft.json --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" validate --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" search --keyword "Parity" --dir docs/decisions --json | jq -e '.ok == true'
@@ -189,7 +189,7 @@ jobs:
           cd "$SCRATCH" && git init -q
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" preflight --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" init --dir docs/decisions --json | jq -e '.ok == true'
-          echo '{"title":"Parity Test ADR","status":"PROPOSED","body":"Testing harness parity expansion."}' > draft.json
+          echo '{"title":"Parity Test ADR","status":"proposed","body":"Testing harness parity expansion."}' > draft.json
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" create --input draft.json --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" validate --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" search --keyword "Parity" --dir docs/decisions --json | jq -e '.ok == true'
@@ -210,7 +210,7 @@ jobs:
           cd "$SCRATCH" && git init -q
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" preflight --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" init --dir docs/decisions --json | jq -e '.ok == true'
-          echo '{"title":"Parity Test ADR","status":"PROPOSED","body":"Testing harness parity expansion."}' > draft.json
+          echo '{"title":"Parity Test ADR","status":"proposed","body":"Testing harness parity expansion."}' > draft.json
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" create --input draft.json --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" validate --dir docs/decisions --json | jq -e '.ok == true'
           python3 "$INSTALLED_PATH/skills/adr-toolkit/scripts/adr.py" search --keyword "Parity" --dir docs/decisions --json | jq -e '.ok == true'
