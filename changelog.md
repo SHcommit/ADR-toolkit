@@ -5,6 +5,7 @@ Lightweight human-readable summary of meaningful repository changes.
 ## Unreleased
 
 - Added `.github/workflows/stale.yml` for scale-triggered stale issue and PR lifecycle automation (#23).
+- Expanded `harness-parity` CI job to verify `create`, `search`, `graph`, and `check` commands across Codex, Antigravity, and Gemini CLI adapters (#28).
 - Added step-by-step tutorial for adding new harness adapters in `adapters/README.md` (#33).
 - Added `docs/factual-correction-policy.md` defining in-place metadata correction vs. decision superseding policy for Accepted ADRs (#29).
 - Modernized PyPA license metadata in `pyproject.toml` to SPDX expression (`license = "MIT"`) and `license-files` (#30).
