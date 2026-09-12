@@ -2,22 +2,29 @@
 
 ## Current task
 
-Resolving GitHub Issues #30 (`Build: PyPA license metadata 현대화`) and #26 (`CI: ruleset required-check drift 자동 검증`). Started on branch `fix/issue-30-26-build-ci-hardening`.
+Resolving GitHub Issues #30 (`Build: PyPA license metadata 현대화`) and #26 (`CI: ruleset required-check drift 자동 검증`). Branch `fix/issue-30-26-build-ci-hardening`.
 
 ## Touched files
 
-- `handoff.md` — updated for new task focus.
+- `pyproject.toml` — modernized license metadata to SPDX expression (`license = "MIT"`), added `license-files = ["LICENSE*"]`, and removed deprecated license classifier per PEP 639.
+- `scripts/verify_rulesets.py` — created script for ruleset required-check drift verification.
+- `tests/unit/test_ruleset_drift.py` — added regression test for ruleset drift verification.
+- `.github/workflows/test.yml` — added `ruleset-drift` CI job.
+- `improvements.md` — moved resolved items to Done.
+- `changelog.md` — added notes under `## Unreleased`.
+- `handoff.md` — this file.
 
 ## Verification
 
-- `git status` on branch `fix/issue-30-26-build-ci-hardening`: clean.
+- `scripts/sync_version.py --check`: **exit 0**
+- `python -m build`: **exit 0**
+- `pytest tests/unit`: **537 passed**
+- `git status` / `git diff` clean and verified.
 
 ## Next step
 
-1. Update `pyproject.toml` to modernize PyPA license metadata to SPDX expression & `license-files` (#30).
-2. Implement/verify ruleset required-check drift script / verification (#26).
-3. Verify changes (`sync_version.py --check`, pytest, build verification).
-4. Commit, push, open PR for `fix/issue-30-26-build-ci-hardening`, and close Issues #30 and #26.
+1. Complete merge of `origin/develop` into `fix/issue-30-26-build-ci-hardening` and push.
+2. Verify PR #50 merge status on GitHub.
 
 ## Open risks
 

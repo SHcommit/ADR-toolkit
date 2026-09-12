@@ -6,7 +6,7 @@ Lightweight human-readable summary of meaningful repository changes.
 
 - Modernized PyPA license metadata in `pyproject.toml` to SPDX expression (`license = "MIT"`) and `license-files` (#30).
 - Automated GitHub ruleset required-check drift verification with `scripts/verify_rulesets.py`, unit tests, and CI `ruleset-drift` job (#26).
-
+- Switched PyPI publishing in `.github/workflows/release.yml` to fail-closed by removing `continue-on-error: true` (#22).
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
