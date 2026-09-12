@@ -2,7 +2,7 @@
 
 ## Current task
 
-Resolving GitHub Issues #33 (`Docs: adapters/README.md tutorial`) and #29 (`Docs: Accepted ADR metadata factual-correction policy`). Completed on branch `docs/issue-33-29-docs-and-policy`.
+Resolving GitHub Issues #33 (`Docs: adapters/README.md tutorial`) and #29 (`Docs: Accepted ADR metadata factual-correction policy`). Branch `docs/issue-33-29-docs-and-policy`.
 
 ## Touched files
 
@@ -19,8 +19,8 @@ Resolving GitHub Issues #33 (`Docs: adapters/README.md tutorial`) and #29 (`Docs
 
 ## Next step
 
-1. Commit, push, open PR for `docs/issue-33-29-docs-and-policy`, and close Issues #33 and #29.
-2. Proceed to next issue (e.g. Issue #28 harness parity expansion or Issue #32 / #23).
+1. Complete merge of `origin/develop` into `docs/issue-33-29-docs-and-policy` and push.
+2. Verify PR #51 merge status on GitHub.
 
 ## Open risks
 

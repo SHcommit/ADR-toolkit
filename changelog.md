@@ -6,7 +6,7 @@ Lightweight human-readable summary of meaningful repository changes.
 
 - Added step-by-step tutorial for adding new harness adapters in `adapters/README.md` (#33).
 - Added `docs/factual-correction-policy.md` defining in-place metadata correction vs. decision superseding policy for Accepted ADRs (#29).
-
+- Switched PyPI publishing in `.github/workflows/release.yml` to fail-closed by removing `continue-on-error: true` (#22).
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
