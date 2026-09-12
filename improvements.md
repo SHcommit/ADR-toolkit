@@ -67,6 +67,7 @@ Backlog derived from `docs/adr-toolkit-audit-report.md`, operational experiences
 
 ## Done
 
+- [x] **규모 trigger 기반 자동화** — inactive 백로그 관리용 `.github/workflows/stale.yml` 도입 및 자동화 워크플로우 구비 완료 (#23).
 - [x] **harness parity CI 검증 명령 확장** — Codex/Antigravity/Gemini어댑터에 대해 `create`, `search`, `graph`, `check` 명령 검증 추가 (#28).
 - [x] **'새 harness adapter 추가하기' 튜토리얼 작성** — `adapters/README.md` 가이드 및 규격 정리 완료 (#33).
 - [x] **Accepted ADR metadata factual-correction policy 설계** — `docs/factual-correction-policy.md` 정책 문서 정의 완료 (#29).
