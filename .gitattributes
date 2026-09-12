@@ -1,0 +1,4 @@
+# Preserve append-only documentation history during concurrent PR merges
+changelog.md merge=union
+improvements.md merge=union
+handoff.md merge=union
