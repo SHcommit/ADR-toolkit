@@ -4,6 +4,7 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Switched PyPI publishing in `.github/workflows/release.yml` to fail-closed by removing `continue-on-error: true` (#22).
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
