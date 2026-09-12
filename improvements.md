@@ -64,11 +64,15 @@ Backlog derived from `docs/adr-toolkit-audit-report.md`, operational experiences
 - [ ] *(전제조건: qualified maintainer 2명 이상)* **CODEOWNERS 독립 승인 활성화** — 현재 1인 운영 상태에서 필수 code-owner review를 켜면 운영을 막거나 형식적 self-review만 만든다고 보고서 자체가 명시적으로 경고함. 인원 조건 충족 전엔 시작하지 않음. (enterprise-adoption.md §4, §9 "지금 구현하지 않을 것")
 - [ ] *(전제조건: 저장소 2개 이상)* **조직 단위 ruleset/reusable workflow/audit export/taxonomy** — 여러 저장소가 같은 운영 문제를 반복할 때 설계 시작. 지금은 저장소가 1개뿐이라 시작 조건 미충족. (enterprise-adoption.md §6, §8 항목 5)
 - [ ] *(다음 governance PR merge 직후)* **required-check context 동기화** — ruleset `22101891`에서 Python 3.9 context를 제거하고 Python 3.10 matrix, `lint`, `dependency-audit`를 required로 추가한 뒤 effective-rules API로 재검증한다.
-- [ ] *(동일 drift 재발 시)* **ruleset 설정 검증 자동화** — classic branch-protection API와 repository ruleset API를 혼동한 감사 오류 및 CI check-name drift가 다시 발생하면 ruleset-as-code 또는 read-only verification script를 도입한다.
-- [ ] **PyPI publish fail-closed 재검토** — Trusted Publisher가 안정화되면 release workflow의 `continue-on-error: true`를 제거해 GitHub Release와 PyPI가 부분 성공으로 갈라지지 않게 한다.
-- [ ] **PyPA license metadata 현대화** — 2027-02-18 이전에 deprecated `project.license` table과 license classifier를 SPDX expression / `license-files`로 전환하고 최소 setuptools 버전을 맞춘다.
 
 ## Done
+
+- [x] **harness parity CI 검증 명령 확장** — Codex/Antigravity/Gemini어댑터에 대해 `create`, `search`, `graph`, `check` 명령 검증 추가 (#28).
+- [x] **'새 harness adapter 추가하기' 튜토리얼 작성** — `adapters/README.md` 가이드 및 규격 정리 완료 (#33).
+- [x] **Accepted ADR metadata factual-correction policy 설계** — `docs/factual-correction-policy.md` 정책 문서 정의 완료 (#29).
+- [x] **PyPA license metadata 현대화** — SPDX 표현식 (`license = "MIT"`) 및 `license-files = ["LICENSE*"]` 적용 완료 (#30).
+- [x] **ruleset 설정 검증 자동화** — `scripts/verify_rulesets.py` 및 CI `ruleset-drift` job과 단위 테스트 추가로 ruleset drift 자동 검증 도입 (#26).
+- [x] **PyPI publish fail-closed 재검토** — Trusted Publisher가 안정화되어 release workflow의 `continue-on-error: true`를 제거하고 fail-closed로 전환 완료 (#22).
 
 Normally this section stays empty between sessions (resolved items live in
 `changelog.md` + git history instead, and this session's own architectural
