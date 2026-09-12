@@ -4,6 +4,9 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added step-by-step tutorial for adding new harness adapters in `adapters/README.md` (#33).
+- Added `docs/factual-correction-policy.md` defining in-place metadata correction vs. decision superseding policy for Accepted ADRs (#29).
+
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
