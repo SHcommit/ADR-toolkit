@@ -2,7 +2,7 @@
 
 ## Current task
 
-Resolving GitHub Issue #28 (`Test: harness parity를 check/search/graph/create까지 확장`). Completed on branch `feature/issue-28-harness-parity-expansion`.
+Resolving GitHub Issue #28 (`Test: harness parity를 check/search/graph/create까지 확장`). Branch `feature/issue-28-harness-parity-expansion`.
 
 ## Touched files
 
@@ -19,8 +19,8 @@ Resolving GitHub Issue #28 (`Test: harness parity를 check/search/graph/create�
 
 ## Next step
 
-1. Commit, push, open PR for `feature/issue-28-harness-parity-expansion`, and close Issue #28.
-2. Proceed to next issue (e.g. Issue #23 automation triggers or Issue #32).
+1. Complete merge of `origin/develop` into `feature/issue-28-harness-parity-expansion` and push.
+2. Verify PR #52 merge status on GitHub.
 
 ## Open risks
 

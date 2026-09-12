@@ -5,7 +5,7 @@ Lightweight human-readable summary of meaningful repository changes.
 ## Unreleased
 
 - Expanded `harness-parity` CI job to verify `create`, `search`, `graph`, and `check` commands across Codex, Antigravity, and Gemini CLI adapters (#28).
-
+- Switched PyPI publishing in `.github/workflows/release.yml` to fail-closed by removing `continue-on-error: true` (#22).
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
