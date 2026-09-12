@@ -2,7 +2,7 @@
 
 ## Current task
 
-Resolving GitHub Issue #23 (`Automation: 규모 trigger 기반 자동화`). Completed on branch `feature/issue-23-automation-triggers`.
+Resolving GitHub Issue #23 (`Automation: 규모 trigger 기반 자동화`). Branch `feature/issue-23-automation-triggers`.
 
 ## Touched files
 
@@ -19,5 +19,10 @@ Resolving GitHub Issue #23 (`Automation: 규모 trigger 기반 자동화`). Comp
 
 ## Next step
 
-1. Commit, push, open PR for `feature/issue-23-automation-triggers`, and close Issue #23.
-2. Review remaining blocked/trigger-based governance backlog issues (#27, #24, #32, #21).
+1. Complete merge of `origin/develop` into `feature/issue-23-automation-triggers` and push.
+2. Verify PR #53 merge status on GitHub.
+
+## Open risks
+
+- Cline adapter still manually verified; `harness-parity` not covering Cline yet.
+- Inherits prior Open risks (ruleset context sync, deferred automation).
