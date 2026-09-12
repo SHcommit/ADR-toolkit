@@ -19,8 +19,8 @@ Resolving GitHub Issues #33 (`Docs: adapters/README.md tutorial`) and #29 (`Docs
 
 ## Next step
 
-1. Complete merge of `origin/develop` into `docs/issue-33-29-docs-and-policy` and push.
-2. Verify PR #51 merge status on GitHub.
+1. Merge PR #51 into `develop`.
+2. Proceed to PR #52 and PR #53 merges.
 
 ## Open risks
 
