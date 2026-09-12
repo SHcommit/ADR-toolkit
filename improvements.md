@@ -65,11 +65,8 @@ Backlog derived from `docs/adr-toolkit-audit-report.md`, operational experiences
 - [ ] *(전제조건: 저장소 2개 이상)* **조직 단위 ruleset/reusable workflow/audit export/taxonomy** — 여러 저장소가 같은 운영 문제를 반복할 때 설계 시작. 지금은 저장소가 1개뿐이라 시작 조건 미충족. (enterprise-adoption.md §6, §8 항목 5)
 - [ ] *(다음 governance PR merge 직후)* **required-check context 동기화** — ruleset `22101891`에서 Python 3.9 context를 제거하고 Python 3.10 matrix, `lint`, `dependency-audit`를 required로 추가한 뒤 effective-rules API로 재검증한다.
 - [ ] *(동일 drift 재발 시)* **ruleset 설정 검증 자동화** — classic branch-protection API와 repository ruleset API를 혼동한 감사 오류 및 CI check-name drift가 다시 발생하면 ruleset-as-code 또는 read-only verification script를 도입한다.
-- [ ] **PyPI publish fail-closed 재검토** — Trusted Publisher가 안정화되면 release workflow의 `continue-on-error: true`를 제거해 GitHub Release와 PyPI가 부분 성공으로 갈라지지 않게 한다.
 - [ ] **PyPA license metadata 현대화** — 2027-02-18 이전에 deprecated `project.license` table과 license classifier를 SPDX expression / `license-files`로 전환하고 최소 setuptools 버전을 맞춘다.
 
 ## Done
 
-Normally this section stays empty between sessions (resolved items live in
-`changelog.md` + git history instead, and this session's own architectural
-decisions in `docs/decisions/ADR-0012..0016`).
+- [x] **PyPI publish fail-closed 재검토** — Trusted Publisher가 안정화되어 release workflow의 `continue-on-error: true`를 제거하고 fail-closed로 전환 완료 (#22).
