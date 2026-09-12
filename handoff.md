@@ -2,14 +2,12 @@
 
 ## Current task
 
-Resolving GitHub Issues #30 (`Build: PyPA license metadata 현대화`) and #26 (`CI: ruleset required-check drift 자동 검증`). Branch `fix/issue-30-26-build-ci-hardening`.
+Resolving GitHub Issues #33 (`Docs: adapters/README.md tutorial`) and #29 (`Docs: Accepted ADR metadata factual-correction policy`). Branch `docs/issue-33-29-docs-and-policy`.
 
 ## Touched files
 
-- `pyproject.toml` — modernized license metadata to SPDX expression (`license = "MIT"`), added `license-files = ["LICENSE*"]`, and removed deprecated license classifier per PEP 639.
-- `scripts/verify_rulesets.py` — created script for ruleset required-check drift verification.
-- `tests/unit/test_ruleset_drift.py` — added regression test for ruleset drift verification.
-- `.github/workflows/test.yml` — added `ruleset-drift` CI job.
+- `adapters/README.md` — added overview table and step-by-step tutorial for adding new harness adapters.
+- `docs/factual-correction-policy.md` — defined permitted in-place metadata edits vs prohibited decision changes for Accepted ADRs.
 - `improvements.md` — moved resolved items to Done.
 - `changelog.md` — added notes under `## Unreleased`.
 - `handoff.md` — this file.
@@ -17,14 +15,12 @@ Resolving GitHub Issues #30 (`Build: PyPA license metadata 현대화`) and #26 (
 ## Verification
 
 - `scripts/sync_version.py --check`: **exit 0**
-- `python -m build`: **exit 0**
-- `pytest tests/unit`: **537 passed**
-- `git status` / `git diff` clean and verified.
+- `git status` clean and verified.
 
 ## Next step
 
-1. Complete merge of `origin/develop` into `fix/issue-30-26-build-ci-hardening` and push.
-2. Verify PR #50 merge status on GitHub.
+1. Merge PR #51 into `develop`.
+2. Proceed to PR #52 and PR #53 merges.
 
 ## Open risks
 
