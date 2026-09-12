@@ -4,6 +4,8 @@ Lightweight human-readable summary of meaningful repository changes.
 
 ## Unreleased
 
+- Added `.github/workflows/stale.yml` for scale-triggered stale issue and PR lifecycle automation (#23).
+
 - Added scalable GitHub governance: structured Issue Forms, source-controlled
   label taxonomy, path-based PR labels, new-issue triage, weekly grouped
   Dependabot updates targeting `develop`, and a dormant CODEOWNERS draft.
