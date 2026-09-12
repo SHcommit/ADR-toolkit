@@ -104,6 +104,18 @@ jobs:
       - name: Verify examples workflows execution and parity
         run: python scripts/verify_examples.py --check
 
+  ruleset-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install PyYAML
+      - name: Check ruleset required-check drift
+        run: python scripts/verify_rulesets.py
+
   pr-title-check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
